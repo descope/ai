@@ -1,0 +1,55 @@
+# Weather MCP Server
+
+![Descope Banner](https://github.com/descope/.github/assets/32936811/d904d37e-e3fa-4331-9f10-2880bb708f64)
+
+## Introduction
+
+The Weather Model Context Protocol (MCP) server provides Express server for handling weather-related data through MCP connections protected by Descope OAuth. 
+
+## Features
+
+- Real-time weather data streaming
+- Secure authentication using Descope
+- MCP Authorization Compliant
+
+## Requirements
+
+Before proceeding, make sure you have the following:
+
+- [Node.js](https://nodejs.org/) (version 18 or later)
+- A valid Descope [Project ID](https://app.descope.com/settings/project) and [Management Key](https://app.descope.com/settings/company/managementkeys)
+- The Descope Inbound Apps feature enabled
+- Git installed
+
+## Running the Server
+
+First, add the environment variables in a `.env` file at the root:
+
+```bash
+DESCOPE_PROJECT_ID=      # Your Descope project ID
+DESCOPE_MANAGEMENT_KEY=  # Your Descope management key
+SERVER_URL=             # The URL where your server is hosted
+```
+
+Then, install dependencies:
+
+```bash
+npm i
+```
+
+Finally, run the server:
+
+```bash
+npm run dev
+```
+
+The server will start on port 3000 (or the port specified in your environment variables).
+
+## API Endpoints
+
+- `GET /sse`: Establishes an SSE connection for real-time weather data
+- `POST /message`: Handles incoming messages for the MCP protocol
+
+## Authentication
+
+The server uses Descope for authentication. All MCP endpoints except the authentication router require a valid bearer token.

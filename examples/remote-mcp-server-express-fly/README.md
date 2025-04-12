@@ -6,6 +6,12 @@
 
 This example shows how to add auth to a Remote MCP Server using Descope's MCP Auth SDK (Express) and deploy it to Fly.io. It handles fetching weather-related data.
 
+## Preview
+
+This MCP Server is deployed to Fly.io here: [https://mcp-server-weather-ez9f9a.fly.dev](https://mcp-server-weather-ez9f9a.fly.dev)
+
+You can connect to the server using the [Cloudflare Playground](https://playground.ai.cloudflare.com/), [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) or any other MCP client. Be sure to include the `/sse` path in the connection URL.
+
 ## Features
 
 - Real-time weather data streaming

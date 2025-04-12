@@ -2,6 +2,12 @@
 
 Let's get a Remote MCP server up-and-running on Cloudflare Workers with Descope OAuth login!
 
+## Preview
+
+This MCP Server is deployed to Cloudflare Workers here: [https://remote-mcp-server-bearer-auth.descope-cx.workers.dev/](https://remote-mcp-server-bearer-auth.descope-cx.workers.dev/)
+
+You can connect to the server using the [Cloudflare Playground](https://playground.ai.cloudflare.com/), [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) or any other MCP client. Be sure to include the `/sse` path in the connection URL.
+
 ## Prerequisites
 
 Before you begin, ensure you have:

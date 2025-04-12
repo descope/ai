@@ -1,4 +1,4 @@
-# Remote MCP Server with Descope Auth
+# Remote MCP Server with Descope Inbound Apps, Hono and Cloudflare Workers
 
 Let's get a Remote MCP server up-and-running on Cloudflare Workers with Descope OAuth login!
 

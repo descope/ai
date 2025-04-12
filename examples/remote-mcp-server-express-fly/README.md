@@ -1,4 +1,4 @@
-# Weather MCP Server
+# Remote MCP Server using Descope's MCP Auth SDK (Express) and Fly.io
 
 ![Descope Banner](https://github.com/descope/.github/assets/32936811/d904d37e-e3fa-4331-9f10-2880bb708f64)
 

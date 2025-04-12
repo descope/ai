@@ -12,7 +12,7 @@ This repository contains various packages and demo apps related consuming Descop
 
 - [`remote-mcp-server-hono-cloudflare`](./examples/remote-mcp-server-hono-cloudflare/README.md): A demo app that shows how to add auth to a Remote MCP Server using Hono and Descope and deploying to Cloudflare Workers.
 
-- [`remote-mcp-server-express-cloudflare`](./examples/remote-mcp-server-express-cloudflare/README.md): An example of a Remote MCP Server using Express and Descope's MCP Auth SDK and deploying to Fly.io.
+- [`remote-mcp-server-express-fly`](./examples/remote-mcp-server-express-fly/README.md): An example of a Remote MCP Server using Express and Descope's MCP Auth SDK and deploying to Fly.io.
 
 ## Contributing
 

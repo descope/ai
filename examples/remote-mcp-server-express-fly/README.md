@@ -4,7 +4,7 @@
 
 ## Introduction
 
-The Weather Model Context Protocol (MCP) server provides Express server for handling weather-related data through MCP connections protected by Descope OAuth. 
+This example shows how to add auth to a Remote MCP Server using Descope's MCP Auth SDK (Express) and deploy it to Fly.io. It handles fetching weather-related data.
 
 ## Features
 

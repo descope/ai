@@ -2,12 +2,6 @@
 
 Let's get a Remote MCP server up-and-running on Cloudflare Workers with Descope OAuth login!
 
-## Preview
-
-This MCP Server is deployed to Cloudflare Workers here: [https://remote-mcp-server-bearer-auth.descope-cx.workers.dev/](https://remote-mcp-server-bearer-auth.descope-cx.workers.dev/)
-
-You can connect to the server using the [Cloudflare Playground](https://playground.ai.cloudflare.com/), [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) or any other MCP client. Be sure to include the `/sse` path in the connection URL.
-
 ## Prerequisites
 
 Before you begin, ensure you have:
@@ -38,14 +32,14 @@ SERVER_URL="http://localhost:8787"
 
 ```bash
 # clone the repository
-git clone https://github.com/descope/mcp-server-sse-notion.git
+git clone git@github.com:cloudflare/ai.git
 
 # install dependencies
-cd mcp-server-sse-notion
-pnpm i
+cd ai
+npm install
 
 # run locally
-pnpm dev
+npx nx dev mcp-server-delegated-auth-descope
 ```
 
 You should be able to open [`http://localhost:8787/`](http://localhost:8787/) in your browser
@@ -73,24 +67,18 @@ TODO: We need to support arbitrary headers to the `mcp-remote` proxy
 1. Set up your secrets in Cloudflare:
 
 ```bash
+# Set Descope credentials as secrets
+wrangler secret put DESCOPE_PROJECT_ID
 wrangler secret put DESCOPE_MANAGEMENT_KEY
+
+# Set your server URL as a secret
+wrangler secret put SERVER_URL
 ```
 
-2. Add the following to your `wrangler.jsonc` file:
-
-```jsonc
-{
- "vars": {
-  "DESCOPE_PROJECT_ID": "your_project_id",
-  "SERVER_URL": "your_server_url"
- }
-}
-```
-
-3. Deploy the worker:
+2. Deploy the worker:
 
 ```bash
-pnpm deploy
+npm run deploy
 ```
 
 ## Call your newly deployed remote MCP server from a remote MCP client

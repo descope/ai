@@ -61,7 +61,7 @@ app.get("/sse", async (req, res) => {
         res.status(429).send("Too many connections");
         return;
     }
-    
+
     const transport = new SSEServerTransport("/message", res);
     const { server } = createServer();
 

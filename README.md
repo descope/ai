@@ -2,7 +2,7 @@
 
 # Descope AI
 
-This repository contains various packages and demo apps related consuming Descope's AI offerings. It is a monorepo powered by Nx and Changesets.
+This repository contains various packages and demo apps related consuming Descope's AI offerings.
 
 ## Packages
 
@@ -15,6 +15,7 @@ This repository contains various packages and demo apps related consuming Descop
 - [`remote-mcp-server-express-fly`](./examples/remote-mcp-server-express-fly/README.md): An example of a Remote MCP Server using Express and Descope's MCP Auth SDK and deploying to Fly.io.
 
 - [`notion-remote-mcp-server`](./examples/notion-remote-mcp-server/README.md): A demo app that shows how to add auth to a Remote MCP Server that integrates with Notion.
+
 ## Contributing
 
 This monorepo is built and managed using [NX](https://nx.dev/). In order to use the repo locally:

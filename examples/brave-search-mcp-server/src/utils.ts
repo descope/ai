@@ -71,19 +71,19 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 
 				.markdown p {
 					font-size: 1rem;
-					color: #4a5568;
+					color: rgb(37, 38, 40);
 					margin-bottom: 1rem;
 					line-height: 1.6;
 				}
 
 				.markdown a {
-					color: #3498db;
+					color:rgb(27, 27, 27);
 					font-weight: 500;
-					text-decoration: none;
+					text-decoration: underline;
 				}
 
 				.markdown a:hover {
-					text-decoration: underline;
+					color:rgb(85, 85, 85);	
 				}
 
 				.markdown blockquote {
@@ -106,8 +106,8 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 					margin-top: 1rem;
 					margin-bottom: 1rem;
 					margin-left: 1.5rem;
-					font-size: 1.125rem;
-					color: #4a5568;
+					font-size: 1rem;
+					color:rgb(37, 38, 40);
 				}
 
 				.markdown li {

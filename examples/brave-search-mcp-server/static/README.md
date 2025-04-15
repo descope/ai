@@ -2,7 +2,7 @@
 
 This service provides a Model Context Protocol (MCP) server for interacting with the [Brave Search API](https://brave.com/search/api/).
 
-This service is maintained and auth is powered by [Descope](https://www.descope.com/) and is very much a proof-of-concept under active development.
+This service is maintained by [Descope](https://www.descope.com/) and is very much a proof-of-concept under active development.
 
 ```json
 {

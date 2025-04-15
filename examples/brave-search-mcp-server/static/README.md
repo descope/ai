@@ -44,7 +44,6 @@ The MCP server implementation includes:
 
 - 🔐 OAuth 2.0/2.1 Authorization Server Metadata (RFC 8414)
 - 🔑 Dynamic Client Registration (RFC 7591)
-- 🎫 Token Revocation (RFC 7009)
 - 🔒 PKCE Support
 - 📝 Bearer Token Authentication
 

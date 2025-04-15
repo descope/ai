@@ -49,7 +49,7 @@ The MCP server implementation includes:
 
 ## Additional
 
-In some rare cases it may help to clear the files added to `~/.mcp-auth`
+When using `mcp-remote` to connect to the server, in some rare cases it may help to clear the files added to `~/.mcp-auth`
 
 ```bash
 rm -rf ~/.mcp-auth

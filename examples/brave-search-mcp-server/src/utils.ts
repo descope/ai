@@ -147,6 +147,9 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 					background:rgb(45, 60, 80) !important;
 					color:rgb(222, 222, 222) !important;
 					position: relative;
+					white-space: pre-wrap;
+					word-wrap: break-word;
+					word-break: break-word;
 				}
 
 				.markdown pre .copy-button {

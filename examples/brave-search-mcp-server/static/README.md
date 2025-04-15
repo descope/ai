@@ -25,17 +25,17 @@ Or if you just need the server itself (requires an OAuth compatible client):
 https://brave-search-mcp-server.descope-cx.workers.dev/sse
 ```
 
-## With Cursor
-
-1. Cmd + Shift + J to open Cursor Settings.
-2. Select MCP.
-3. Select Add new global MCP server
-
 ## With Windsurf
 
 1. Open Windsurf Settings.
-2. Under Cascade, you'll find Model Context Provider Servers.
-3. Select Add Server.
+2. Under **Cascade**, you'll find **Model Context Provider Servers**.
+3. Select **Add Server**.
+
+## With Cursor
+
+1. **Cmd + Shift + J** to open Cursor Settings.
+2. Select **MCP**.
+3. Select **Add new global MCP server**
 
 ## With VSCode
 
@@ -88,15 +88,6 @@ Here's a few sample workflows (prompts) that we've tried to design around within
 
 - `web-search` - Search the web with Brave
 - `local-search` - Search the local knowledge base with Brave
-
-## Features
-
-The MCP server implementation includes:
-
-- 🔐 OAuth 2.0/2.1 Authorization Server Metadata (RFC 8414)
-- 🔑 Dynamic Client Registration (RFC 7591)
-- 🔒 PKCE Support
-- 📝 Bearer Token Authentication
 
 ## Additional
 

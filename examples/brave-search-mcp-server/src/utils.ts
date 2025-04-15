@@ -70,7 +70,7 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 				}
 
 				.markdown p {
-					font-size: 1.125rem;
+					font-size: 1rem;
 					color: #4a5568;
 					margin-bottom: 1rem;
 					line-height: 1.6;

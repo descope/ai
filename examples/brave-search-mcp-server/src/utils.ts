@@ -146,24 +146,60 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 				.markdown pre {
 					background:rgb(45, 60, 80) !important;
 					color:rgb(222, 222, 222) !important;
+					position: relative;
 				}
+
+				.markdown pre .copy-button {
+					position: absolute;
+					top: 0.5rem;
+					right: 0.5rem;
+					padding: 0.25rem 0.5rem;
+					background: rgba(255, 255, 255, 0.1);
+					border: 1px solid rgba(255, 255, 255, 0.2);
+					color: white;
+					border-radius: 0.25rem;
+					cursor: pointer;
+					font-size: 0.75rem;
+					transition: all 0.2s;
+				}
+
+				.markdown pre .copy-button:hover {
+					background: rgba(255, 255, 255, 0.2);
+				}
+
+				// .markdown pre .copy-button.copied {
+				// 	background: #2ecc71;
+				// 	border-color: #2ecc71;
+				// }
 			</style>
+			<script>
+				// Add copy buttons to all pre code blocks
+				document.addEventListener('DOMContentLoaded', () => {
+					const preBlocks = document.querySelectorAll('.markdown pre');
+					preBlocks.forEach(pre => {
+						const button = document.createElement('button');
+						button.className = 'copy-button';
+						button.textContent = 'Copy';
+						button.onclick = () => {
+							const code = pre.querySelector('code')?.textContent || '';
+							navigator.clipboard.writeText(code).then(() => {
+								button.textContent = 'Copied!';
+								button.classList.add('copied');
+								setTimeout(() => {
+									button.textContent = 'Copy';
+									button.classList.remove('copied');
+								}, 2000);
+							});
+						};
+						pre.appendChild(button);
+					});
+				});
+			</script>
 		</head>
 		<body
 			class="bg-gray-50 text-gray-800 font-sans leading-relaxed flex flex-col min-h-screen"
 		>
-			<header class="bg-white shadow-sm mb-8">
-				<div
-					class="container mx-auto px-4 py-4 flex justify-between items-center"
-				>
-					<a
-						href="/"
-						class="text-xl font-heading font-bold text-primary hover:text-primary/80 transition-colors"
-						>Brave MCP</a
-					>
-				</div>
-			</header>
-			<main class="container mx-auto px-4 pb-12 flex-grow">
+			<main class="container mx-auto px-4 pb-12 flex-grow pt-8">
 				${content}
 			</main>
 			<footer class="bg-gray-100 py-6 mt-12">

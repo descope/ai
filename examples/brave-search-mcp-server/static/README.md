@@ -56,13 +56,13 @@ Note: MCP is supported in VSCode 1.99 and above.
 ```json
 {
   "context_servers": {
-    "sentry": {
+    "brave": {
       "command": {
         "command": "npx",
         "args": [
           "-y",
           "mcp-remote",
-          "https://mcp.sentry.dev/sse"
+          "https://brave-search-mcp-server.descope-cx.workers.dev/sse"
         ]
       }
     },

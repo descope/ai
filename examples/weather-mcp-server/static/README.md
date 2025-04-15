@@ -1,4 +1,4 @@
-# Weather MCP Server
+# 🌤️ Weather MCP Server
 
 A Model Context Protocol (MCP) server for accessing weather data from the [National Weather Service API](https://www.weather.gov/documentation/services-web-api). This service is maintained by [Descope](https://www.descope.com/) and is currently in active development.
 

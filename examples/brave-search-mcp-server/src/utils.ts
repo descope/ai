@@ -141,7 +141,11 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 
 				.markdown pre code {
 					background-color: transparent;
-					padding: 0;
+				}
+					
+				.markdown pre {
+					background:rgb(45, 60, 80) !important;
+					color:rgb(222, 222, 222) !important;
 				}
 			</style>
 		</head>

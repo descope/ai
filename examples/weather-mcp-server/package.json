@@ -1,5 +1,5 @@
 {
-	"name": "brave-search-mcp-server",
+	"name": "weather-mcp-server",
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {

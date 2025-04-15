@@ -1,4 +1,4 @@
-# 🔍 Brave Search MCP Server
+# Brave Search MCP Server
 
 Let's get a Remote MCP server up-and-running on Cloudflare Workers with Descope OAuth login!
 

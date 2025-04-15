@@ -1,4 +1,4 @@
-# Brave Search MCP Server
+# 🔍 Brave Search MCP Server
 
 A Model Context Protocol (MCP) server for interacting with the [Brave Search API](https://brave.com/search/api/). This service is maintained by [Descope](https://www.descope.com/) and is currently in active development.
 

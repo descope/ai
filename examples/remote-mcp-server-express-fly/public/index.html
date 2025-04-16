@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather MCP Server</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#3498db",
+                        secondary: "#2ecc71",
+                        accent: "#f39c12",
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "system-ui", "sans-serif"],
+                        heading: ["Roboto", "system-ui", "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap");
+
+        pre {
+            background: rgb(45, 60, 80) !important;
+            color: rgb(222, 222, 222) !important;
+            position: relative;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            word-break: break-word;
+            border-radius: 0.5rem;
+            padding: 0.7rem;
+        }
+
+        pre .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        pre .copy-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        pre .copy-button.copied {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const preBlocks = document.querySelectorAll('pre');
+            preBlocks.forEach(pre => {
+                const button = document.createElement('button');
+                button.className = 'copy-button';
+                button.textContent = 'Copy';
+                button.onclick = () => {
+                    const code = pre.querySelector('code')?.textContent || '';
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.textContent = 'Copied!';
+                        button.classList.add('copied');
+                        setTimeout(() => {
+                            button.textContent = 'Copy';
+                            button.classList.remove('copied');
+                        }, 2000);
+                    });
+                };
+                pre.appendChild(button);
+            });
+        });
+    </script>
+</head>
+
+<body class="bg-gray-50 text-gray-800 font-sans leading-relaxed flex flex-col min-h-screen">
+    <main class="container mx-auto px-4 pb-12 flex-grow pt-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl font-bold font-heading text-gray-900 mb-6">🌎 Weather MCP Server</h1>
+            <p class="text-lg text-gray-700 mb-8">A Model Context Protocol (MCP) server for weather data protected by
+                <a href="https://www.descope.com/" class="text-primary hover:underline">Descope</a>
+                authentication hosted on <a href="https://fly.io/" class="text-primary hover:underline">Fly.io</a>.
+            </p>
+
+            <h2 class="text-2xl font-bold font-heading text-gray-800 mt-8 mb-4">Quick Start</h2>
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-3">Server URL</h3>
+                <pre><code class="px-2 py-1 rounded">https://your-server-url/sse</code></pre>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-3">Configuration</h3>
+                <pre><code>{
+  "mcpServers": {
+    "weather": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://your-server-url/sse"
+      ]
+    }
+  }
+}</code></pre>
+            </div>
+
+            <h2 class="text-2xl font-bold font-heading text-gray-800 mt-8 mb-4">IDE Integration</h2>
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-3">Windsurf</h3>
+                <ol class="list-decimal pl-6 space-y-2">
+                    <li>Open Settings</li>
+                    <li>Navigate to <strong class="font-semibold">Cascade</strong> → <strong class="font-semibold">Model
+                            Context Provider Servers</strong></li>
+                    <li>Select <strong class="font-semibold">Add Server</strong></li>
+                </ol>
+
+                <h3 class="text-xl font-semibold text-gray-800 mt-6 mb-3">Cursor</h3>
+                <ol class="list-decimal pl-6 space-y-2">
+                    <li>Press <strong class="font-semibold">Cmd + Shift + J</strong> to open Settings</li>
+                    <li>Select <strong class="font-semibold">MCP</strong></li>
+                    <li>Select <strong class="font-semibold">Add new global MCP server</strong></li>
+                </ol>
+
+                <h3 class="text-xl font-semibold text-gray-800 mt-6 mb-3">VSCode</h3>
+                <p class="mb-2">Read more <a href="https://code.visualstudio.com/docs/copilot/chat/mcp-servers"
+                        class="text-primary hover:underline">here</a></p>
+                <p class="text-gray-600">Note: Requires VSCode 1.99 or above</p>
+
+                <h3 class="text-xl font-semibold text-gray-800 mt-6 mb-3">Zed</h3>
+                <pre><code>{
+  "context_servers": {
+    "weather": {
+      "command": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "mcp-remote",
+          "https://your-server-url/sse"
+        ]
+      }
+    },
+    "settings": {}
+  }
+}</code></pre>
+            </div>
+
+            <h2 class="text-2xl font-bold font-heading text-gray-800 mt-8 mb-4">Available Tools</h2>
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <ul class="list-disc pl-6 space-y-2">
+                    <li><code class="bg-gray-100 px-2 py-1 rounded">weather-forecast</code>: Get weather forecasts for
+                        any location</li>
+                    <li><code class="bg-gray-100 px-2 py-1 rounded">weather-history</code>: Access historical weather
+                        data</li>
+                </ul>
+            </div>
+
+            <h2 class="text-2xl font-bold font-heading text-gray-800 mt-8 mb-4">Example Workflows</h2>
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-2">Travel Planning</h4>
+                    <p class="text-gray-700">"What's the weather forecast for Tokyo next week?"</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-2">Event Planning</h4>
+                    <p class="text-gray-700">"Check historical weather patterns for outdoor weddings in June"</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-2">Agriculture</h4>
+                    <p class="text-gray-700">"Analyze rainfall patterns in California over the past 5 years"</p>
+                </div>
+            </div>
+
+            <h2 class="text-2xl font-bold font-heading text-gray-800 mt-8 mb-4">Troubleshooting</h2>
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <p class="mb-4">If you encounter issues with <code
+                        class="bg-gray-100 px-2 py-1 rounded">mcp-remote</code>, try clearing the authentication files:
+                </p>
+                <pre><code>rm -rf ~/.mcp-auth</code></pre>
+            </div>
+        </div>
+    </main>
+    <footer class="bg-gray-100 py-6 mt-12">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>&copy; ${new Date().getFullYear()} Descope. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+
+</html>

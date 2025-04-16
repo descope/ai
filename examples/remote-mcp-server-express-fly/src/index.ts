@@ -6,6 +6,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import { descopeMcpAuthRouter, descopeMcpBearerAuth, DescopeMcpProvider, DescopeMcpProviderOptions } from "@descope/mcp-express";
 import cors from "cors";
+import path from 'path';
+
 declare module "express-serve-static-core" {
     interface Request {
         /**
@@ -20,6 +22,9 @@ dotenv.config();
 
 const app = express();
 
+// Serve static files from the public directory
+app.use(express.static(path.join(process.cwd(), 'public')));
+
 app.use(
     cors({
         origin: true,
@@ -30,11 +35,7 @@ app.use(
 
 app.options("*", cors());
 
-const provider = new DescopeMcpProvider({
-    dynamicClientRegistrationOptions: {
-        authPageUrl: `https://api.descope.com/login/${process.env.DESCOPE_PROJECT_ID}?flow=improved-inbound-apps-user-consent`
-    }
-});
+const provider = new DescopeMcpProvider();
 
 app.use(descopeMcpAuthRouter(provider));
 
@@ -42,19 +43,6 @@ app.use(["/sse", "/message"], descopeMcpBearerAuth());
 
 let servers: McpServer[] = [];
 const MAX_CONNECTIONS = 100; // Adjust based on your shared instance limits
-
-app.get("/", (req, res) => {
-    res.json({
-        name: "Weather MCP Server",
-        description: "A Model Context Protocol server for weather data protected by Descope",
-        endpoints: {
-            root: "/",
-            sse: "/sse",
-            message: "/message"
-        },
-        status: "running"
-    });
-})
 
 app.get("/sse", async (req, res) => {
     if (servers.length >= MAX_CONNECTIONS) {

@@ -68,11 +68,6 @@ function findMatchingKey(keys: JWK[], kid: string): JWK {
     return key;
 }
 
-function validateRequiredClaims(payload: JwtPayload): void {
-    if (!payload.aud || !payload.sub || !payload.exp) {
-        throw new Error('Token missing required claims');
-    }
-}
 
 function validateAudience(payload: JwtPayload, audience?: string[]): void {
     if (!audience?.length) return;
@@ -120,8 +115,6 @@ async function verifyAccessToken(
         const key = findMatchingKey(keys, header.kid);
         const { payload } = await verifyJwt(token, key);
 
-        // Validate claims
-        validateRequiredClaims(payload);
         validateAudience(payload, audience);
         const scopes = extractAndValidateScopes(payload, requiredScopes);
 

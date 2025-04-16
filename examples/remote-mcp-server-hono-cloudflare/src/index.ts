@@ -1,12 +1,12 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { Context, Hono } from "hono";
-import { layout, homeContent } from "./utils";
-import { DescopeMcpProvider } from "./descope-hono/provider";
-import { descopeMcpAuthRouter } from "./descope-hono/router";
-import { descopeMcpBearerAuth } from "./descope-hono/middleware/bearerAuth";
+import { Hono } from "hono";
+import { layout, homeContent } from "./home";
+import { descopeMcpBearerAuth } from "./lib/bearer-auth";
 import { cors } from "hono/cors";
+import { getDescopeOAuthEndpointUrl } from "./lib/utils";
+import { AuthInfo } from "./lib/schemas";
 
 type Bindings = {
 	DESCOPE_PROJECT_ID: string;
@@ -16,7 +16,7 @@ type Bindings = {
 };
 
 type Props = {
-	bearerToken: string;
+	auth: AuthInfo;
 };
 
 type State = null;
@@ -32,7 +32,7 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
 		}));
 
 		this.server.tool("getToken", {}, async () => ({
-			content: [{ type: "text", text: String(`User's token: ${this.props.bearerToken}`) }],
+			content: [{ type: "text", text: String(`User's token: ${this.props.auth.token}`) }],
 		}));
 	}
 }
@@ -53,26 +53,33 @@ app.get("/", async (c) => {
 	return c.html(layout(content, "MCP Remote Auth Demo - Home"));
 });
 
-// OAuth routes handler
-const handleOAuthRoute = async (c: Context) => {
-	const provider = new DescopeMcpProvider({}, { env: c.env })
-	const router = descopeMcpAuthRouter(provider);
-	return router.fetch(c.req.raw, c.env, c.executionCtx);
-};
+app.get("/.well-known/oauth-authorization-server", async (c) => {
+	const baseURL = c.env.DESCOPE_BASE_URL || "https://api.descope.com";
+	return c.json({
+		issuer: `${baseURL}/v1/apps/${c.env.DESCOPE_PROJECT_ID}`,
+		registration_endpoint: `${baseURL}/${c.env.DESCOPE_PROJECT_ID}/oauth2/v1/apps/register`,
 
-// OAuth routes
-app.use("/.well-known/oauth-authorization-server", handleOAuthRoute);
-app.all("/authorize", handleOAuthRoute);
-app.use("/register", handleOAuthRoute);
+		authorization_endpoint: getDescopeOAuthEndpointUrl(baseURL, "authorize"),
+		token_endpoint: getDescopeOAuthEndpointUrl(baseURL, "token"),
+		revocation_endpoint: getDescopeOAuthEndpointUrl(baseURL, "revoke"),
+		userinfo_endpoint: getDescopeOAuthEndpointUrl(baseURL, "userinfo"),
+
+		scopes_supported: ["openid", "email", "profile"],
+		response_types_supported: ["code"],
+		code_challenge_methods_supported: ["S256"],
+		token_endpoint_auth_methods_supported: ["client_secret_post"],
+		grant_types_supported: ["authorization_code", "refresh_token"],
+	});
+});
 
 // Protected MCP routes
 app.use("/sse/*", descopeMcpBearerAuth());
 app.route("/sse", new Hono().mount("/", (req, env, ctx) => {
-	const authHeader = req.headers.get("authorization");
 	ctx.props = {
-		bearerToken: authHeader,
+		auth: ctx.get("auth"),
 	};
 	return MyMCP.mount("/sse").fetch(req, env, ctx);
 }));
 
 export default app;
+

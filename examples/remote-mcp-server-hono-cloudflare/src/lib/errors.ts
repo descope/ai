@@ -1,35 +1,34 @@
-import { OAuthErrorResponse } from "./schemas/oauth.js";
-
+import { OAuthErrorResponse } from "./schemas.js";
 /**
  * Base class for all OAuth errors that provides standardized error handling and response formatting.
  * This class implements the OAuth 2.0 error response format as specified in RFC 6749.
  */
 export class OAuthError extends Error {
-  constructor(
-    public readonly errorCode: string,
-    message: string,
-    public readonly errorUri?: string,
-  ) {
-    super(message);
-    this.name = this.constructor.name;
-  }
-
-  /**
-   * Converts the error to a standard OAuth error response object that follows the OAuth 2.0 specification.
-   * The response includes the error code, description, and optional URI for additional error information.
-   */
-  toResponseObject(): OAuthErrorResponse {
-    const response: OAuthErrorResponse = {
-      error: this.errorCode,
-      error_description: this.message,
-    };
-
-    if (this.errorUri) {
-      response.error_uri = this.errorUri;
+    constructor(
+        public readonly errorCode: string,
+        message: string,
+        public readonly errorUri?: string,
+    ) {
+        super(message);
+        this.name = this.constructor.name;
     }
 
-    return response;
-  }
+    /**
+     * Converts the error to a standard OAuth error response object that follows the OAuth 2.0 specification.
+     * The response includes the error code, description, and optional URI for additional error information.
+     */
+    toResponseObject(): OAuthErrorResponse {
+        const response: OAuthErrorResponse = {
+            error: this.errorCode,
+            error_description: this.message,
+        };
+
+        if (this.errorUri) {
+            response.error_uri = this.errorUri;
+        }
+
+        return response;
+    }
 }
 
 /**
@@ -40,9 +39,9 @@ export class OAuthError extends Error {
  * - Duplicate parameters
  */
 export class InvalidRequestError extends OAuthError {
-  constructor(message: string, errorUri?: string) {
-    super("invalid_request", message, errorUri);
-  }
+    constructor(message: string, errorUri?: string) {
+        super("invalid_request", message, errorUri);
+    }
 }
 
 /**
@@ -50,9 +49,9 @@ export class InvalidRequestError extends OAuthError {
  * Use when no other specific error code is appropriate.
  */
 export class ServerError extends OAuthError {
-  constructor(message: string, errorUri?: string) {
-    super("server_error", message, errorUri);
-  }
+    constructor(message: string, errorUri?: string) {
+        super("server_error", message, errorUri);
+    }
 }
 
 /**
@@ -64,9 +63,9 @@ export class ServerError extends OAuthError {
  * - Wrong client
  */
 export class InvalidTokenError extends OAuthError {
-  constructor(message: string, errorUri?: string) {
-    super("invalid_token", message, errorUri);
-  }
+    constructor(message: string, errorUri?: string) {
+        super("invalid_token", message, errorUri);
+    }
 }
 
 /**
@@ -74,9 +73,9 @@ export class InvalidTokenError extends OAuthError {
  * Custom extension of OAuth 2.0 for clearer method validation feedback.
  */
 export class MethodNotAllowedError extends OAuthError {
-  constructor(message: string, errorUri?: string) {
-    super("method_not_allowed", message, errorUri);
-  }
+    constructor(message: string, errorUri?: string) {
+        super("method_not_allowed", message, errorUri);
+    }
 }
 
 /**
@@ -88,9 +87,9 @@ export class MethodNotAllowedError extends OAuthError {
  * - Policy violations
  */
 export class InvalidClientMetadataError extends OAuthError {
-  constructor(message: string, errorUri?: string) {
-    super("invalid_client_metadata", message, errorUri);
-  }
+    constructor(message: string, errorUri?: string) {
+        super("invalid_client_metadata", message, errorUri);
+    }
 }
 
 /**
@@ -101,7 +100,7 @@ export class InvalidClientMetadataError extends OAuthError {
  * - Privilege requirements
  */
 export class InsufficientScopeError extends OAuthError {
-  constructor(message: string, errorUri?: string) {
-    super("insufficient_scope", message, errorUri);
-  }
+    constructor(message: string, errorUri?: string) {
+        super("insufficient_scope", message, errorUri);
+    }
 }

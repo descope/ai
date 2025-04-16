@@ -2,7 +2,6 @@
 import { html, raw } from "hono/html";
 import type { HtmlEscapedString } from "hono/utils/html";
 import { marked } from "marked";
-import type { AuthRequest } from "@cloudflare/workers-oauth-provider";
 import { env } from "cloudflare:workers";
 
 // This file mainly exists as a dumping ground for uninteresting html and CSS
@@ -70,20 +69,20 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 				}
 
 				.markdown p {
-					font-size: 1.125rem;
-					color: #4a5568;
+					font-size: 1rem;
+					color: rgb(37, 38, 40);
 					margin-bottom: 1rem;
 					line-height: 1.6;
 				}
 
 				.markdown a {
-					color: #3498db;
+					color:rgb(27, 27, 27);
 					font-weight: 500;
-					text-decoration: none;
+					text-decoration: underline;
 				}
 
 				.markdown a:hover {
-					text-decoration: underline;
+					color:rgb(85, 85, 85);	
 				}
 
 				.markdown blockquote {
@@ -106,8 +105,8 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 					margin-top: 1rem;
 					margin-bottom: 1rem;
 					margin-left: 1.5rem;
-					font-size: 1.125rem;
-					color: #4a5568;
+					font-size: 1rem;
+					color:rgb(37, 38, 40);
 				}
 
 				.markdown li {
@@ -141,31 +140,74 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 
 				.markdown pre code {
 					background-color: transparent;
-					padding: 0;
 				}
+					
+				.markdown pre {
+					background:rgb(45, 60, 80) !important;
+					color:rgb(222, 222, 222) !important;
+					position: relative;
+					white-space: pre-wrap;
+					word-wrap: break-word;
+					word-break: break-word;
+				}
+
+				.markdown pre .copy-button {
+					position: absolute;
+					top: 0.5rem;
+					right: 0.5rem;
+					padding: 0.25rem 0.5rem;
+					background: rgba(255, 255, 255, 0.1);
+					border: 1px solid rgba(255, 255, 255, 0.2);
+					color: white;
+					border-radius: 0.25rem;
+					cursor: pointer;
+					font-size: 0.75rem;
+					transition: all 0.2s;
+				}
+
+				.markdown pre .copy-button:hover {
+					background: rgba(255, 255, 255, 0.2);
+				}
+
+				// .markdown pre .copy-button.copied {
+				// 	background: #2ecc71;
+				// 	border-color: #2ecc71;
+				// }
 			</style>
+			<script>
+				// Add copy buttons to all pre code blocks
+				document.addEventListener('DOMContentLoaded', () => {
+					const preBlocks = document.querySelectorAll('.markdown pre');
+					preBlocks.forEach(pre => {
+						const button = document.createElement('button');
+						button.className = 'copy-button';
+						button.textContent = 'Copy';
+						button.onclick = () => {
+							const code = pre.querySelector('code')?.textContent || '';
+							navigator.clipboard.writeText(code).then(() => {
+								button.textContent = 'Copied!';
+								button.classList.add('copied');
+								setTimeout(() => {
+									button.textContent = 'Copy';
+									button.classList.remove('copied');
+								}, 2000);
+							});
+						};
+						pre.appendChild(button);
+					});
+				});
+			</script>
 		</head>
 		<body
 			class="bg-gray-50 text-gray-800 font-sans leading-relaxed flex flex-col min-h-screen"
 		>
-			<header class="bg-white shadow-sm mb-8">
-				<div
-					class="container mx-auto px-4 py-4 flex justify-between items-center"
-				>
-					<a
-						href="/"
-						class="text-xl font-heading font-bold text-primary hover:text-primary/80 transition-colors"
-						>Remote MCP Server with Descope Auth Demo</a
-					>
-				</div>
-			</header>
-			<main class="container mx-auto px-4 pb-12 flex-grow">
+			<main class="container mx-auto px-4 pb-12 flex-grow pt-8">
 				${content}
 			</main>
 			<footer class="bg-gray-100 py-6 mt-12">
 				<div class="container mx-auto px-4 text-center text-gray-600">
 					<p>
-						&copy; ${new Date().getFullYear()} Remote MCP Server with Descope Auth Demo.
+						&copy; ${new Date().getFullYear()} Descope.
 						All rights reserved.
 					</p>
 				</div>
@@ -184,222 +226,4 @@ export const homeContent = async (req: Request): Promise<HtmlEscapedString> => {
 	return html`
 		<div class="max-w-4xl mx-auto markdown">${raw(content)}</div>
 	`;
-};
-
-export const renderLoggedInAuthorizeScreen = async (
-	oauthScopes: { name: string; description: string }[],
-	oauthReqInfo: AuthRequest,
-) => {
-	return html`
-		<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
-			<h1 class="text-2xl font-heading font-bold mb-6 text-gray-900">
-				Authorization Request
-			</h1>
-
-			<div class="mb-8">
-				<h2 class="text-lg font-semibold mb-3 text-gray-800">
-					MCP Remote Auth Demo would like permission to:
-				</h2>
-				<ul class="space-y-2">
-					${oauthScopes.map(
-						(scope) => html`
-							<li class="flex items-start">
-								<span
-									class="inline-block mr-2 mt-1 text-secondary"
-									>✓</span
-								>
-								<div>
-									<p class="font-medium">${scope.name}</p>
-									<p class="text-gray-600 text-sm">
-										${scope.description}
-									</p>
-								</div>
-							</li>
-						`,
-					)}
-				</ul>
-			</div>
-			<form action="/approve" method="POST" class="space-y-4">
-				<input
-					type="hidden"
-					name="oauthReqInfo"
-					value="${JSON.stringify(oauthReqInfo)}"
-				/>
-				<input type="hidden" name="email" value="user@example.com" />
-				<button
-					type="submit"
-					name="action"
-					value="approve"
-					class="w-full py-3 px-4 bg-secondary text-white rounded-md font-medium hover:bg-secondary/90 transition-colors"
-				>
-					Approve
-				</button>
-				<button
-					type="submit"
-					name="action"
-					value="reject"
-					class="w-full py-3 px-4 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors"
-				>
-					Reject
-				</button>
-			</form>
-		</div>
-	`;
-};
-
-export const renderLoggedOutAuthorizeScreen = async (
-	oauthScopes: { name: string; description: string }[],
-	oauthReqInfo: AuthRequest,
-) => {
-	return html`
-		<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
-			<h1 class="text-2xl font-heading font-bold mb-6 text-gray-900">
-				Authorization Request
-			</h1>
-
-			<div class="mb-8">
-				<h2 class="text-lg font-semibold mb-3 text-gray-800">
-					MCP Remote Auth Demo would like permission to:
-				</h2>
-				<ul class="space-y-2">
-					${oauthScopes.map(
-						(scope) => html`
-							<li class="flex items-start">
-								<span
-									class="inline-block mr-2 mt-1 text-secondary"
-									>✓</span
-								>
-								<div>
-									<p class="font-medium">${scope.name}</p>
-									<p class="text-gray-600 text-sm">
-										${scope.description}
-									</p>
-								</div>
-							</li>
-						`,
-					)}
-				</ul>
-			</div>
-			<form action="/approve" method="POST" class="space-y-4">
-				<input
-					type="hidden"
-					name="oauthReqInfo"
-					value="${JSON.stringify(oauthReqInfo)}"
-				/>
-				<div class="space-y-4">
-					<div>
-						<label
-							for="email"
-							class="block text-sm font-medium text-gray-700 mb-1"
-							>Email</label
-						>
-						<input
-							type="email"
-							id="email"
-							name="email"
-							required
-							class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-						/>
-					</div>
-					<div>
-						<label
-							for="password"
-							class="block text-sm font-medium text-gray-700 mb-1"
-							>Password</label
-						>
-						<input
-							type="password"
-							id="password"
-							name="password"
-							required
-							class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-						/>
-					</div>
-				</div>
-				<button
-					type="submit"
-					name="action"
-					value="login_approve"
-					class="w-full py-3 px-4 bg-primary text-white rounded-md font-medium hover:bg-primary/90 transition-colors"
-				>
-					Log in and Approve
-				</button>
-				<button
-					type="submit"
-					name="action"
-					value="reject"
-					class="w-full py-3 px-4 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors"
-				>
-					Reject
-				</button>
-			</form>
-		</div>
-	`;
-};
-
-export const renderApproveContent = async (
-	message: string,
-	status: string,
-	redirectUrl: string,
-) => {
-	return html`
-		<div
-			class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md text-center"
-		>
-			<div class="mb-4">
-				<span
-					class="inline-block p-3 ${
-						status === "success"
-							? "bg-green-100 text-green-800"
-							: "bg-red-100 text-red-800"
-					} rounded-full"
-				>
-					${status === "success" ? "✓" : "✗"}
-				</span>
-			</div>
-			<h1 class="text-2xl font-heading font-bold mb-4 text-gray-900">
-				${message}
-			</h1>
-			<p class="mb-8 text-gray-600">
-				You will be redirected back to the application shortly.
-			</p>
-			<a
-				href="/"
-				class="inline-block py-2 px-4 bg-primary text-white rounded-md font-medium hover:bg-primary/90 transition-colors"
-			>
-				Return to Home
-			</a>
-			${raw(`
-				<script>
-					setTimeout(() => {
-						window.location.href = "${redirectUrl}";
-					}, 2000);
-				</script>
-			`)}
-		</div>
-	`;
-};
-
-export const renderAuthorizationApprovedContent = async (redirectUrl: string) => {
-	return renderApproveContent("Authorization approved!", "success", redirectUrl);
-};
-
-export const renderAuthorizationRejectedContent = async (redirectUrl: string) => {
-	return renderApproveContent("Authorization rejected.", "error", redirectUrl);
-};
-
-export const parseApproveFormBody = async (body: {
-	[x: string]: string | File;
-}) => {
-	const action = body.action as string;
-	const email = body.email as string;
-	const password = body.password as string;
-	let oauthReqInfo: AuthRequest | null = null;
-	try {
-		oauthReqInfo = JSON.parse(body.oauthReqInfo as string) as AuthRequest;
-	} catch (e) {
-		oauthReqInfo = null;
-	}
-
-	return { action, oauthReqInfo, email, password };
 };

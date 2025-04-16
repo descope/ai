@@ -1,119 +1,103 @@
-# Remote MCP Server with Descope Auth
+# 🌎 Remote MCP Server with Descope, Hono, and Cloudflare
 
-Let's get a Remote MCP server up-and-running on Cloudflare Workers with Descope OAuth login!
+A template Remote MCP Server with auth by [Descope](https://www.descope.com/), implemented with [Hono](https://hono.dev/), and deployed on [Cloudflare](https://www.cloudflare.com/).
 
-## Prerequisites
+## Quick Start
 
-Before you begin, ensure you have:
+### Server URL
 
-- A [Descope](https://www.descope.com/) account and project
-- Node.js version `18.x` or higher
-- A Cloudflare account (for deployment)
-
-## Develop locally
-
-1. Get your credentials from the Descope Console:
-   - [Project ID](https://app.descope.com/settings/project)
-   - [Management Key](https://app.descope.com/settings/company/managementkeys)
-
-2. Create a `.dev.vars` file in your project root (this file is gitignored):
-```bash
-# .dev.vars
-DESCOPE_PROJECT_ID="your_project_id"
-DESCOPE_MANAGEMENT_KEY="your_management_key"
-# For local development
-SERVER_URL="http://localhost:8787"
-# For production (replace with your worker URL)
-# SERVER_URL="https://mcp-server-delegated-auth-descope.your-account-name.workers.dev"
+```
+https://brave-search-mcp-server.descope-cx.workers.dev/sse
 ```
 
-3. Clone and set up the repository:
-```bash
-# clone the repository
-git clone git@github.com:cloudflare/ai.git
+### Configuration
 
-# install dependencies
-cd ai
-npm install
-
-# run locally
-npx nx dev mcp-server-delegated-auth-descope
+```json
+{
+  "mcpServers": {
+    "brave": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://brave-search-mcp-server.descope-cx.workers.dev/sse"
+      ]
+    }
+  }
+}
 ```
 
-You should be able to open [`http://localhost:8787/`](http://localhost:8787/) in your browser
+## IDE Integration
 
-## Connect the MCP inspector to your server
+### Windsurf
 
-To explore your new MCP api, you can use the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector).
+1. Open Settings
+2. Navigate to **Cascade** → **Model Context Provider Servers**
+3. Select **Add Server**
 
-1. Start it with `npx @modelcontextprotocol/inspector`
-2. [Within the inspector](http://localhost:5173), switch the Transport Type to `SSE` and enter `http://localhost:8787/sse` as the URL of the MCP server to connect to.
-3. Add a bearer token and click "Connect"
-4. Click "List Tools"
-5. Run the "getToken" tool, which should return the Authorization header that you set in the inspector
+### Cursor
 
-<div align="center">
-  <img src="img/mcp-inspector-sse-config.png" alt="MCP Inspector with the above config" width="600"/>
-</div>
+1. Press **Cmd + Shift + J** to open Settings
+2. Select **MCP**
+3. Select **Add new global MCP server**
 
-## Connect Claude Desktop to your local MCP server
+### VSCode
 
-TODO: We need to support arbitrary headers to the `mcp-remote` proxy
+1. Read more [here](https://code.visualstudio.com/docs/copilot/chat/mcp-servers)
 
-## Deploy to Cloudflare
+Note: Requires VSCode 1.99 or above
 
-1. Set up your secrets in Cloudflare:
-```bash
-# Set Descope credentials as secrets
-wrangler secret put DESCOPE_PROJECT_ID
-wrangler secret put DESCOPE_MANAGEMENT_KEY
+### Zed
 
-# Set your server URL as a secret
-wrangler secret put SERVER_URL
+1. Press **CMD + ,** to open settings
+2. Add the following configuration:
+
+```json
+{
+  "context_servers": {
+    "brave": {
+      "command": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "mcp-remote",
+          "https://brave-search-mcp-server.descope-cx.workers.dev/sse"
+        ]
+      }
+    },
+    "settings": {}
+  }
+}
 ```
 
-2. Deploy the worker:
-```bash
-npm run deploy
-```
+## Other Clients
 
-## Call your newly deployed remote MCP server from a remote MCP client
+### Cloudflare Playground
 
-Just like you did above in "Develop locally", run the MCP inspector:
+1. Open [Cloudflare Playground](https://playground.ai.cloudflare.com/)
+2. Enter the MCP server URL under MCP Servers
+3. Click Connect
 
-```bash
-npx @modelcontextprotocol/inspector@latest
-```
+## Available Tools
 
-Then enter the `workers.dev` URL (ex: `worker-name.account-name.workers.dev/sse`) of your Worker in the inspector as the URL of the MCP server to connect to, and click "Connect".
+- `web-search`: Search the web with Brave
+- `local-search`: Search the local knowledge base with Brave
 
-You've now connected to your MCP server from a remote MCP client. You can pass in a bearer token like mentioned above.
+## Example Workflows
 
-## Connect Claude Desktop to your remote MCP server
+- **Research**: "Find recent articles about quantum computing breakthroughs in the last 6 months"
+- **Documentation**: "Search for best practices in documenting Python async functions"
+- **Troubleshooting**: "Find solutions for 'ModuleNotFoundError: No module named 'requests'' in Python"
+- **Market Analysis**: "Search for recent news about AI startups in the healthcare sector"
+- **Learning**: "Find comprehensive tutorials about React hooks and their use cases"
+- **Development**: "Search for examples of integrating Brave Search API with Node.js"
+- **Security**: "Find recent vulnerabilities reported in popular npm packages"
+- **Business Research**: "Search for trends in cloud computing adoption among small businesses"
 
-TODO: We need to support arbitrary headers to the `mcp-remote` proxy
+## Troubleshooting
 
-## Debugging
-
-Should anything go wrong it can be helpful to restart Claude, or to try connecting directly to your
-MCP server on the command line with the following command.
-
-```bash
-npx mcp-remote http://localhost:8787/sse
-```
-
-In some rare cases it may help to clear the files added to `~/.mcp-auth`
+If you encounter issues with `mcp-remote`, try clearing the authentication files:
 
 ```bash
 rm -rf ~/.mcp-auth
 ```
-
-## Features
-
-The MCP server implementation includes:
-
-- 🔐 OAuth 2.0/2.1 Authorization Server Metadata (RFC 8414)
-- 🔑 Dynamic Client Registration (RFC 7591)
-- 🎫 Token Revocation (RFC 7009)
-- 🔒 PKCE Support
-- 📝 Bearer Token Authentication

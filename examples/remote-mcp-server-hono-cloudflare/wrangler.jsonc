@@ -9,7 +9,9 @@
 	"compatibility_date": "2025-03-10",
 	"migrations": [
 		{
-			"new_sqlite_classes": ["MyMCP"],
+			"new_sqlite_classes": [
+				"MyMCP"
+			],
 			"tag": "v1"
 		}
 	],
@@ -24,5 +26,12 @@
 	"observability": {
 		"enabled": true
 	},
-	"assets": { "directory": "./static/", "binding": "ASSETS" }
+	"assets": {
+		"directory": "./static/",
+		"binding": "ASSETS"
+	},
+	"vars": {
+		"DESCOPE_PROJECT_ID": "P2vkCve0rvrJNA28ZxmmWweCY5wL",
+		"MCP_SERVER_URL": "https://remote-mcp-server-bearer-auth.descope-cx.workers.dev/"
+	}
 }

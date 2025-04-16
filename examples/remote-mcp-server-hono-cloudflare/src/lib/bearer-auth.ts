@@ -171,8 +171,7 @@ export function descopeMcpBearerAuth(audience?: string[], requiredScopes?: strin
 
             const authInfo = await verifyAccessToken(token, jwksUrl, audience, requiredScopes);
 
-            // @ts-expect-error
-            c.executionCtx.props = {
+            (c.executionCtx as ExecutionContext).props = {
                 auth: authInfo,
             };
             await next();

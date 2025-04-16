@@ -37,17 +37,14 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
 	}
 }
 
-// Create the main Hono app
 const app = new Hono<{ Bindings: Bindings }>();
 
-// Apply CORS middleware
 app.use(cors({
 	origin: "*",
 	allowHeaders: ["Content-Type", "Authorization", "mcp-protocol-version"],
 	maxAge: 86400,
 }));
 
-// Homepage route
 app.get("/", async (c) => {
 	const content = await homeContent(c.req.raw);
 	return c.html(layout(content, "MCP Remote Auth Demo - Home"));
@@ -76,7 +73,7 @@ app.get("/.well-known/oauth-authorization-server", async (c) => {
 app.use("/sse/*", descopeMcpBearerAuth());
 app.route("/sse", new Hono().mount("/", (req, env, ctx) => {
 	ctx.props = {
-		auth: ctx.get("auth"),
+		auth: ctx.props.auth,
 	};
 	return MyMCP.mount("/sse").fetch(req, env, ctx);
 }));

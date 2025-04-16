@@ -171,7 +171,10 @@ export function descopeMcpBearerAuth(audience?: string[], requiredScopes?: strin
 
             const authInfo = await verifyAccessToken(token, jwksUrl, audience, requiredScopes);
 
-            c.set("auth", authInfo);
+            // @ts-expect-error
+            c.executionCtx.props = {
+                auth: authInfo,
+            };
             await next();
         } catch (error) {
             console.log("Error in descopeMcpBearerAuth middleware", error);

@@ -1,0 +1,15 @@
+packages:
+  - "packages/*"
+  - "examples/**"
+
+catalog:
+  marked: ^15.0.7
+  typescript: 5.5.2
+  workers-mcp: 0.1.0-3
+  wrangler: 4.2.0
+  "@modelcontextprotocol/sdk": 1.7.0
+  agents: 0.0.43
+  hono: 4.7.4
+  jose: 6.0.10
+  zod: 3.24.2
+  "@biomejs/biome": 1.9.4

@@ -1,5 +1,5 @@
 {
-	"name": "@descope/weather-mcp-server",
+	"name": "weather-mcp-server",
 	"version": "1.0.0",
 	"description": "Remote Weather MCP Server",
 	"type": "module",
@@ -26,6 +26,7 @@
 		"zod": "^3.24.2"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
 		"@types/cors": "^2.8.17",
 		"@types/express": "^5.0.0",
 		"@types/node": "^22.10.10",

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather MCP Server</title>
     <script>
-        const SERVER_URL = 'https://mcp-server-weather-ez9f9a.fly.dev/sse';
+        const SERVER_URL = 'https://weather.descope.ai/mcp';
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -165,7 +165,8 @@
     <main class="container mx-auto px-4 pb-12 flex-grow pt-8">
         <div class="max-w-4xl mx-auto">
             <h1 class="text-4xl font-bold font-heading text-white mb-6">🌤️ Weather MCP Server</h1>
-            <p class="text-lg text-gray-300 mb-8">A
+            <p class="text-lg text-gray-300 mb-8">
+                A  <a href="https://github.com/modelcontextprotocol/typescript-sdk?tab=readme-ov-file#without-session-management-stateless">Stateless</a> <a href ="https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http">Streamable HTTP</a>
                 <a href="https://modelcontextprotocol.com/" class="hover:text-primary">Model Context Protocol
                     (MCP)</a> server for weather data from the <a
                     href="https://www.weather.gov/documentation/services-web-api" class="hover:text-primary">National

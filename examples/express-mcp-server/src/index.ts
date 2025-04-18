@@ -20,25 +20,21 @@ dotenv.config();
 
 const app = express();
 
-// Serve static files from the public directory
+// Middleware
+app.use(express.json());
 app.use(express.static(path.join(process.cwd(), 'public')));
-
-app.use(
-    cors({
-        origin: true,
-        methods: '*',
-        allowedHeaders: 'Authorization, Origin, Content-Type, Accept, *',
-    })
-);
-
+app.use(cors({
+    origin: true,
+    methods: '*',
+    allowedHeaders: 'Authorization, Origin, Content-Type, Accept, *',
+}));
 app.options("*", cors());
 
 app.use(descopeMcpAuthRouter());
-
 app.use(["/mcp"], descopeMcpBearerAuth());
 
-
-const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
+// Initialize transport
+const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined, // set to undefined for stateless servers
 });
 

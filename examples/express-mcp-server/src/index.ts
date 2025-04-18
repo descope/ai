@@ -1,13 +1,13 @@
 import dotenv from "dotenv";
-import express from "express";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { createServer } from "./create-server.js";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import { descopeMcpAuthRouter, descopeMcpBearerAuth, DescopeMcpProvider, DescopeMcpProviderOptions } from "@descope/mcp-express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import path from 'path';
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
+import { descopeMcpAuthRouter, descopeMcpBearerAuth } from "@descope/mcp-express";
+import { createServer } from "./create-server.js";
+
+// Type declarations
 declare global {
     namespace Express {
         interface Request {
@@ -16,11 +16,14 @@ declare global {
     }
 }
 
+// Environment setup
 dotenv.config();
+const PORT = process.env.PORT || 3000;
 
+// Initialize Express app
 const app = express();
 
-// Middleware
+// Middleware setup
 app.use(express.json());
 app.use(express.static(path.join(process.cwd(), 'public')));
 app.use(cors({
@@ -30,6 +33,7 @@ app.use(cors({
 }));
 app.options("*", cors());
 
+// Auth middleware
 app.use(descopeMcpAuthRouter());
 app.use(["/mcp"], descopeMcpBearerAuth());
 
@@ -38,13 +42,8 @@ const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined, // set to undefined for stateless servers
 });
 
-const setupServer = async () => {
-    const { server } = createServer();
-    await server.connect(transport);
-};
-
-
-app.post('/mcp', async (req, res) => {
+// MCP endpoint
+app.post('/mcp', async (req: Request, res: Response) => {
     console.log('Received MCP request:', req.body);
     try {
         await transport.handleRequest(req, res, req.body);
@@ -63,36 +62,42 @@ app.post('/mcp', async (req, res) => {
     }
 });
 
-app.get('/mcp', async (req, res) => {
-    console.log('Received GET MCP request');
-    res.writeHead(405).end(JSON.stringify({
+// Method not allowed handlers
+const methodNotAllowed = (req: Request, res: Response) => {
+    console.log(`Received ${req.method} MCP request`);
+    res.status(405).json({
         jsonrpc: "2.0",
         error: {
             code: -32000,
             message: "Method not allowed."
         },
         id: null
-    }));
-});
-
-app.delete('/mcp', async (req, res) => {
-    console.log('Received DELETE MCP request');
-    res.writeHead(405).end(JSON.stringify({
-        jsonrpc: "2.0",
-        error: {
-            code: -32000,
-            message: "Method not allowed."
-        },
-        id: null
-    }));
-});
-
-const PORT = process.env.PORT || 3000;
-setupServer().then(() => {
-    app.listen(PORT, () => {
-        console.log(`MCP Streamable HTTP Server listening on port ${PORT}`);
     });
-}).catch(error => {
-    console.error('Failed to set up the server:', error);
-    process.exit(1);
-});
+};
+
+app.get('/mcp', methodNotAllowed);
+app.delete('/mcp', methodNotAllowed);
+
+// Server setup
+const setupServer = async () => {
+    try {
+        const { server } = createServer();
+        await server.connect(transport);
+        console.log('Server connected successfully');
+    } catch (error) {
+        console.error('Failed to set up the server:', error);
+        throw error;
+    }
+};
+
+// Start server
+setupServer()
+    .then(() => {
+        app.listen(PORT, () => {
+            console.log(`MCP Streamable HTTP Server listening on port ${PORT}`);
+        });
+    })
+    .catch(error => {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    });

@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@descope/mcp-express':
-        specifier: ^1.0.3
-        version: 1.0.3
+        specifier: ^1.0.4
+        version: 1.0.4
       '@descope/node-sdk':
         specifier: ^1.6.13
         version: 1.7.2
@@ -64,8 +64,8 @@ packages:
   '@descope/core-js-sdk@2.38.0':
     resolution: {integrity: sha512-IDhvQJ4u0w958KsBp4HamTAqoNXl5i+gU261DrQ14/R2mABz7SRYJ+UxFBSpbUY9KGk2Qba0WrHpzXnUPwuQAw==}
 
-  '@descope/mcp-express@1.0.3':
-    resolution: {integrity: sha512-FplmPZwv7bwj9PoacGQ275rUI5ErOPUns1U8aS3Qa19wwckcdO9vrQa5ZHACyxb3ib11lOAWkkwGtqBU46u82A==}
+  '@descope/mcp-express@1.0.4':
+    resolution: {integrity: sha512-VtIZvVfa9fNnpjZg3FxT9vANQAoCSq1rd5+vZr2um0REeT7yitu3713eAT4sOu1UHzcpxw1S9Sa/MXM+QZhfAw==}
     engines: {node: '>=18'}
 
   '@descope/node-sdk@1.7.2':
@@ -891,7 +891,7 @@ snapshots:
     dependencies:
       jwt-decode: 4.0.0
 
-  '@descope/mcp-express@1.0.3':
+  '@descope/mcp-express@1.0.4':
     dependencies:
       '@descope/node-sdk': 1.7.2
       cors: 2.8.5

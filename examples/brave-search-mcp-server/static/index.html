@@ -216,7 +216,7 @@
             <div class="card rounded-lg p-6 mb-6">
                 <div class="mb-6">
                     <h3 class="text-xl font-semibold text-white mb-3">Web Search</h3>
-                    <code class="bg-gray-700 px-2 py-1 rounded">search</code>
+                    <code class="bg-gray-700 px-2 py-1 rounded">brave_web_search</code>
                     <p class="mt-2 text-gray-300">Perform web searches using the <a
                             href="https://brave.com/search/api/"
                             class="hover:text-primary">Brave Search API</a>. This tool provides
@@ -224,15 +224,32 @@
                     <div class="mt-3 bg-gray-700 p-4 rounded">
                         <p class="font-semibold mb-2 text-white">Parameters:</p>
                         <ul class="list-disc pl-6 space-y-1 text-gray-300">
+                            <li><code class="bg-gray-700 px-1 rounded">query</code>: Search query string (max 400 characters)</li>
+                            <li><code class="bg-gray-700 px-1 rounded">count</code>: Number of results to return (1-20, default: 10)</li>
+                            <li><code class="bg-gray-700 px-1 rounded">offset</code>: Number of results to skip (0-9, default: 0)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="text-xl font-semibold text-white mb-3">Local Search</h3>
+                    <code class="bg-gray-700 px-2 py-1 rounded">brave_local_search</code>
+                    <p class="mt-2 text-gray-300">Search for local businesses and points of interest using the <a
+                            href="https://brave.com/search/api/"
+                            class="hover:text-primary">Brave Search API</a>. This tool provides detailed information about local businesses including addresses, phone numbers, ratings, and more.</p>
+                    <div class="mt-3 bg-gray-700 p-4 rounded">
+                        <p class="font-semibold mb-2 text-white">Parameters:</p>
+                        <ul class="list-disc pl-6 space-y-1 text-gray-300">
                             <li><code class="bg-gray-700 px-1 rounded">query</code>: Search query string</li>
-                            <li><code class="bg-gray-700 px-1 rounded">count</code>: Number of results to return (optional)</li>
+                            <li><code class="bg-gray-700 px-1 rounded">count</code>: Number of results to return (1-20, default: 5)</li>
                         </ul>
                         <p class="mt-3 font-semibold mb-2 text-white">Returns:</p>
                         <ul class="list-disc pl-6 space-y-1 text-gray-300">
-                            <li>Search results with titles and descriptions</li>
-                            <li>URLs for each result</li>
-                            <li>Relevance scores</li>
-                            <li>Additional metadata when available</li>
+                            <li>Business name and address</li>
+                            <li>Phone number and price range</li>
+                            <li>Rating and number of reviews</li>
+                            <li>Operating hours</li>
+                            <li>Business description</li>
                         </ul>
                     </div>
                 </div>

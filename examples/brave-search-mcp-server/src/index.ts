@@ -2,7 +2,6 @@ import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { Context, Hono } from "hono";
-import { layout, homeContent } from "./utils";
 import { DescopeMcpProvider } from "./descope-hono/provider";
 import { descopeMcpAuthRouter } from "./descope-hono/router";
 import { descopeMcpBearerAuth } from "./descope-hono/middleware/bearerAuth";
@@ -262,12 +261,6 @@ app.use(cors({
 	allowHeaders: ["Content-Type", "Authorization", "mcp-protocol-version"],
 	maxAge: 86400,
 }));
-
-// Homepage route
-app.get("/", async (c) => {
-	const content = await homeContent(c.req.raw);
-	return c.html(layout(content, "Brave Search MCP Server - Home"));
-});
 
 // OAuth routes handler
 const handleOAuthRoute = async (c: Context) => {

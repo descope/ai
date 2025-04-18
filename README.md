@@ -6,7 +6,7 @@ This repository contains various packages and demo apps related consuming Descop
 
 ## Packages
 
-- [`mcp-express`](./packages/mcp-express/README.md): A TypeScript-based Express Library that enables leveraging Descope [Inbound Apps](https://docs.descope.com/inbound-apps) to add auth to Remote MCP Servers.
+- [`mcp-express`](https://github.com/descope/mcp-express): A TypeScript-based Express Library that enables leveraging Descope [Inbound Apps](https://docs.descope.com/inbound-apps) to add auth to Remote MCP Servers.
 
 ## Examples
 
@@ -18,11 +18,12 @@ This repository contains various packages and demo apps related consuming Descop
 
 ## Contributing
 
-This monorepo is built and managed using [NX](https://nx.dev/). In order to use the repo locally:
+In order to use the repo locally:
 
 1. Fork / Clone this repository
-2. Run `pnpm i`
-3. Use the available scripts in the root level `package.json`. e.g. `pnpm run <test/lint/build>`
+2. Navigate to the pertinent example directory
+3. Run `pnpm i`
+4. Use the available scripts in the root level `package.json`. e.g. `pnpm run <test/lint/build>`
 
 You can find README and examples in each package.
 

@@ -33,9 +33,9 @@ app.use(
 
 app.options("*", cors());
 
-// app.use(descopeMcpAuthRouter());
+app.use(descopeMcpAuthRouter());
 
-// app.use(["/mcp"], descopeMcpBearerAuth());
+app.use(["/mcp"], descopeMcpBearerAuth());
 
 
 const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({

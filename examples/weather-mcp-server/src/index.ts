@@ -13,6 +13,9 @@ type Bindings = {
 	DESCOPE_MANAGEMENT_KEY: string;
 	DESCOPE_BASE_URL?: string;
 	SERVER_URL: string;
+	ASSETS: {
+		fetch: (request: Request | string) => Promise<Response>;
+	};
 };
 
 type Props = {
@@ -245,8 +248,7 @@ app.use(cors({
 
 // Homepage route
 app.get("/", async (c) => {
-	const content = await homeContent(c.req.raw);
-	return c.html(layout(content, "Weather MCP Server - Home"));
+	return c.html(await c.env.ASSETS.fetch("/index.html").then(res => res.text()));
 });
 
 // OAuth routes handler

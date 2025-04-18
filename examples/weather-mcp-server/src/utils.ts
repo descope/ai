@@ -18,6 +18,7 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 				name="viewport"
 				content="width=device-width, initial-scale=1.0"
 			/>
+			<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 			<title>${title}</title>
 			<script src="https://cdn.tailwindcss.com"></script>
 			<script>
@@ -228,3 +229,5 @@ export const homeContent = async (req: Request): Promise<HtmlEscapedString> => {
 		<div class="max-w-4xl mx-auto markdown">${raw(content)}</div>
 	`;
 };
+
+

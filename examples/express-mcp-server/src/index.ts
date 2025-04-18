@@ -78,10 +78,11 @@ const methodNotAllowed = (req: Request, res: Response) => {
 app.get('/mcp', methodNotAllowed);
 app.delete('/mcp', methodNotAllowed);
 
+const { server } = createServer();
+
 // Server setup
 const setupServer = async () => {
     try {
-        const { server } = createServer();
         await server.connect(transport);
         console.log('Server connected successfully');
     } catch (error) {
@@ -101,3 +102,24 @@ setupServer()
         console.error('Failed to start server:', error);
         process.exit(1);
     });
+
+
+
+// Handle server shutdown
+process.on('SIGINT', async () => {
+    console.log('Shutting down server...');
+    try {
+        console.log(`Closing transport`);
+        await transport.close();
+    } catch (error) {
+        console.error(`Error closing transport:`, error);
+    }
+
+    try {
+        await server.close();
+        console.log('Server shutdown complete');
+    } catch (error) {
+        console.error('Error closing server:', error);
+    }
+    process.exit(0);
+});

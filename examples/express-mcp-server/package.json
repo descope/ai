@@ -1,7 +1,7 @@
 {
-  "name": "streamable-http-mcp-server",
+  "name": "express-mcp-server",
   "version": "1.0.0",
-  "description": "Streamable HTTP MCP Server",
+  "description": "Express MCP Server with Streamable HTTP Transport and Descope Auth",
   "type": "module",
   "main": "index.js",
   "scripts": {

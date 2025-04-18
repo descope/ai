@@ -6,9 +6,9 @@
 
 This example shows how to add auth to a Streamable HTTP MCP Server using Descope's MCP Auth SDK (Express) and deploy it to Vercel. It handles fetching weather-related data.
 
-## Preview
+## Deployment
 
-This MCP Server is deployed to Vercel here: [https://streamable-http-mcp-server-git-main-descope-descope-projects.vercel.app](https://streamable-http-mcp-server-git-main-descope-descope-projects.vercel.app)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/descope/ai/tree/main/examples/express-mcp-server&env=DESCOPE_PROJECT_ID,DESCOPE_MANAGEMENT_KEY,SERVER_URL&envDescription=Required%20environment%20variables%20for%20the%20MCP%20server&envLink=https://github.com/descope/ai/tree/main/examples/express-mcp-server#requirements)
 
 You can connect to the server using the [Cloudflare Playground](https://playground.ai.cloudflare.com/), [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) or any other MCP client. Be sure to include the `/mcp` path in the connection URL.
 

@@ -2,7 +2,6 @@ import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { Context, Hono } from "hono";
-import { layout, homeContent } from "./utils";
 import { DescopeMcpProvider } from "./descope-hono/provider";
 import { descopeMcpAuthRouter } from "./descope-hono/router";
 import { descopeMcpBearerAuth } from "./descope-hono/middleware/bearerAuth";
@@ -13,9 +12,6 @@ type Bindings = {
 	DESCOPE_MANAGEMENT_KEY: string;
 	DESCOPE_BASE_URL?: string;
 	SERVER_URL: string;
-	ASSETS: {
-		fetch: (request: Request | string) => Promise<Response>;
-	};
 };
 
 type Props = {
@@ -245,11 +241,6 @@ app.use(cors({
 	allowHeaders: ["Content-Type", "Authorization", "mcp-protocol-version"],
 	maxAge: 86400,
 }));
-
-// Homepage route
-app.get("/", async (c) => {
-	return c.html(await c.env.ASSETS.fetch("/index.html").then(res => res.text()));
-});
 
 // OAuth routes handler
 const handleOAuthRoute = async (c: Context) => {

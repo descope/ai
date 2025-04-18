@@ -9,6 +9,7 @@
     "build": "tsc && shx chmod +x build/*.js",
     "watch": "tsc --watch",
     "start": "node build/index.js",
+    "prepare": "pnpm run build",
     "dev": "concurrently \"npm run watch\" \"nodemon --watch build build/index.js\""
   },
   "files": [
@@ -29,7 +30,7 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
+    "@types/express": "^5.0.1",
     "@types/node": "^22.10.10",
     "concurrently": "^8.2.2",
     "nodemon": "^3.1.9",

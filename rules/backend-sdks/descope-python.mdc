@@ -1,0 +1,473 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Python Development & Descope SDK Implementation Guide
+
+## Python Best Practices
+
+### Code Style Guidelines
+
+1. **Imports Organization**:
+```python
+# Standard library
+import os
+import sys
+from typing import List, Optional
+
+# Third-party
+from descope import DescopeClient, DeliveryMethod
+from fastapi import FastAPI, Depends
+
+# Local
+from .auth.client import get_descope_client
+from .auth.middleware import require_auth
+```
+
+2. **Type Hints**:
+```python
+from typing import Optional, List, Dict
+
+def get_user_by_id(user_id: str) -> Optional[Dict[str, any]]:
+    try:
+        return descope_client.mgmt.user.load(user_id)
+    except Exception as e:
+        logger.error(f"Failed to load user: {e}")
+        return None
+```
+
+3. **Error Handling**:
+```python
+try:
+    result = perform_operation()
+except ValueError as e:
+    logger.error(f"Invalid value: {e}")
+    raise
+except ConnectionError as e:
+    logger.error(f"Connection failed: {e}")
+    retry_operation()
+```
+
+4. **Documentation**:
+```python
+def validate_session(session_token: str) -> dict:
+    """
+    Validates a Descope session token.
+
+    Args:
+        session_token: The session token to validate
+
+    Returns:
+        dict: The validated token claims
+
+    Raises:
+        AuthException: If the token is invalid or expired
+    """
+    return descope_client.validate_session(session_token)
+```
+
+## Descope SDK Implementation
+
+### Important Implementation Note
+
+⚠️ **Authentication Best Practice**: Implement user authentication flows in your frontend application using Descope's Web Components or React SDK. The backend SDK should primarily be used for:
+
+1. Session validation
+2. Role/permission checks
+3. Management operations
+4. Custom authentication flows when necessary
+
+### SDK Setup
+
+1. **Environment Configuration** (`config.py`):
+```python
+from decouple import config
+
+DESCOPE_PROJECT_ID = config('DESCOPE_PROJECT_ID')
+DESCOPE_MANAGEMENT_KEY = config('DESCOPE_MANAGEMENT_KEY', default=None)
+```
+
+2. **Client Initialization** (`auth/client.py`):
+```python
+from descope import DescopeClient
+from functools import lru_cache
+from .config import DESCOPE_PROJECT_ID, DESCOPE_MANAGEMENT_KEY
+
+@lru_cache()
+def get_descope_client() -> DescopeClient:
+    """
+    Returns a cached instance of the Descope client.
+    Uses management key if available, otherwise basic client.
+    """
+    return DescopeClient(
+        project_id=DESCOPE_PROJECT_ID,
+        management_key=DESCOPE_MANAGEMENT_KEY
+    )
+```
+
+### Authentication Implementation
+
+1. **Frontend Authentication** (`frontend/auth.js`):
+```javascript
+import { DescopeWC } from "@descope/web-component-sdk";
+
+const descope = DescopeWC.init(PROJECT_ID);
+
+// Add authentication flow
+<descope-wc
+    flow-id="sign-up-or-in"
+    onSuccess={(e) => {
+        const { sessionToken, refreshToken } = e.detail;
+        // Store tokens securely
+        sessionStorage.setItem('session_token', sessionToken);
+        localStorage.setItem('refresh_token', refreshToken);
+    }}
+></descope-wc>
+```
+
+2. **Backend Middleware** (`auth/middleware.py`):
+```python
+from functools import wraps
+from fastapi import HTTPException, Depends
+from .client import get_descope_client
+
+def require_auth(permissions: List[str] = None):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            token = get_token_from_header()
+            client = get_descope_client()
+            
+            try:
+                jwt_response = client.validate_session(token)
+                
+                if permissions:
+                    if not client.validate_permissions(
+                        jwt_response, permissions
+                    ):
+                        raise HTTPException(
+                            status_code=403,
+                            detail="Insufficient permissions"
+                        )
+                
+                return await func(*args, **kwargs)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=401,
+                    detail=str(e)
+                )
+        return wrapper
+    return decorator
+```
+
+### User Management
+
+1. **User Service** (`auth/services.py`):
+```python
+from typing import Optional, Dict, List
+from .client import get_descope_client
+
+class UserService:
+    def __init__(self):
+        self.client = get_descope_client()
+
+    async def create_user(self, user_data: Dict) -> Dict:
+        """Creates a new user."""
+        try:
+            return self.client.mgmt.user.create(
+                login_id=user_data["email"],
+                email=user_data["email"],
+                display_name=user_data.get("name"),
+                phone=user_data.get("phone"),
+                user_tenants=[
+                    AssociatedTenant(
+                        tenant_id=tenant["id"],
+                        roles=tenant["roles"]
+                    ) for tenant in user_data.get("tenants", [])
+                ],
+                custom_attributes=user_data.get("custom_attributes", {})
+            )
+        except Exception as e:
+            logger.error(f"Failed to create user: {e}")
+            raise
+
+    async def update_user(
+        self, login_id: str, updates: Dict
+    ) -> Dict:
+        """Updates an existing user."""
+        try:
+            return self.client.mgmt.user.update(
+                login_id=login_id,
+                email=updates.get("email"),
+                display_name=updates.get("name"),
+                phone=updates.get("phone"),
+                user_tenants=[
+                    AssociatedTenant(
+                        tenant_id=tenant["id"],
+                        roles=tenant["roles"]
+                    ) for tenant in updates.get("tenants", [])
+                ]
+            )
+        except Exception as e:
+            logger.error(f"Failed to update user: {e}")
+            raise
+```
+
+### SSO Configuration
+
+1. **SSO Service** (`auth/sso.py`):
+```python
+from typing import Dict
+from descope import (
+    SSOSAMLSettings,
+    SSOOIDCSettings,
+    AttributeMapping,
+    RoleMapping
+)
+
+class SSOService:
+    def __init__(self):
+        self.client = get_descope_client()
+
+    def configure_saml(
+        self, tenant_id: str, config: Dict
+    ) -> Dict:
+        """Configures SAML SSO for a tenant."""
+        try:
+            settings = SSOSAMLSettings(
+                idp_url=config["idp_url"],
+                idp_entity_id=config["entity_id"],
+                idp_cert=config["certificate"],
+                attribute_mapping=AttributeMapping(
+                    name="name",
+                    email="email",
+                    given_name="givenName",
+                    phone_number="phone",
+                    picture="picture",
+                    group="groups"
+                ),
+                role_mappings=[
+                    RoleMapping(
+                        groups=mapping["groups"],
+                        role=mapping["role"]
+                    ) for mapping in config.get("role_mappings", [])
+                ]
+            )
+            
+            return self.client.mgmt.sso.configure_saml_settings(
+                tenant_id=tenant_id,
+                settings=settings,
+                redirect_url=config.get("redirect_url"),
+                domains=config.get("domains", [])
+            )
+        except Exception as e:
+            logger.error(f"SAML configuration failed: {e}")
+            raise
+```
+
+### Access Key Management
+
+1. **Access Key Service** (`auth/access_keys.py`):
+```python
+import time
+from typing import Dict, Tuple
+
+class AccessKeyService:
+    def __init__(self):
+        self.client = get_descope_client()
+
+    def create_key(
+        self, key_data: Dict
+    ) -> Tuple[str, str]:
+        """
+        Creates a new access key.
+        Returns tuple of (key_id, cleartext).
+        """
+        try:
+            response = self.client.mgmt.access_key.create(
+                name=key_data["name"],
+                expire_time=key_data.get(
+                    "expire_time",
+                    int(time.time() + 86400)
+                ),
+                key_tenants=[
+                    AssociatedTenant(
+                        tenant_id=tenant["id"],
+                        roles=tenant["roles"]
+                    ) for tenant in key_data.get("tenants", [])
+                ],
+                description=key_data.get("description"),
+                permitted_ips=key_data.get("permitted_ips", [])
+            )
+            return response["key"], response["cleartext"]
+        except Exception as e:
+            logger.error(f"Failed to create access key: {e}")
+            raise
+```
+
+### Error Handling
+
+1. **Custom Error Handler** (`auth/errors.py`):
+```python
+from descope import (
+    AuthException,
+    RateLimitException,
+    ServerCommonException,
+    API_RATE_LIMIT_RETRY_AFTER_HEADER
+)
+
+class DescopeErrorHandler:
+    @staticmethod
+    def handle_error(e: Exception) -> Dict:
+        if isinstance(e, RateLimitException):
+            retry_after = e.rate_limit_parameters.get(
+                API_RATE_LIMIT_RETRY_AFTER_HEADER
+            )
+            logger.warning(
+                f"Rate limit exceeded. Retry after {retry_after}s"
+            )
+            return {
+                "error": "rate_limit_exceeded",
+                "retry_after": retry_after
+            }
+            
+        elif isinstance(e, AuthException):
+            logger.error(
+                f"Auth error: {e.error_message} "
+                f"(Code: {e.error_code})"
+            )
+            return {
+                "error": "authentication_failed",
+                "message": e.error_message,
+                "code": e.error_code
+            }
+            
+        elif isinstance(e, ServerCommonException):
+            logger.error(f"Server error: {e}")
+            return {
+                "error": "server_error",
+                "message": str(e)
+            }
+            
+        else:
+            logger.error(f"Unexpected error: {e}")
+            return {
+                "error": "unexpected_error",
+                "message": str(e)
+            }
+```
+
+### Testing Setup
+
+1. **Test Configuration** (`tests/conftest.py`):
+```python
+import pytest
+from descope import DescopeClient
+
+@pytest.fixture
+def descope_test_client():
+    """Creates a Descope client for testing."""
+    return DescopeClient(
+        project_id="test_project_id",
+        management_key="test_management_key"
+    )
+
+@pytest.fixture
+async def test_user(descope_test_client):
+    """Creates a test user for testing."""
+    user = descope_test_client.mgmt.user.create_test_user(
+        login_id="test@example.com",
+        email="test@example.com",
+        display_name="Test User"
+    )
+    yield user
+    # Cleanup
+    descope_test_client.mgmt.user.delete_all_test_users()
+```
+
+2. **Authentication Tests** (`tests/test_auth.py`):
+```python
+import pytest
+from descope import AuthException
+
+def test_session_validation(descope_test_client, test_user):
+    # Generate test credentials
+    resp = descope_test_client.mgmt.user.generate_otp_for_test_user(
+        DeliveryMethod.EMAIL,
+        test_user["loginId"]
+    )
+    
+    # Verify OTP
+    jwt_response = descope_test_client.otp.verify_code(
+        method=DeliveryMethod.EMAIL,
+        login_id=test_user["loginId"],
+        code=resp["code"]
+    )
+    
+    # Test session validation
+    assert descope_test_client.validate_session(
+        jwt_response["sessionJwt"]["jwt"]
+    )
+```
+
+## Best Practices & Security Guidelines
+
+1. **Security**:
+   - Never store cleartext access keys in code
+   - Use environment variables for sensitive data
+   - Implement proper session management
+   - Use HTTPS for all API endpoints
+   - Validate all user input
+
+2. **Performance**:
+   - Cache session validation results
+   - Use batch operations when possible
+   - Implement proper error handling and retries
+   - Monitor API rate limits
+
+3. **Testing**:
+   - Use test users for automated testing
+   - Mock external services in unit tests
+   - Clean up test data after tests
+   - Test error scenarios
+
+4. **Logging**:
+```python
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("descope")
+
+# Add security event handler
+security_handler = logging.FileHandler("security.log")
+security_handler.setLevel(logging.WARNING)
+logger.addHandler(security_handler)
+```
+
+## Environment Setup
+
+1. **Requirements** (`requirements.txt`):
+```
+descope>=0.9.0
+python-decouple>=3.8
+fastapi>=0.68.0
+pytest>=7.0.0
+requests>=2.28.0
+```
+
+2. **Environment Variables** (`.env`):
+```
+DESCOPE_PROJECT_ID=P2...
+DESCOPE_MANAGEMENT_KEY=K2...
+```
+
+Remember:
+1. Keep the backend focused on session validation and management
+2. Implement authentication flows in the frontend
+3. Follow security best practices
+4. Maintain proper error handling
+5. Keep dependencies updated

@@ -1,0 +1,564 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Descope Angular SDK - Integration Guide
+
+The Descope Angular SDK provides a simple way to add authentication to your Angular applications.
+
+## Installation
+
+```bash
+npm install @descope/angular-sdk
+# or
+yarn add @descope/angular-sdk
+# or
+pnpm add @descope/angular-sdk
+```
+
+## Quick Setup
+
+### 1. Import the Descope Module
+
+Add the Descope module to your Angular application:
+
+```typescript
+// app.module.ts
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { DescopeAuthModule } from '@descope/angular-sdk';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { LoginComponent } from './login/login.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    LoginComponent,
+    DashboardComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    DescopeAuthModule.forRoot({
+      projectId: 'YOUR_PROJECT_ID',
+      baseUrl: 'https://api.descope.com', // Optional
+      persistTokens: true, // Optional
+      autoRefresh: true, // Optional
+    })
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+
+### 2. Create an Authentication Component
+
+```typescript
+// login.component.ts
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { DescopeAuthService } from '@descope/angular-sdk';
+
+@Component({
+  selector: 'app-login',
+  template: `
+    <div class="login-container">
+      <h1>Sign In</h1>
+      <descope-flow
+        flowId="sign-up-or-in"
+        [theme]="{ root: { colorScheme: 'light' } }"
+        (success)="onSuccess($event)"
+        (error)="onError($event)"
+      ></descope-flow>
+    </div>
+  `,
+  styles: [`
+    .login-container {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+  `]
+})
+export class LoginComponent {
+  constructor(
+    private router: Router,
+    private authService: DescopeAuthService
+  ) {}
+
+  onSuccess(event: any): void {
+    console.log('Authentication successful:', event);
+    this.router.navigate(['/dashboard']);
+  }
+
+  onError(error: any): void {
+    console.error('Authentication error:', error);
+  }
+}
+```
+
+### 3. Set up Protected Routes
+
+```typescript
+// app-routing.module.ts
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { AuthGuard } from '@descope/angular-sdk';
+
+import { LoginComponent } from './login/login.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+
+const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  {
+    path: 'dashboard',
+    component: DashboardComponent,
+    canActivate: [AuthGuard]
+  },
+  { path: '', redirectTo: '/login', pathMatch: 'full' }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+```
+
+## Authentication Services and Guards
+
+The Angular SDK provides services and guards for managing authentication:
+
+### DescopeAuthService
+
+The main service for interacting with the Descope SDK:
+
+```typescript
+// dashboard.component.ts
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { DescopeAuthService } from '@descope/angular-sdk';
+
+@Component({
+  selector: 'app-dashboard',
+  template: `
+    <div *ngIf="isLoading; else content">Loading...</div>
+    <ng-template #content>
+      <h1>Welcome, {{ user?.name || 'User' }}!</h1>
+      <div>Email: {{ user?.email }}</div>
+      <button (click)="logout()">Logout</button>
+    </ng-template>
+  `
+})
+export class DashboardComponent implements OnInit {
+  isLoading = true;
+  user: any = null;
+
+  constructor(
+    private authService: DescopeAuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.authService.session$.subscribe(session => {
+      this.user = session?.user;
+      this.isLoading = false;
+    });
+  }
+
+  logout(): void {
+    this.authService.logout().then(() => {
+      this.router.navigate(['/login']);
+    }).catch(error => {
+      console.error('Logout failed:', error);
+    });
+  }
+}
+```
+
+### AuthGuard
+
+The `AuthGuard` protects routes that require authentication:
+
+```typescript
+// The AuthGuard is already imported from the SDK,
+// but you can create a custom one if needed:
+
+import { Injectable } from '@angular/core';
+import { CanActivate, Router } from '@angular/router';
+import { Observable } from 'rxjs';
+import { map, take } from 'rxjs/operators';
+import { DescopeAuthService } from '@descope/angular-sdk';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CustomAuthGuard implements CanActivate {
+  constructor(
+    private authService: DescopeAuthService,
+    private router: Router
+  ) {}
+
+  canActivate(): Observable<boolean> {
+    return this.authService.isAuthenticated$.pipe(
+      take(1),
+      map(isAuthenticated => {
+        if (isAuthenticated) {
+          return true;
+        } else {
+          this.router.navigate(['/login']);
+          return false;
+        }
+      })
+    );
+  }
+}
+```
+
+## Manual Authentication Flow
+
+If you want to build your own UI rather than using the prebuilt component:
+
+```typescript
+// custom-auth.component.ts
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { DescopeAuthService } from '@descope/angular-sdk';
+
+@Component({
+  selector: 'app-custom-auth',
+  template: `
+    <div>
+      <h1>Sign In</h1>
+      <form (ngSubmit)="handleEmailSignIn()">
+        <input
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          placeholder="Email"
+          required
+        />
+        <button type="submit">Send OTP</button>
+        <div *ngIf="error" class="error">{{ error }}</div>
+      </form>
+    </div>
+  `
+})
+export class CustomAuthComponent {
+  email = '';
+  error = '';
+
+  constructor(
+    private authService: DescopeAuthService,
+    private router: Router
+  ) {}
+
+  async handleEmailSignIn(): Promise<void> {
+    this.error = '';
+
+    try {
+      await this.authService.sdk.otp.email.signIn(this.email);
+      this.router.navigate(['/verify'], {
+        queryParams: { email: this.email, method: 'email' }
+      });
+    } catch (err: any) {
+      this.error = err.message || 'Failed to send OTP';
+    }
+  }
+}
+```
+
+## FedCM (Federated Credential Management)
+
+FedCM provides a browser-native UI for authentication with Google. Here's how to implement it:
+
+```typescript
+// fedcm-auth.component.ts
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { DescopeAuthService } from '@descope/angular-sdk';
+
+@Component({
+  selector: 'app-fedcm-auth',
+  template: `
+    <div>
+      <button
+        *ngIf="isFedCMSupported"
+        (click)="signInWithFedCM()"
+      >
+        Sign in with Google (FedCM)
+      </button>
+      <p *ngIf="!isFedCMSupported">FedCM is not supported in your browser.</p>
+      <div *ngIf="error" class="error">{{ error }}</div>
+    </div>
+  `
+})
+export class FedCMAuthComponent implements OnInit {
+  isFedCMSupported = false;
+  error = '';
+
+  constructor(
+    private authService: DescopeAuthService,
+    private router: Router
+  ) {}
+
+  async ngOnInit(): Promise<void> {
+    await this.checkFedCMSupport();
+  }
+
+  async checkFedCMSupport(): Promise<void> {
+    try {
+      const supported = await this.authService.sdk.fedcm.isSupported();
+      this.isFedCMSupported = supported;
+    } catch (err) {
+      console.error('Failed to check FedCM support:', err);
+    }
+  }
+
+  async signInWithFedCM(): Promise<void> {
+    try {
+      this.error = '';
+
+      const response = await this.authService.sdk.fedcm.authenticate({
+        provider: 'google',
+        clientId: 'YOUR_GOOGLE_CLIENT_ID'
+      });
+
+      if (response) {
+        console.log('FedCM authentication successful');
+        this.router.navigate(['/dashboard']);
+      }
+    } catch (err: any) {
+      this.error = err.message || 'Authentication failed';
+      console.error('FedCM authentication failed:', err);
+    }
+  }
+}
+```
+
+## Google One Tap Integration
+
+Google One Tap provides a frictionless sign-in experience:
+
+```typescript
+// one-tap-auth.component.ts
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
+import { DescopeAuthService } from '@descope/angular-sdk';
+
+@Component({
+  selector: 'app-one-tap-auth',
+  template: `
+    <div>
+      <div id="one-tap-container"></div>
+      <button
+        [disabled]="!isInitialized"
+        (click)="signInWithOneTap()"
+      >
+        Sign in with Google
+      </button>
+      <div *ngIf="error" class="error">{{ error }}</div>
+    </div>
+  `
+})
+export class OneTapAuthComponent implements OnInit, OnDestroy {
+  isInitialized = false;
+  error = '';
+
+  constructor(
+    private authService: DescopeAuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.initOneTap();
+  }
+
+  ngOnDestroy(): void {
+    this.authService.sdk.oneTap.cancel();
+  }
+
+  async initOneTap(): Promise<void> {
+    try {
+      await this.authService.sdk.oneTap.initialize({
+        client_id: 'YOUR_GOOGLE_CLIENT_ID',
+        auto_select: true,
+        cancel_on_tap_outside: false,
+        prompt_parent_id: 'one-tap-container' // ID of the DOM element
+      });
+
+      this.isInitialized = true;
+    } catch (err) {
+      console.error('Failed to initialize One Tap:', err);
+    }
+  }
+
+  async signInWithOneTap(): Promise<void> {
+    if (!this.isInitialized) return;
+
+    try {
+      this.error = '';
+
+      // Display One Tap prompt and get credential
+      const credential = await this.authService.sdk.oneTap.prompt();
+
+      // Verify credential with Descope
+      const response = await this.authService.sdk.oneTap.verify(credential);
+
+      if (response) {
+        console.log('One Tap authentication successful');
+        this.router.navigate(['/dashboard']);
+      }
+    } catch (err: any) {
+      this.error = err.message || 'Authentication failed';
+      console.error('One Tap authentication failed:', err);
+    }
+  }
+}
+```
+
+## OIDC (OpenID Connect) Implementation
+
+For redirect-based authentication with OIDC providers:
+
+```typescript
+// oidc-auth.component.ts
+import { Component } from '@angular/core';
+import { DescopeAuthService } from '@descope/angular-sdk';
+
+@Component({
+  selector: 'app-oidc-auth',
+  template: `
+    <div>
+      <button (click)="signInWithOIDC()">
+        Sign in with OIDC Provider
+      </button>
+      <div *ngIf="error" class="error">{{ error }}</div>
+    </div>
+  `
+})
+export class OIDCAuthComponent {
+  error = '';
+
+  constructor(private authService: DescopeAuthService) {}
+
+  async signInWithOIDC(): Promise<void> {
+    try {
+      this.error = '';
+
+      await this.authService.sdk.oidc.loginWithRedirect({
+        application_id: 'YOUR_APPLICATION_ID', // Optional
+        redirect_uri: window.location.origin + '/callback',
+        scope: 'openid profile email'
+      });
+
+      // This will redirect the user, so the code below won't execute immediately
+      console.log('Redirecting to OIDC provider...');
+    } catch (err: any) {
+      this.error = err.message || 'Failed to initiate login';
+      console.error('Failed to initiate OIDC login:', err);
+    }
+  }
+}
+```
+
+### OIDC Callback Component
+
+```typescript
+// oidc-callback.component.ts
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { DescopeAuthService } from '@descope/angular-sdk';
+
+@Component({
+  selector: 'app-oidc-callback',
+  template: `
+    <div>
+      <div *ngIf="isProcessing">Completing authentication...</div>
+      <div *ngIf="!isProcessing">Error processing authentication. Redirecting...</div>
+    </div>
+  `
+})
+export class OIDCCallbackComponent implements OnInit {
+  isProcessing = true;
+
+  constructor(
+    private authService: DescopeAuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.completeAuthentication();
+  }
+
+  async completeAuthentication(): Promise<void> {
+    try {
+      // Complete the OIDC authentication flow
+      await this.authService.sdk.oidc.finishLoginIfNeeded();
+      this.router.navigate(['/dashboard']);
+    } catch (err) {
+      console.error('Failed to complete OIDC login:', err);
+      this.router.navigate(['/login']);
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+}
+```
+
+## Configuration Options
+
+The Descope module accepts the following configuration options:
+
+```typescript
+DescopeAuthModule.forRoot({
+  projectId: 'YOUR_PROJECT_ID', // Required
+  baseUrl: 'https://api.descope.com', // Optional - Descope API base URL
+  persistTokens: true, // Optional - Store tokens in localStorage
+  autoRefresh: true, // Optional - Auto-refresh session before expiry
+  sessionTokenViaCookie: true, // Optional - Store session token in cookies
+  storagePrefix: 'my-app', // Optional - Prefix for storage keys
+  logger: { level: 'debug' }, // Optional - Logging configuration
+  tenant: 'YOUR_TENANT_ID', // Optional - Tenant ID for multi-tenant apps
+  flowIds: { // Optional - Default flow IDs for different operations
+    signUp: 'sign-up',
+    signIn: 'sign-in',
+    signUpOrIn: 'sign-up-or-in',
+  }
+})
+```
+
+## Authentication Pattern Comparison
+
+| Feature | Embedded Component | FedCM | One Tap | OIDC Redirect |
+|---------|-------------------|-------|---------|---------------|
+| UX | ✅ Seamless, customizable | ✅ Browser-native UI | ✅ Non-intrusive prompt | ⚠️ Full page redirects |
+| Setup Complexity | ✅ Low | ⚠️ Medium | ⚠️ Medium | ✅ Low |
+| Browser Support | ✅ All modern browsers | ⚠️ Limited (Chrome) | ✅ Most browsers | ✅ All browsers |
+| Mobile Support | ✅ Responsive design | ❌ Limited | ⚠️ Mobile web only | ✅ Supported |
+| Customization | ✅ Extensive | ❌ Browser controlled | ❌ Google controlled | ⚠️ Limited |
+
+## Security Best Practices
+
+1. **Always validate authentication status** on protected routes
+2. **Implement proper error handling** for authentication failures
+3. **Use HTTPS** for all authentication-related requests
+4. **Use refresh tokens** for extended sessions
+5. **Validate JWT tokens** on the server for sensitive operations
+6. **Configure CORS properly** when the backend is on a different domain
+
+## Performance Optimization
+
+- Use Angular's lazy loading for authentication modules
+- Leverage Angular's dependency injection for better code organization
+- Optimize bundle size with tree-shaking
+- Use Angular's OnPush change detection strategy for improved performance
+
+## Implementation Examples
+
+For a complete implementation example, refer to the [Angular Demo App](mdc:https:/github.com/descope/angular-sdk-sample)

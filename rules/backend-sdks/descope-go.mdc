@@ -1,0 +1,359 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Descope Go SDK Guide
+
+## Project Structure
+
+### Example Configuration Setup
+```go
+// config/auth.go
+package config
+
+import "github.com/descope/go-sdk/descope/client"
+
+func NewDescopeClient() (*client.Client, error) {
+    return client.NewWithConfig(&client.Config{
+        ProjectID: os.Getenv("DESCOPE_PROJECT_ID"),
+        // Optional: ManagementKey for admin operations
+        ManagementKey: os.Getenv("DESCOPE_MANAGEMENT_KEY"),
+    })
+}
+```
+
+### Example Auth Middleware
+```go
+// internal/auth/middleware.go
+package auth
+
+import (
+    "github.com/gin-gonic/gin"
+    "github.com/descope/go-sdk/descope/gin"
+)
+
+func SetupAuthMiddleware(router *gin.Engine, descopeClient *client.Client) {
+    auth := gin.NewMiddleware(descopeClient)
+
+    // Public routes
+    public := router.Group("/api/v1")
+    {
+        public.POST("/auth/signup", handlers.SignUp)
+        public.POST("/auth/signin", handlers.SignIn)
+    }
+
+    // Protected routes
+    protected := router.Group("/api/v1")
+    protected.Use(auth.SessionMiddleware())
+    {
+        protected.GET("/users/me", handlers.GetCurrentUser)
+    }
+
+    // Admin routes
+    admin := router.Group("/api/v1/admin")
+    admin.Use(auth.PermissionsMiddleware([]string{"admin:access"}))
+    {
+        admin.GET("/users", handlers.ListUsers)
+        admin.POST("/tenants", handlers.CreateTenant)
+    }
+}
+```
+
+### Example Auth Handler
+```go
+// internal/auth/handlers.go
+package auth
+
+import (
+    "github.com/gin-gonic/gin"
+    "github.com/descope/go-sdk/descope/client"
+)
+
+type AuthHandler struct {
+    descopeClient *client.Client
+}
+
+func (h *AuthHandler) SignUp(c *gin.Context) {
+    var req SignUpRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+
+    maskedAddress, err := h.descopeClient.Auth.OTP().SignUp(
+        c.Request.Context(),
+        descope.MethodEmail,
+        req.Email,
+        &descope.User{
+            Name: req.Name,
+            Email: req.Email,
+            Phone: req.Phone,
+        },
+        nil,
+    )
+    if err != nil {
+        c.JSON(500, gin.H{"error": "Failed to sign up"})
+        return
+    }
+
+    c.JSON(200, gin.H{
+        "message": "Verification code sent",
+        "maskedAddress": maskedAddress,
+    })
+}
+```
+
+### Example User Service
+```go
+// internal/users/service.go
+package users
+
+import (
+    "github.com/descope/go-sdk/descope/client"
+)
+
+type UserService struct {
+    descopeClient *client.Client
+}
+
+func (s *UserService) CreateUser(ctx context.Context, user *User) error {
+    _, err := s.descopeClient.Management.User().Create(ctx, &descope.User{
+        Name: user.Name,
+        Email: user.Email,
+        Phone: user.Phone,
+        CustomAttributes: map[string]interface{}{
+            "role": user.Role,
+            "department": user.Department,
+        },
+    })
+    return err
+}
+
+func (s *UserService) UpdateUserRole(ctx context.Context, userID, role string) error {
+    return s.descopeClient.Management.User().Update(ctx, userID, &descope.UserUpdateOptions{
+        CustomAttributes: map[string]interface{}{
+            "role": role,
+        },
+    })
+}
+```
+
+## Quick Start
+
+```go
+// Import the client package
+import "github.com/descope/go-sdk/descope/client"
+
+// Initialize client with environment variable
+descopeClient, err := client.New()
+
+// Or with direct configuration
+descopeClient, err := client.NewWithConfig(&client.Config{
+    ProjectID: "P2abc..."  // Your Project ID
+})
+```
+
+## Authentication Methods
+
+### OTP Authentication
+```go
+// Sign up or sign in with OTP
+maskedAddress, err := descopeClient.Auth.OTP().SignUpOrIn(
+    context.Background(),
+    descope.MethodEmail,
+    "user@example.com",
+    nil,
+)
+
+// Verify OTP code
+authInfo, err := descopeClient.Auth.OTP().VerifyCode(
+    context.Background(),
+    descope.MethodEmail,
+    "user@example.com",
+    "123456",
+    nil,
+)
+```
+
+### Magic Link
+```go
+// Send Magic Link
+maskedAddress, err := descopeClient.Auth.MagicLink().SignUpOrIn(
+    context.Background(),
+    descope.MethodEmail,
+    "user@example.com",
+    "https://app.example.com/verify",
+    nil,
+)
+
+// Verify Magic Link
+authInfo, err := descopeClient.Auth.MagicLink().Verify(
+    context.Background(),
+    token,
+    nil,
+)
+```
+
+### OAuth/SSO
+```go
+// Start OAuth flow
+authURL, err := descopeClient.Auth.OAuth().Start(
+    context.Background(),
+    "google",
+    "https://app.example.com/callback",
+    nil,
+)
+
+// Exchange OAuth code
+authInfo, err := descopeClient.Auth.OAuth().Exchange(
+    context.Background(),
+    "google",
+    code,
+    nil,
+)
+```
+
+## Session Management
+
+### Validation
+```go
+// Basic session validation
+ok, err := descopeClient.Auth.ValidateSession(
+    context.Background(),
+    sessionToken,
+)
+
+// Validate with permissions
+ok, err = descopeClient.Auth.ValidateSessionWithPermissions(
+    context.Background(),
+    sessionToken,
+    []string{"read:users"},
+)
+
+// Refresh session
+newAuthInfo, err := descopeClient.Auth.RefreshSession(
+    context.Background(),
+    refreshToken,
+    nil,
+)
+```
+
+## Error Handling
+
+```go
+// Check specific error codes
+if descope.IsError(err, "E061102") {
+    // Handle specific error
+}
+
+// Check common errors
+if errors.Is(err, descope.ErrInvalidOneTimeCode) {
+    // Handle invalid code
+}
+
+// Get error details
+if descopeErr := descope.AsError(err); descopeErr != nil {
+    log.Printf("Code: %s, Description: %s",
+        descopeErr.Code,
+        descopeErr.Description)
+}
+```
+
+## Management Operations
+
+### User Management
+```go
+// Create user
+user := &descope.User{
+    Name: "John Doe",
+    Email: "john@example.com",
+}
+userResponse, err := descopeClient.Management.User().Create(
+    context.Background(),
+    user,
+)
+
+// Update user
+updates := &descope.UserUpdateOptions{
+    Name: "John Smith",
+}
+err = descopeClient.Management.User().Update(
+    context.Background(),
+    userID,
+    updates,
+)
+```
+
+### Tenant Management
+```go
+// Create tenant
+tenant, err := descopeClient.Management.Tenant().Create(
+    context.Background(),
+    "My Tenant",
+    "tenant-id",
+)
+
+// Update tenant
+err = descopeClient.Management.Tenant().Update(
+    context.Background(),
+    "tenant-id",
+    "Updated Name",
+)
+```
+
+## Web Framework Integration
+
+### Gin Middleware
+```go
+import "github.com/descope/go-sdk/descope/gin"
+
+// Create middleware
+auth := gin.NewMiddleware(descopeClient)
+
+// Protect routes
+router.Use(auth.SessionMiddleware())
+
+// With permissions
+router.Use(auth.PermissionsMiddleware([]string{"read:users"}))
+```
+
+## Best Practices
+
+### Security
+1. Store sensitive keys in environment variables
+2. Validate sessions on all protected routes
+3. Use HTTPS in production
+4. Implement rate limiting
+5. Log security events appropriately
+
+### Performance
+1. Reuse client instances
+2. Implement connection pooling
+3. Handle rate limits with backoff
+4. Cache session validation results
+
+### Testing
+1. Use test environments
+2. Mock authentication flows
+3. Test error scenarios
+4. Validate session handling
+
+## Rate Limits
+
+Default limits per minute:
+- Authentication: 100
+- Management API: 1000
+- Session validation: 1000
+
+## Logging
+
+```go
+import "github.com/descope/go-sdk/descope/logger"
+
+// Set custom logger
+logger.SetLogger(customLogger)
+
+// Set log level
+logger.SetLevel(logger.DEBUG)
+```

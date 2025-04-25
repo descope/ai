@@ -1,0 +1,488 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Descope Next.js SDK - Integration Guide
+
+This guide provides instructions for implementing Descope authentication in any Next.js application, covering both App Router and Pages Router approaches.
+
+# Descope Integration Rule for Next.js Applications
+
+When integrating Descope authentication into Next.js applications:
+
+1. **ALWAYS** use `@descope/nextjs-sdk`
+2. DO NOT install the `@descope/react-sdk` in Next.js applications
+2. The command to install should be: `npm install @descope/nextjs-sdk`
+3. For Next.js applications, the Next.js-specific SDK provides proper integration with Next.js features including server components, app router, and middleware
+
+## Authentication Implementation Options
+
+Descope offers two main methods for implementing authentication in your Next.js application:
+
+### Embedded Components (Recommended)
+
+Embedded components offer a superior user experience by:
+- **Maintaining context** - Users stay within your application during the authentication flow
+- **No redirects** - Provides a seamless experience without leaving your app
+- **Consistent UX** - Maintains your app's design language and flow
+- **Reduced friction** - Fewer page loads means higher conversion rates
+- **Full customization** - Flexible styling options to match your brand
+
+```tsx
+// Example: Using embedded Descope component
+import { Descope } from '@descope/nextjs-sdk';
+
+export default function LoginPage() {
+  return (
+    <Descope
+      flowId="sign-up-or-in"
+      onSuccess={(e) => console.log('Logged in!')}
+      redirectAfterSuccess="/dashboard"
+      theme={{
+        root: {
+          colorScheme: 'light',
+          fontFamily: 'your-custom-font'
+        }
+      }}
+    />
+  );
+}
+```
+
+### OIDC Redirect Flow (Alternative)
+
+OIDC redirect-based authentication can be useful when:
+- You need to delegate the entire authentication experience to Descope's hosted pages
+- You have strict security requirements requiring authentication on a separate domain
+- You prefer minimal authentication code in your application
+
+```tsx
+// Example: OIDC redirect login
+import { useDescope } from '@descope/nextjs-sdk/client';
+
+export default function LoginPage() {
+  const sdk = useDescope();
+
+  return (
+    <button
+      onClick={() => sdk.oidc.loginWithRedirect()}
+    >
+      Login with Descope
+    </button>
+  );
+}
+```
+
+## Authentication Middleware
+
+Next.js SDK includes powerful middleware to protect routes without duplicating authentication logic.
+
+### Setting Up Middleware
+
+Create a `middleware.ts` file in the root of your Next.js project:
+
+```typescript
+// middleware.ts
+import { authMiddleware } from '@descope/nextjs-sdk/server';
+
+export default authMiddleware({
+  // Required: Your Descope Project ID
+  projectId: process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID,
+
+  // Optional: Where to redirect unauthenticated users (default: '/sign-in')
+  redirectUrl: '/login',
+
+  // Option 1: Define public routes (everything else is private)
+  publicRoutes: ['/login', '/signup', '/about', '/pricing'],
+
+  // Option 2: Define private routes (everything else is public)
+  // privateRoutes: ['/dashboard', '/account', '/admin/*'],
+
+  // Optional: Logging level for debugging
+  logLevel: 'info' // 'debug' | 'info' | 'warn' | 'error'
+});
+
+// Important: Configure which routes the middleware runs on
+export const config = {
+  matcher: ['/((?!api/public|_next/static|_next/image|favicon.ico).*)'],
+};
+```
+
+### Route Protection Rules
+
+- **Default behavior**: All routes are private unless specified
+- `publicRoutes`: List of paths that don't require authentication
+- `privateRoutes`: List of paths that require authentication (all others public)
+- Wildcard support: Use patterns like `/admin/*` to protect entire sections
+- If both `publicRoutes` and `privateRoutes` are specified, `privateRoutes` is ignored
+
+## Setting Up Your Next.js App
+
+### App Router Setup
+
+1. Wrap your app with `AuthProvider`:
+
+```tsx
+// app/layout.tsx
+import { AuthProvider } from '@descope/nextjs-sdk';
+
+export default function RootLayout({
+  children
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <AuthProvider projectId="YOUR_DESCOPE_PROJECT_ID">
+      <html lang="en">
+        <body>{children}</body>
+      </html>
+    </AuthProvider>
+  );
+}
+```
+
+2. Create a login page with the Descope component:
+
+```tsx
+// app/login/page.tsx
+'use client';
+import dynamic from 'next/dynamic';
+
+// Important: Use dynamic import with SSR disabled
+const Descope = dynamic(
+  () => import('@descope/nextjs-sdk').then(mod => mod.Descope),
+  { ssr: false }
+);
+
+export default function LoginPage() {
+  return (
+    <Descope
+      flowId="sign-up-or-in"
+      onSuccess={(e) => console.log('Success:', e.detail.user)}
+      onError={(e) => console.error('Error:', e.detail)}
+      redirectAfterSuccess="/dashboard"
+    />
+  );
+}
+```
+
+3. Access authentication state in components:
+
+```tsx
+// app/dashboard/page.tsx
+'use client';
+import { useSession, useUser } from '@descope/nextjs-sdk/client';
+
+export default function Dashboard() {
+  const { isAuthenticated, isSessionLoading } = useSession();
+  const { user, isUserLoading } = useUser();
+
+  if (isSessionLoading || isUserLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <div>Please log in</div>;
+  }
+
+  return (
+    <div>
+      <h1>Welcome, {user.name}</h1>
+      <p>Email: {user.email}</p>
+    </div>
+  );
+}
+```
+
+### Pages Router Setup
+
+1. Wrap your app with `AuthProvider`:
+
+```tsx
+// pages/_app.tsx
+import { AuthProvider } from '@descope/nextjs-sdk';
+import type { AppProps } from 'next/app';
+
+export default function MyApp({ Component, pageProps }: AppProps) {
+  return (
+    <AuthProvider projectId="YOUR_DESCOPE_PROJECT_ID">
+      <Component {...pageProps} />
+    </AuthProvider>
+  );
+}
+```
+
+2. Create a login page:
+
+```tsx
+// pages/login.tsx
+import { Descope } from '@descope/nextjs-sdk';
+import { useRouter } from 'next/router';
+
+export default function LoginPage() {
+  const router = useRouter();
+
+  return (
+    <Descope
+      flowId="sign-up-or-in"
+      onSuccess={() => router.push('/dashboard')}
+      onError={(e) => console.error('Login failed:', e.detail)}
+    />
+  );
+}
+```
+
+## Session Management
+
+### Client-Side Session Access
+
+Use React hooks to access session data in client components:
+
+```tsx
+'use client'; // For App Router components
+import { useDescope, useSession, useUser } from '@descope/nextjs-sdk/client';
+
+export default function ProfileComponent() {
+  // Authentication state and session token
+  const { isAuthenticated, isSessionLoading, sessionToken } = useSession();
+
+  // User profile information
+  const { user, isUserLoading } = useUser();
+
+  // SDK instance for operations like logout
+  const sdk = useDescope();
+
+  const handleLogout = () => {
+    sdk.logout();
+    // Redirect or update UI after logout
+  };
+
+  // Render based on authentication state
+  if (isSessionLoading || isUserLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <div>Not authenticated</div>;
+  }
+
+  return (
+    <div>
+      <h1>Welcome, {user.name}</h1>
+      <button onClick={handleLogout}>Logout</button>
+    </div>
+  );
+}
+```
+
+### Server-Side Session Access
+
+#### App Router: Use `session()`
+
+For server components and route handlers:
+
+```tsx
+// Server Component
+import { session } from '@descope/nextjs-sdk/server';
+
+export default async function ProfilePage() {
+  const sessionInfo = await session();
+
+  if (!sessionInfo) {
+    return <div>Not authenticated</div>;
+  }
+
+  // Access JWT token and parsed claims
+  const { jwt, token } = sessionInfo;
+
+  return (
+    <div>
+      <h1>Hello, {token.name}</h1>
+      <p>User ID: {token.sub}</p>
+    </div>
+  );
+}
+```
+
+```tsx
+// Route Handler (app/api/profile/route.ts)
+import { session } from '@descope/nextjs-sdk/server';
+
+export async function GET() {
+  const sessionInfo = await session();
+
+  if (!sessionInfo) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  return Response.json({
+    userId: sessionInfo.token.sub,
+    email: sessionInfo.token.email,
+    permissions: sessionInfo.token.permissions
+  });
+}
+```
+
+#### Pages Router: Use `getSession(req)`
+
+For API routes in Pages Router:
+
+```tsx
+// pages/api/profile.ts
+import { getSession } from '@descope/nextjs-sdk/server';
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  const sessionInfo = getSession(req);
+
+  if (!sessionInfo) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  return res.status(200).json({
+    userId: sessionInfo.token.sub,
+    email: sessionInfo.token.email
+  });
+}
+```
+
+### Management API Access
+
+Use `createSdk()` for backend operations like user management:
+
+```tsx
+// Route handler or API route
+import { createSdk } from '@descope/nextjs-sdk/server';
+
+// Create SDK instance with management key
+const sdk = createSdk({
+  projectId: process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID,
+  managementKey: process.env.DESCOPE_MANAGEMENT_KEY
+});
+
+export async function POST(req) {
+  const { email, name } = await req.json();
+
+  // Create a new user
+  const { ok, data, error } = await sdk.management.user.create({
+    email,
+    name,
+    loginId: email
+  });
+
+  if (!ok) {
+    return Response.json({ error }, { status: 400 });
+  }
+
+  return Response.json({ user: data });
+}
+```
+
+## SSR Considerations
+
+Descope components rely on browser APIs and must be rendered client-side only.
+
+### Important: Use Dynamic Imports
+
+Always import Descope components with dynamic imports and disabled SSR:
+
+```tsx
+'use client'; // For App Router
+import dynamic from 'next/dynamic';
+
+// Proper way to import Descope components
+const Descope = dynamic(
+  () => import('@descope/nextjs-sdk').then(mod => mod.Descope),
+  { ssr: false } // Critical: Disable SSR
+);
+
+export default function AuthPage() {
+  return (
+    <Descope
+      flowId="sign-up-or-in"
+      redirectAfterSuccess="/dashboard"
+    />
+  );
+}
+```
+
+Without this, you'll encounter errors like:
+- `TypeError: Illegal constructor`
+- `ReferenceError: window is not defined`
+
+## Widget Integration
+
+Descope provides widgets for user management functionality:
+
+```tsx
+'use client';
+import dynamic from 'next/dynamic';
+
+// Import widget with SSR disabled
+const UserManagement = dynamic(
+  () => import('@descope/nextjs-sdk').then(mod => mod.UserManagement),
+  { ssr: false }
+);
+
+export default function ManageUsersPage() {
+  return (
+    <div>
+      <h1>User Management</h1>
+      <UserManagement
+        widgetId="user-management-widget"
+        tenant="YOUR_TENANT_ID"
+      />
+    </div>
+  );
+}
+```
+
+## Authentication Pattern Comparison
+
+| Feature | Embedded Components | OIDC Redirect |
+|---------|---------------------|---------------|
+| User Experience | ✅ Seamless, no redirects | ⚠️ Requires page redirects |
+| Implementation Complexity | ✅ Simple component integration | ✅ Simple redirect calls |
+| Customization | ✅ Extensive theme options | ❌ Limited to hosted page customization |
+| Maintenance | ✅ Automatic updates | ✅ Automatic updates |
+| Security | ✅ High security | ✅ High security |
+| Mobile Support | ✅ Excellent | ⚠️ More complex with redirects |
+| Conversion Rate | ✅ Higher (fewer steps) | ⚠️ Lower (more friction) |
+
+## Configuration Options
+
+### AuthProvider Configuration
+
+```tsx
+<AuthProvider
+  // Required: Your Descope Project ID
+  projectId="YOUR_PROJECT_ID"
+
+  // Optional: Store session in cookie instead of localStorage
+  sessionTokenViaCookie={true}
+
+  // Optional: Cookie preferences if using sessionTokenViaCookie
+  sessionTokenViaCookie={{
+    sameSite: 'Strict', // or 'Lax'
+    secure: true
+  }}
+
+  // Optional: OIDC configuration for redirect flows
+  oidcConfig={true} // or detailed config object
+
+  // Optional: Auto refresh session token before expiry
+  autoRefresh={true}
+/>
+```
+
+## Recommended Best Practices
+
+1. **Always use middleware** for consistent route protection
+2. **Prefer embedded components** over OIDC redirects for better UX
+3. **Use dynamic imports** with `ssr: false` for all Descope components
+4. **Implement proper loading states** while authentication state is loading
+5. **Verify session on the server** for all protected API routes
+6. **Store sensitive keys** in environment variables
+7. **Implement proper error handling** for authentication failures
+

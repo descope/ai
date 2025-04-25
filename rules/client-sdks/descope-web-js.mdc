@@ -1,0 +1,282 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Descope Web JS SDK - Integration Guide
+
+The Descope Web JS SDK is the foundation for all JavaScript-based authentication, providing a core set of APIs that work in any web application.
+
+## Installation
+
+```bash
+npm install @descope/web-js-sdk
+# or
+yarn add @descope/web-js-sdk
+# or
+pnpm add @descope/web-js-sdk
+```
+
+## SDK Initialization
+
+Initialize the SDK with your Descope Project ID and optional configuration:
+
+```javascript
+import descopeSdk from '@descope/web-js-sdk';
+
+const sdk = descopeSdk({
+  // Required: Your Descope Project ID
+  projectId: 'YOUR_PROJECT_ID',
+
+  // Optional: Store tokens in browser storage
+  persistTokens: true,
+
+  // Optional: Store session token in a cookie
+  // Default is to store in localStorage when persistTokens is true
+  sessionTokenViaCookie: false,
+
+  // Optional: Customize cookie settings when sessionTokenViaCookie is enabled
+  sessionTokenViaCookie: {
+    sameSite: 'Strict', // or 'Lax'
+    secure: true
+  },
+
+  // Optional: Auto-refresh session
+  autoRefresh: true,
+
+  // Optional: Store user details
+  storeLastAuthenticatedUser: true,
+
+  // Optional: Keep user details after logout
+  keepLastAuthenticatedUserAfterLogout: false,
+
+  // Optional: Custom refresh token cookie name for multiple projects
+  refreshCookieName: "my-custom-refresh-cookie",
+
+  // Optional: External token provider for migration
+  getExternalToken: async () => {
+    // Return token from external auth provider
+    return 'my-external-token';
+  }
+});
+```
+
+## Authentication Methods
+
+### One-Time Password (OTP)
+
+```javascript
+// Send OTP code to email
+const res = await sdk.otp.signIn.email('user@example.com');
+if (!res.ok) {
+  console.error('Failed to send OTP code');
+}
+
+// Verify OTP code
+const verifyRes = await sdk.otp.verify.email('user@example.com', '123456');
+if (verifyRes.ok) {
+  console.log('Successfully authenticated');
+  const sessionToken = sdk.getSessionToken();
+}
+```
+
+### Magic Links
+
+```javascript
+// Send magic link to email
+const res = await sdk.magicLink.signIn.email('user@example.com', 'https://your-app.com/verify');
+if (!res.ok) {
+  console.error('Failed to send magic link');
+}
+
+// Verify magic link (on callback page)
+const urlParams = new URLSearchParams(window.location.search);
+const token = urlParams.get('t');
+if (token) {
+  const verifyRes = await sdk.magicLink.verify.email('user@example.com', token);
+  if (verifyRes.ok) {
+    console.log('Successfully authenticated');
+  }
+}
+```
+
+### OAuth (Social Login)
+
+```javascript
+// Start OAuth authentication
+await sdk.oauth.start('google', 'https://your-app.com/callback');
+
+// Verify OAuth on callback page
+const verifyRes = await sdk.oauth.exchange();
+if (verifyRes.ok) {
+  console.log('Successfully authenticated with OAuth');
+}
+```
+
+### WebAuthn (Passkeys)
+
+```javascript
+// Start WebAuthn registration
+const res = await sdk.webauthn.signUp.start('user@example.com');
+if (!res.ok) {
+  console.error('Failed to start WebAuthn registration');
+}
+
+// Finish WebAuthn registration
+const finishRes = await sdk.webauthn.signUp.finish();
+if (finishRes.ok) {
+  console.log('Successfully registered WebAuthn');
+}
+
+// Sign in with WebAuthn
+const signInRes = await sdk.webauthn.signIn.start('user@example.com');
+if (signInRes.ok) {
+  const finishSignInRes = await sdk.webauthn.signIn.finish();
+  if (finishSignInRes.ok) {
+    console.log('Successfully authenticated with WebAuthn');
+  }
+}
+```
+
+### FedCM (Federated Credential Management)
+
+FedCM is a modern, privacy-preserving authentication mechanism that streamlines the sign-in process.
+
+```javascript
+// Check if FedCM is supported by the browser
+if (sdk.fedcm.isSupported()) {
+  // Configure FedCM provider
+  const fedcmConfig = {
+    provider: 'google',
+    clientId: 'YOUR_CLIENT_ID'
+  };
+
+  // Initiate FedCM authentication
+  try {
+    const res = await sdk.fedcm.authenticate(fedcmConfig);
+    if (res.ok) {
+      console.log('Successfully authenticated with FedCM');
+    }
+  } catch (error) {
+    console.error('FedCM authentication failed:', error);
+  }
+}
+```
+
+### Google One Tap
+
+Google One Tap provides a streamlined sign-in experience with minimal user friction.
+
+```javascript
+// Configure One Tap
+const oneTapConfig = {
+  client_id: 'YOUR_GOOGLE_CLIENT_ID',
+  auto_select: true,
+  cancel_on_tap_outside: false
+};
+
+// Initialize One Tap integration
+try {
+  await sdk.oneTap.initialize(oneTapConfig);
+
+  // Show One Tap prompt
+  const credential = await sdk.oneTap.prompt();
+
+  // Verify the credential with Descope
+  const verifyRes = await sdk.oneTap.verify(credential);
+  if (verifyRes.ok) {
+    console.log('Successfully authenticated with One Tap');
+  }
+} catch (error) {
+  console.error('One Tap authentication failed:', error);
+}
+```
+
+### OIDC (OpenID Connect)
+
+```javascript
+// Initialize SDK with OIDC support
+const sdk = descopeSdk({
+  projectId: 'YOUR_PROJECT_ID',
+  oidcConfig: true // or custom config object
+});
+
+// Start OIDC login flow
+await sdk.oidc.loginWithRedirect({
+  redirect_uri: window.location.origin + '/callback'
+});
+
+// On callback page
+await sdk.oidc.finishLoginIfNeed();
+```
+
+## Session Management
+
+### Event Listeners
+
+```javascript
+// Listen for session token changes
+sdk.onSessionTokenChange((newSession, oldSession) => {
+  console.log('Session token changed');
+});
+
+// Listen for authentication state changes
+sdk.onIsAuthenticatedChange((isAuthenticated) => {
+  console.log('Is authenticated:', isAuthenticated);
+  // Update UI based on authentication state
+});
+
+// Listen for user changes
+sdk.onUserChange((newUser, oldUser) => {
+  console.log('User changed:', newUser);
+});
+```
+
+### Session Operations
+
+```javascript
+// Check if user is authenticated
+const isAuthenticated = sdk.session.isAuthenticated();
+
+// Get current session token
+const sessionToken = sdk.getSessionToken();
+
+// Get current user info
+const user = sdk.me();
+
+// Refresh session token
+await sdk.refresh();
+
+// Logout
+await sdk.logout();
+```
+
+## Direct API Access
+
+For advanced use cases, you can access the lower-level API client:
+
+```javascript
+// Make a custom API call
+const response = await sdk.httpClient.get('/some/endpoint', {
+  headers: {
+    'Custom-Header': 'value'
+  }
+});
+```
+
+## Error Handling
+
+Properly handle authentication errors:
+
+```javascript
+try {
+  const res = await sdk.otp.signIn.email('user@example.com');
+  if (!res.ok) {
+    // Handle API error
+    console.error('Error sending OTP:', res.error);
+  }
+} catch (error) {
+  // Handle unexpected errors
+  console.error('Unexpected error:', error);
+}
+```

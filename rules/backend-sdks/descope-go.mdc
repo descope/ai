@@ -1,34 +1,11 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
 # Descope Go SDK Guide
 
 ## Project Structure
-
-### Recommended Project Layout
-```
-your-project/
-├── main.go                 # Main application entry point
-├── go.mod                  # Module definition
-├── go.sum                  # Dependencies checksum
-├── config/
-│   └── auth.go            # Descope client configuration
-├── internal/
-│   ├── auth/              # Authentication logic
-│   │   ├── middleware.go  # Auth middleware
-│   │   └── handlers.go    # Auth handlers
-│   ├── users/             # User management
-│   │   ├── service.go     # User business logic
-│   │   └── repository.go  # User data access
-│   └── tenants/           # Tenant management
-│       ├── service.go     # Tenant business logic
-│       └── repository.go  # Tenant data access
-└── api/
-    └── routes/            # API route definitions
-        └── auth.go        # Auth routes
-```
 
 ### Example Configuration Setup
 ```go

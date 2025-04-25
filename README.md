@@ -8,6 +8,14 @@ This repository contains various packages and demo apps related consuming Descop
 
 - [`mcp-express`](https://github.com/descope/mcp-express): A TypeScript-based Express Library that enables leveraging Descope [Inbound Apps](https://docs.descope.com/inbound-apps) to add auth to Remote MCP Servers.
 
+## Cursor Rules
+
+The `/rules` folder contains pre-built Cursor rules that can be imported into your IDE to enhance your development experience. These rules are organized into the following categories:
+
+- `backend-sdks/`: Rules for working with backend SDKs
+- `client-sdks/`: Rules for working with client SDKs
+- `mcp/`: Rules for working with MCP (Management Control Plane)
+
 ## Examples
 
 - [`remote-mcp-server-hono-cloudflare`](./examples/remote-mcp-server-hono-cloudflare/README.md): A demo app that shows how to add auth to a Remote MCP Server using Hono and Descope and deploying to Cloudflare Workers.

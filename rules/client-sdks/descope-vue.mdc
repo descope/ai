@@ -1,0 +1,535 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Descope Vue SDK - Integration Guide
+
+The Descope Vue SDK provides a simple way to add authentication to your Vue applications.
+
+## Installation
+
+```bash
+npm install @descope/vue-sdk
+# or
+yarn add @descope/vue-sdk
+# or
+pnpm add @descope/vue-sdk
+```
+
+## Quick Setup
+
+### 1. Configure the Descope Plugin
+
+#### Vue 3 Setup
+
+```javascript
+// main.js or main.ts
+import { createApp } from 'vue';
+import { createDescope } from '@descope/vue-sdk';
+import App from './App.vue';
+import router from './router';
+
+const app = createApp(App);
+
+// Create and configure Descope
+const descope = createDescope({
+  projectId: 'YOUR_PROJECT_ID',
+  baseUrl: 'https://api.descope.com', // Optional
+  persistTokens: true, // Optional
+  autoRefresh: true, // Optional
+});
+
+// Register the plugin
+app.use(descope);
+app.use(router);
+app.mount('#app');
+```
+
+#### Vue 2 Setup (with plugin compatibility)
+
+```javascript
+// main.js
+import Vue from 'vue';
+import { createDescope } from '@descope/vue-sdk';
+import App from './App.vue';
+import router from './router';
+
+// Create and configure Descope
+const descope = createDescope({
+  projectId: 'YOUR_PROJECT_ID',
+  baseUrl: 'https://api.descope.com', // Optional
+  persistTokens: true, // Optional
+  autoRefresh: true, // Optional
+});
+
+// Register the plugin
+Vue.use(descope);
+
+new Vue({
+  router,
+  render: h => h(App),
+}).$mount('#app');
+```
+
+### 2. Create an Authentication Component
+
+```vue
+<!-- Login.vue -->
+<template>
+  <div class="login-container">
+    <h1>Sign In</h1>
+    <DescopeFlow
+      flow-id="sign-up-or-in"
+      :theme="{ root: { colorScheme: 'light' } }"
+      @success="onSuccess"
+      @error="onError"
+    />
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'LoginPage',
+  methods: {
+    onSuccess(e) {
+      console.log('Authentication successful:', e);
+      this.$router.push('/dashboard');
+    },
+    onError(e) {
+      console.error('Authentication error:', e);
+    }
+  }
+}
+</script>
+
+<!-- Vue 3 Composition API version -->
+<script setup>
+import { DescopeFlow } from '@descope/vue-sdk';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+const onSuccess = (e) => {
+  console.log('Authentication successful:', e);
+  router.push('/dashboard');
+};
+
+const onError = (e) => {
+  console.error('Authentication error:', e);
+};
+</script>
+```
+
+### 3. Set up Protected Routes
+
+```javascript
+// router/index.js
+import { createRouter, createWebHistory } from 'vue-router';
+import { useSession } from '@descope/vue-sdk';
+import Login from '../views/Login.vue';
+import Dashboard from '../views/Dashboard.vue';
+
+const routes = [
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: Dashboard,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/',
+    redirect: '/login'
+  }
+];
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+});
+
+// Navigation guard for authentication
+router.beforeEach((to, from, next) => {
+  const { isAuthenticated, isLoading } = useSession();
+
+  if (to.meta.requiresAuth) {
+    // For auth required routes, check authentication
+    if (isLoading.value) {
+      // You might want to show a loading screen here
+      // or wait until loading completes
+      const unwatch = isLoading.watch(loading => {
+        if (!loading) {
+          unwatch();
+          if (isAuthenticated.value) {
+            next();
+          } else {
+            next({ name: 'Login' });
+          }
+        }
+      });
+    } else if (isAuthenticated.value) {
+      next();
+    } else {
+      next({ name: 'Login' });
+    }
+  } else {
+    // Non-auth routes proceed normally
+    next();
+  }
+});
+
+export default router;
+```
+
+## Authentication Composables
+
+The Vue SDK provides several composables (Vue 3) or helpers (Vue 2) for managing authentication:
+
+### useSession Composable
+
+Access the current session state:
+
+```vue
+<!-- Dashboard.vue -->
+<template>
+  <div v-if="isLoading">Loading...</div>
+  <div v-else>
+    <h1>Welcome, {{ user?.name || 'User' }}!</h1>
+    <div>Email: {{ user?.email }}</div>
+    <button @click="handleLogout">Logout</button>
+  </div>
+</template>
+
+<script setup>
+import { useSession, useDescope } from '@descope/vue-sdk';
+import { useRouter } from 'vue-router';
+
+const { isAuthenticated, isLoading, user } = useSession();
+const { logout } = useDescope();
+const router = useRouter();
+
+const handleLogout = async () => {
+  try {
+    await logout();
+    router.push('/login');
+  } catch (error) {
+    console.error('Logout failed:', error);
+  }
+};
+</script>
+```
+
+### useDescope Composable
+
+Access Descope SDK methods:
+
+```vue
+<script setup>
+import { useDescope } from '@descope/vue-sdk';
+
+const {
+  logout,
+  refreshSession,
+  httpClient,
+  sdk // Access to all Descope SDK methods
+} = useDescope();
+
+// Use these methods to interact with the authentication system
+</script>
+```
+
+## Manual Authentication Flow
+
+If you want to build your own UI rather than using the prebuilt component:
+
+```vue
+<!-- CustomAuth.vue -->
+<template>
+  <div>
+    <h1>Sign In</h1>
+    <form @submit.prevent="handleEmailSignIn">
+      <input
+        type="email"
+        v-model="email"
+        placeholder="Email"
+        required
+      />
+      <button type="submit">Send OTP</button>
+      <div v-if="error" class="error">{{ error }}</div>
+    </form>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { useDescope } from '@descope/vue-sdk';
+import { useRouter } from 'vue-router';
+
+const email = ref('');
+const error = ref('');
+const { sdk } = useDescope();
+const router = useRouter();
+
+const handleEmailSignIn = async () => {
+  error.value = '';
+
+  try {
+    await sdk.otp.email.signIn(email.value);
+    router.push({
+      path: '/verify',
+      query: { email: email.value, method: 'email' }
+    });
+  } catch (err) {
+    error.value = err.message || 'Failed to send OTP';
+  }
+};
+</script>
+```
+
+## FedCM (Federated Credential Management)
+
+FedCM provides a browser-native UI for authentication with Google. Here's how to implement it:
+
+```vue
+<!-- FedCMAuth.vue -->
+<template>
+  <div>
+    <button
+      v-if="isFedCMSupported"
+      @click="signInWithFedCM"
+    >
+      Sign in with Google (FedCM)
+    </button>
+    <p v-else>FedCM is not supported in your browser.</p>
+    <div v-if="error" class="error">{{ error }}</div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useDescope } from '@descope/vue-sdk';
+import { useRouter } from 'vue-router';
+
+const isFedCMSupported = ref(false);
+const error = ref('');
+const { sdk } = useDescope();
+const router = useRouter();
+
+onMounted(async () => {
+  await checkFedCMSupport();
+});
+
+const checkFedCMSupport = async () => {
+  try {
+    const supported = await sdk.fedcm.isSupported();
+    isFedCMSupported.value = supported;
+  } catch (err) {
+    console.error('Failed to check FedCM support:', err);
+  }
+};
+
+const signInWithFedCM = async () => {
+  try {
+    error.value = '';
+
+    const response = await sdk.fedcm.authenticate({
+      provider: 'google',
+      clientId: 'YOUR_GOOGLE_CLIENT_ID'
+    });
+
+    if (response) {
+      console.log('FedCM authentication successful');
+      router.push('/dashboard');
+    }
+  } catch (err) {
+    error.value = err.message || 'Authentication failed';
+    console.error('FedCM authentication failed:', err);
+  }
+};
+</script>
+```
+
+## Google One Tap Integration
+
+Google One Tap provides a frictionless sign-in experience:
+
+```vue
+<!-- OneTapAuth.vue -->
+<template>
+  <div>
+    <div id="one-tap-container"></div>
+    <button
+      :disabled="!isInitialized"
+      @click="signInWithOneTap"
+    >
+      Sign in with Google
+    </button>
+    <div v-if="error" class="error">{{ error }}</div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useDescope } from '@descope/vue-sdk';
+import { useRouter } from 'vue-router';
+
+const isInitialized = ref(false);
+const error = ref('');
+const { sdk } = useDescope();
+const router = useRouter();
+
+onMounted(() => {
+  initOneTap();
+});
+
+onUnmounted(() => {
+  sdk.oneTap.cancel();
+});
+
+const initOneTap = async () => {
+  try {
+    await sdk.oneTap.initialize({
+      client_id: 'YOUR_GOOGLE_CLIENT_ID',
+      auto_select: true,
+      cancel_on_tap_outside: false,
+      prompt_parent_id: 'one-tap-container' // ID of the DOM element
+    });
+
+    isInitialized.value = true;
+  } catch (err) {
+    console.error('Failed to initialize One Tap:', err);
+  }
+};
+
+const signInWithOneTap = async () => {
+  if (!isInitialized.value) return;
+
+  try {
+    error.value = '';
+
+    // Display One Tap prompt and get credential
+    const credential = await sdk.oneTap.prompt();
+
+    // Verify credential with Descope
+    const response = await sdk.oneTap.verify(credential);
+
+    if (response) {
+      console.log('One Tap authentication successful');
+      router.push('/dashboard');
+    }
+  } catch (err) {
+    error.value = err.message || 'Authentication failed';
+    console.error('One Tap authentication failed:', err);
+  }
+};
+</script>
+```
+
+## OIDC (OpenID Connect) Implementation
+
+For redirect-based authentication with OIDC providers:
+
+```vue
+<!-- OIDCAuth.vue -->
+<template>
+  <div>
+    <button @click="signInWithOIDC">
+      Sign in with OIDC Provider
+    </button>
+    <div v-if="error" class="error">{{ error }}</div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { useDescope } from '@descope/vue-sdk';
+
+const error = ref('');
+const { sdk } = useDescope();
+
+const signInWithOIDC = async () => {
+  try {
+    error.value = '';
+
+    await sdk.oidc.loginWithRedirect({
+      application_id: 'YOUR_APPLICATION_ID', // Optional
+      redirect_uri: window.location.origin + '/callback',
+      scope: 'openid profile email'
+    });
+
+    // This will redirect the user, so the code below won't execute immediately
+    console.log('Redirecting to OIDC provider...');
+  } catch (err) {
+    error.value = err.message || 'Failed to initiate login';
+    console.error('Failed to initiate OIDC login:', err);
+  }
+};
+</script>
+```
+
+### OIDC Callback Component
+
+```vue
+<!-- OIDCCallback.vue -->
+<template>
+  <div>
+    <div v-if="isProcessing">Completing authentication...</div>
+    <div v-else>Error processing authentication. Redirecting...</div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useDescope } from '@descope/vue-sdk';
+
+const isProcessing = ref(true);
+const { sdk } = useDescope();
+const router = useRouter();
+
+onMounted(() => {
+  completeAuthentication();
+});
+
+const completeAuthentication = async () => {
+  try {
+    // Complete the OIDC authentication flow
+    await sdk.oidc.finishLoginIfNeeded();
+    router.push('/dashboard');
+  } catch (err) {
+    console.error('Failed to complete OIDC login:', err);
+    router.push('/login');
+  } finally {
+    isProcessing.value = false;
+  }
+};
+</script>
+```
+
+## Configuration Options
+
+The Descope plugin accepts the following configuration options:
+
+```javascript
+const descope = createDescope({
+  projectId: 'YOUR_PROJECT_ID', // Required
+  baseUrl: 'https://api.descope.com', // Optional - Descope API base URL
+  persistTokens: true, // Optional - Store tokens in localStorage
+  autoRefresh: true, // Optional - Auto-refresh session before expiry
+  sessionTokenViaCookie: true, // Optional - Store session token in cookies
+  storagePrefix: 'my-app', // Optional - Prefix for storage keys
+  logger: { level: 'debug' }, // Optional - Logging configuration
+  tenant: 'YOUR_TENANT_ID', // Optional - Tenant ID for multi-tenant apps
+  flowIds: { // Optional - Default flow IDs for different operations
+    signUp: 'sign-up',
+    signIn: 'sign-in',
+    signUpOrIn: 'sign-up-or-in',
+  }
+});
+```

@@ -1,26 +1,9 @@
 {
   "version": 2,
-  "rootDirectory": "examples/express-vercel-mcp-server",
-  "builds": [
+  "rewrites": [
     {
-      "src": "dist/index.js",
-      "use": "@vercel/node"
+      "source": "/(.*)",
+      "destination": "/dist/index.js"
     }
-  ],
-  "routes": [
-    {
-      "src": "/mcp",
-      "dest": "dist/index.js",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "src": "/(.*)",
-      "dest": "dist/index.js"
-    }
-  ],
-  "env": {
-    "PORT": "3000"
-  }
+  ]
 }

@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "rootDirectory": "examples/express-vercel-mcp-server",
   "builds": [
     {
       "src": "dist/index.js",

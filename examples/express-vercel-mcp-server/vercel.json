@@ -10,7 +10,9 @@
     {
       "src": "/mcp",
       "dest": "dist/index.js",
-      "methods": ["POST"]
+      "methods": [
+        "POST"
+      ]
     },
     {
       "src": "/(.*)",

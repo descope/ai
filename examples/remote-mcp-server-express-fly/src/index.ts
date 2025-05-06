@@ -1,22 +1,23 @@
 import dotenv from "dotenv";
-import express from "express";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { createServer } from "./create-server.js";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import express, { Request, Response } from "express";
 import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import { descopeMcpAuthRouter, descopeMcpBearerAuth, DescopeMcpProvider, DescopeMcpProviderOptions } from "@descope/mcp-express";
+import { descopeMcpAuthRouter, descopeMcpBearerAuth, DescopeMcpProvider } from "@descope/mcp-express";
 import cors from "cors";
 import path from 'path';
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { createServer } from "./create-server.js";
 
-declare module "express-serve-static-core" {
-    interface Request {
-        /**
-         * Information about the validated access token, if the `descopeMcpBearerAuth` middleware was used.
-         * Contains user information and token details after successful authentication.
-         */
-        auth?: AuthInfo;
-    }
-}
+const PORT = process.env.PORT || 3000;
+
+// declare module "express-serve-static-core" {
+//     interface Request {
+//         /**
+//          * Information about the validated access token, if the `descopeMcpBearerAuth` middleware was used.
+//          * Contains user information and token details after successful authentication.
+//          */
+//         auth?: AuthInfo;
+//     }
+// }
 
 dotenv.config();
 
@@ -39,53 +40,94 @@ const provider = new DescopeMcpProvider();
 
 app.use(descopeMcpAuthRouter(provider));
 
-app.use(["/sse", "/message"], descopeMcpBearerAuth());
+app.use(["/mcp"], descopeMcpBearerAuth());
 
-let servers: McpServer[] = [];
-const MAX_CONNECTIONS = 100; // Adjust based on your shared instance limits
 
-app.get("/sse", async (req, res) => {
-    if (servers.length >= MAX_CONNECTIONS) {
-        res.status(429).send("Too many connections");
-        return;
+// Initialize transport
+const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: undefined, // set to undefined for stateless servers
+});
+
+// Create server instance
+const { server } = createServer();
+
+// MCP endpoint
+app.post('/mcp', async (req: Request, res: Response) => {
+    console.log('Received MCP request:', req.body);
+    try {
+        // Set the context for this request
+        server.setContext({ auth: req.auth });
+        await transport.handleRequest(req, res, req.body);
+    } catch (error) {
+        console.error('Error handling MCP request:', error);
+        if (!res.headersSent) {
+            res.status(500).json({
+                jsonrpc: '2.0',
+                error: {
+                    code: -32603,
+                    message: 'Internal server error',
+                },
+                id: null,
+            });
+        }
     }
+});
 
-    const transport = new SSEServerTransport("/message", res);
-    const { server } = createServer();
 
-    servers.push(server);
-    server.server.onclose = () => {
-        console.log("SSE connection closed");
-        servers = servers.filter((s) => s !== server);
-    };
+// // Method not allowed handlers
+const methodNotAllowed = (req: Request, res: Response) => {
+    console.log(`Received ${req.method} MCP request`);
+    res.status(405).json({
+        jsonrpc: "2.0",
+        error: {
+            code: -32000,
+            message: "Method not allowed."
+        },
+        id: null
+    });
+};
 
-    // Add timeout for inactive connections (30 minutes)
-    const timeout = setTimeout(() => {
-        server.server.close();
-    }, 30 * 60 * 1000);
+app.get('/mcp', methodNotAllowed);
+app.delete('/mcp', methodNotAllowed);
 
-    server.server.onclose = () => {
-        clearTimeout(timeout);
-        console.log("SSE connection closed");
-        servers = servers.filter((s) => s !== server);
-    };
-
-    console.log("Received connection");
-    await server.connect(transport);
-})
-
-app.post("/message", async (req, res) => {
-    const sessionId = req.query.sessionId as string;
-    const transport = servers.map(s => s.server.transport as SSEServerTransport).find(t => t.sessionId === sessionId);
-    if (!transport) {
-        res.status(404).send("Session not found");
-        return;
+// Server setup
+const setupServer = async () => {
+    try {
+        await server.connect(transport);
+        console.log('Server connected successfully');
+    } catch (error) {
+        console.error('Failed to set up the server:', error);
+        throw error;
     }
-    console.log("Received message");
-    await transport.handlePostMessage(req, res);
-})
+};
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Weather MCP Server is running on port ${PORT}`);
-})
+// Start server
+setupServer()
+    .then(() => {
+        app.listen(PORT, () => {
+            console.log(`MCP Streamable HTTP Server listening on port ${PORT}`);
+        });
+    })
+    .catch(error => {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    });
+
+// Handle server shutdown
+// process.on('SIGINT', async () => {
+//     console.log('Shutting down server...');
+//     try {
+//         console.log(`Closing transport`);
+//         await transport.close();
+//     } catch (error) {
+//         console.error(`Error closing transport:`, error);
+//     }
+
+//     try {
+//         await server.close();
+//         console.log('Server shutdown complete');
+//     } catch (error) {
+//         console.error('Error closing server:', error);
+//     }
+//     process.exit(0);
+// });

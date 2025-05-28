@@ -1,74 +1,123 @@
-# Python MCP Server using FastMCP and Descope Inbound Apps
+# Securing MCP Server-Client Architecture with Descope Using Ollama, LLaMA Stack in Python
 
-![Descope Banner](https://github.com/descope/.github/assets/32936811/d904d37e-e3fa-4331-9f10-2880bb708f64)
+As AI workloads scale in sensitivity and compute cost, it's crucial to secure interactions between clients and inference servers. This post demonstrates how to secure a Python-based MCP server-client architecture using Ollama and the LLaMA model stack, protected via OAuth 2.0 using Descope.
 
-## Introduction
+## Prerequisites
 
-This example shows how to secure a Python-based MCP (Model Context Protocol) server using [FastMCP](https://github.com/modelcontext/fastmcp) and Descope Inbound Apps as the main authorization server. It demonstrates how to protect tool calls on an MCP server using Descope-issued OAuth access tokens.
+- Python 3.10+
+- Docker & Docker Compose (optional)
+- Descope Account and Project
+- Ollama installed (ollama serve)
+- Descope Python SDK
+- HTTP libraries: requests, httpx
 
-## Preview
-
-You can run this server locally or deploy it to any platform that supports Python (e.g., Railway, Fly.io, or Render).
-
-It’s designed to work with any MCP-compatible client, such as:
-
-- [Cloudflare AI Playground](https://playground.ai.cloudflare.com/)
-- [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector)
-- Custom clients built with the [MCP Client SDK](https://github.com/modelcontext/client)
-
-## Requirements
-
-Before proceeding, ensure you have the following:
-
-- Python 3.8 or later
-- A valid Descope [Project ID](https://app.descope.com/settings/project)
-- The Descope Inbound Apps feature enabled with proper scopes
-- `make` (optional, but simplifies setup)
-
-## Running the Server
-
-First, clone this repo and optionally create a `.env` file (or edit `server.py` directly) with your Descope project details.
-
-### Step 1 – Run using Make:
+## Run ollama
 
 ```bash
-make run
+ollama run llama2:3b --keepalive 60m
 ```
 
-### Step 2 – Call a Tool
+## Run llama stack (optional)
 
-You can test the protected server by calling the `greet` tool with a bearer token:
+```bash
+INFERENCE_MODEL=llama2:3b uv run --with llama-stack llama stack build --template ollama --image-type venv --run
+```
+
+## Run MCP Server and Client
+
+Setup virtual environment
+
+```bash
+uv venv
+source .venv/bin/activate
+```
+
+Add Python dependencies
+
+```bash
+uv add fastmcp descope llama-stack-client
+```
+
+### Configure Credentials
+
+Update the following files with your Descope credentials:
+
+1. In `mcp-llama-stack-descope.py`:
 
 ```python
-await client.call_tool("greet", {"name": "Ford"})
+mcp = FastMCP(
+    name="SecureApp",
+    auth_server_provider=DescopeOAuthProvider(
+        project_id="YOUR_PROJECT_ID",
+        management_key="YOUR_MANAGEMENT_KEY",
+        client_id="YOUR_CLIENT_ID",
+        client_secret="YOUR_CLIENT_SECRET"
+    ),
+    ...
+)
 ```
 
-If the token is valid and includes the required scope (`my_scope`), you’ll get:
+2. In `client-descope.py`:
 
-```
-{'message': 'Hello Ford'}
-```
-
-## Authentication
-
-This server uses Descope as its OIDC-compliant OAuth provider.
-
-The server dynamically fetches the JWKS from:
-
-```
-https://api.descope.com/v1/apps/<your-project-id>/.well-known/jwks.json
+```python
+PROJECT_ID = "YOUR_PROJECT_ID"
+MANAGEMENT_KEY = "YOUR_MANAGEMENT_KEY"
+CLIENT_ID = "YOUR_CLIENT_ID"
+CLIENT_SECRET = "YOUR_CLIENT_SECRET"
 ```
 
-## File Structure
+### Run FastMCP Server
 
-```
-my-mcp-server/
-├── main.py              # Main FastMCP server with Descope auth
-├── requirements.txt     # Python dependencies
-├── Makefile             # Easy run commands
-└── README.md            # Project info
+```bash
+uv run mcp-llama-stack-descope.py
 ```
 
-## License
+### Run FastMCP Client
 
-MIT
+```bash
+uv run client-descope.py
+```
+
+## Available Tools
+
+The server provides the following tools:
+
+1. `add`: Simple addition of two numbers
+2. `generate_text`: Text generation using LlamaStack's LLM
+   - Parameters:
+     - prompt: The input text to generate from
+     - model: The model to use (default: llama2:3b)
+     - temperature: Controls randomness (0.0 to 1.0)
+     - max_tokens: Maximum length of the generated response
+3. `list_ollama_models`: List available models in the LlamaStack server
+
+## Security Features
+
+- OAuth 2.0 authentication via Descope
+- Secure token management
+- Client credentials flow for server-to-server communication
+- Token validation and revocation
+- Proper error handling and logging
+
+## Error Handling
+
+The implementation includes comprehensive error handling for:
+
+- Authentication failures
+- Token validation errors
+- LLM inference errors
+- Network issues
+- Invalid requests
+
+## Logging
+
+The server and client both implement detailed logging for:
+
+- Authentication events
+- API calls
+- Error conditions
+- Performance metrics
+
+## Contributing
+
+Feel free to submit issues and enhancement requests!

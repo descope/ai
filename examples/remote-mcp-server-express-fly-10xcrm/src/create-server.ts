@@ -38,16 +38,6 @@ function formatDeal(feature: DealFeatures): string {
 }
 
 
-interface ForecastPeriod {
-    name?: string;
-    temperature?: number;
-    temperatureUnit?: string;
-    windSpeed?: string;
-    windDirection?: string;
-    shortForecast?: string;
-}
-
-
 
 async function make10xCRMRequest<T>(url: string, authToken: string): Promise<T | null> {
     const headers = {
@@ -99,6 +89,11 @@ interface ContactResponse {
     pagination: [];
 }
 
+interface ContactSearchResponse {
+    contacts: ContactFeatures[];
+    pagination: [];
+}
+
 interface DealResponse {
     data: DealFeatures[];
     pagination: [];
@@ -113,15 +108,20 @@ export const createServer = ({ authToken }: { authToken: string }) => {
 
 
     server.tool(
-        "list-contacts",
-        "Get a paginated list of contacts with optional search",
+        "get-contacts-search",
+        "Search contacts with optional filters and pagination",
         {
-            // TODO: optional search?
+            query: z.string().describe("The name or email of the contact to retrieve.").optional(),
+            company: z.string().describe("The company of the contact to retrieve.").optional(),
+            status: z.string().describe("The status of the contact to retrieve.").optional(),
         },
-        async () => {
-            const contactsUrl = `${API_BASE_10xCRM}/contacts`;
-            const contactsData = await make10xCRMRequest<ContactResponse>(contactsUrl, authToken);
-            console.log(contactsData);
+        async ( {query, company, status} ) => {
+            const params = new URLSearchParams();
+            if (query != undefined && query != "undefined") params.append("query", query);
+            if (company != undefined && company != "undefined") params.append("company", company);
+            if (status != undefined && status != "undefined") params.append("status", status);
+            const contactsUrl = `${API_BASE_10xCRM}/contacts/search?${params.toString()}`;
+            const contactsData = await make10xCRMRequest<ContactSearchResponse>(contactsUrl, authToken);
             if (!contactsData) {
                 return {
                     content: [
@@ -133,7 +133,7 @@ export const createServer = ({ authToken }: { authToken: string }) => {
                 };
             }
 
-            const features = contactsData.data || [];
+            const features = contactsData.contacts || [];
             if (features.length === 0) {
                 return {
                     content: [
@@ -144,7 +144,6 @@ export const createServer = ({ authToken }: { authToken: string }) => {
                     ],
                 };
             }
-            // TODO: format return text
             const formattedContacts = features.map(formatContact);
             const contactsText = `Contacts:\n\n${formattedContacts.join("\n")}`;
 
@@ -164,12 +163,10 @@ export const createServer = ({ authToken }: { authToken: string }) => {
         "Get a contact by ID or email",
         {
             id: z.string().describe("The ID or email of the contact to retrieve."),
-            // email: z.string().describe("The email of the contact to retrieve.")
         },
         async ({ id }) => {
             const contactsUrl = `${API_BASE_10xCRM}/contacts/${id}`;
             const contactsData = await make10xCRMRequest<ContactFeatures>(contactsUrl, authToken);
-            console.log(contactsData);
             if (!contactsData) {
                 return {
                     content: [
@@ -181,7 +178,6 @@ export const createServer = ({ authToken }: { authToken: string }) => {
                 };
             }
             const features = contactsData || [];
-            console.log(" features " + features);
             if (features === null) {
                 return {
                     content: [
@@ -194,7 +190,6 @@ export const createServer = ({ authToken }: { authToken: string }) => {
             }
 
             const formattedContacts = formatContact(features);
-            console.log(formattedContacts);
             const contactsText = `Contact for ${id}:\n\n${formattedContacts}`;
 
             return {
@@ -212,10 +207,23 @@ export const createServer = ({ authToken }: { authToken: string }) => {
         "get-deals",
         "Get a paginated list of deals with optional search and stage filters",
         {
-            dealInfo: z.string().describe(""),
+            search: z.string().describe("Customer name or deal name of the deals to retrieve").optional(),
+            page: z.string().describe("Page from which to retrieve deals").optional(),
+            limit: z.string().describe("Limit from which to retrieve deals").optional(),
+            stage: z.string().describe("Stage of the deals to retrieve").optional(),
+
         },
-        async ({ dealInfo }) => {
-            const dealsUrl = `${API_BASE_10xCRM}/deals`;
+        async ({ search, page, limit, stage }) => {
+            const params = new URLSearchParams();
+            if (search != undefined && search != "undefined") params.append("search", search);
+            if (page != undefined && page != "undefined") params.append("page", page);
+            if (limit != undefined && limit != "undefined") params.append("limit", limit);
+            if (stage != undefined && stage != "undefined") params.append("stage", stage);
+            let dealsUrl = `${API_BASE_10xCRM}/deals?${params.toString()}`;
+            if (params == null) {
+                dealsUrl = `${API_BASE_10xCRM}/deals`;
+            }
+            
             const dealsData = await make10xCRMRequest<DealResponse>(dealsUrl, authToken);
 
             if (!dealsData) {
@@ -303,46 +311,45 @@ export const createServer = ({ authToken }: { authToken: string }) => {
     );
 
     server.tool(
-        "get-contacts-search",
-        "Search contacts with optional filters and pagination",
+        "list-contacts",
+        "List all contacts",
         {
-            query: z.string().describe("Search contacts with optional filters and pagination"),
         },
-        async ({ query }) => {
-            const alertsUrl = `${API_BASE_10xCRM}/contacts?contacts=${query}`;
-            const alertsData = await make10xCRMRequest<ContactResponse>(alertsUrl, authToken);
+        async ({}) => {
+            const contactsUrl = `${API_BASE_10xCRM}/contacts`;
+            const contactsData = await make10xCRMRequest<ContactResponse>(contactsUrl, authToken);
 
-            if (!alertsData) {
+            if (!contactsData) {
                 return {
                     content: [
                         {
                             type: "text",
-                            text: "Failed to retrieve alerts data",
+                            text: "Failed to retrieve contacts data",
                         },
                     ],
                 };
             }
 
-            const features = alertsData.data || [];
+            const features = contactsData.data || [];
             if (features.length === 0) {
                 return {
                     content: [
                         {
                             type: "text",
-                            text: `No active alerts for ${query}`,
+                            text: `No contacts found`,
                         },
                     ],
                 };
             }
 
-            const formattedAlerts = features;
-            const alertsText = `Active alerts for ${query}:\n\n${formattedAlerts.join("\n")}`;
+            const formattedContacts = features.map(formatContact);
+            const contactsText = `Active contacts:\n\n${formattedContacts.join("\n")}`;
 
             return {
                 content: [
                     {
                         type: "text",
-                        text: alertsText,
+                        text: contactsText,
                     },
                 ],
             };

@@ -6,55 +6,73 @@ const USER_AGENT = "10x-crm/1.0";
 const API_BASE_10xCRM = "https://www.10x-crm.app/api";
 
 
-// // Format alert data
-// function formatAlert(feature: AlertFeature): string {
-//   const props = feature.properties;
-//   return [
-//     `Event: ${props.event || "Unknown"}`,
-//     `Area: ${props.areaDesc || "Unknown"}`,
-//     `Severity: ${props.severity || "Unknown"}`,
-//     `Status: ${props.status || "Unknown"}`,
-//     `Headline: ${props.headline || "No headline"}`,
-//     "---",
-//   ].join("\n");
-// }
+// Format contact data
+function formatContact(feature: ContactFeatures): string {
+    const props = feature;
+    return [
+        `ID: ${props.id || "Unknown"}`,
+        `Name: ${props.name || "Unknown"}`,
+        `Email: ${props.email || "Unknown"}`,
+        `Company: ${props.company || "Unknown"}`,
+        `Tenant ID: ${props.tenant_id || "Unknown"}`,
+        `Created At: ${props.created_at || "Unknown"}`,
+        `Last Contact: ${props.last_contact || "Unknown"}`,
+        "---",
+    ].join("\n");
+}
+
+// Format deal data
+function formatDeal(feature: DealFeatures): string {
+    const props = feature;
+    return [
+        `ID: ${props.id || "Unknown"}`,
+        `Name: ${props.name || "Unknown"}`,
+        `Value: ${props.value || "Unknown"}`,
+        `Stage: ${props.stage || "Unknown"}`,
+        `Customer ID: ${props.customerId || "Unknown"}`,
+        `Expected Close Date: ${props.expectedCloseDate || "Unknown"}`,
+        `Probability: ${props.probability || "Unknown"}`,
+        `Created At: ${props.created_at || "Unknown"}`,
+        "---",
+    ].join("\n");
+}
+
 
 interface ForecastPeriod {
-  name?: string;
-  temperature?: number;
-  temperatureUnit?: string;
-  windSpeed?: string;
-  windDirection?: string;
-  shortForecast?: string;
+    name?: string;
+    temperature?: number;
+    temperatureUnit?: string;
+    windSpeed?: string;
+    windDirection?: string;
+    shortForecast?: string;
 }
 
 
 
 async function make10xCRMRequest<T>(url: string, authToken: string): Promise<T | null> {
-  const headers = {
-    "User-Agent": USER_AGENT,
-    Accept: "application/json",
-    Authorization: `Bearer ${authToken}`,
-  };
+    const headers = {
+        "User-Agent": USER_AGENT,
+        Accept: "application/json",
+        Authorization: `Bearer ${authToken}`,
+    };
 
-  console.log("authToken " + authToken);
-  console.log("url " + url);
-  console.log("user agent " + USER_AGENT);
+    console.log("authToken " + authToken);
+    console.log("url " + url);
+    console.log("user agent " + USER_AGENT);
 
-  try {
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    try {
+        const response = await fetch(url, { headers });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return (await response.json()) as T;
+    } catch (error) {
+        console.error("Error making 10xCRM request:", error);
+        return null;
     }
-    return (await response.json()) as T;
-  } catch (error) {
-    console.error("Error making 10xCRM request:", error);
-    return null;
-  }
 }
 
 interface ContactFeatures {
-  properties: {
     id?: string;
     name?: string;
     email?: string;
@@ -62,34 +80,28 @@ interface ContactFeatures {
     tenant_id?: string;
     created_at?: string;
     last_contact?: string;
-  };
 }
 
 interface DealFeatures {
-    properties: {
-        id?: string;
-        name?: string;
-        value?: number;
-        stage?: string;
-        customerId?: string;
-        expectedCloseDate?: string;
-        probability?: number;
-        created_at?: string;
-    };
+    id?: string;
+    name?: string;
+    value?: number;
+    stage?: string;
+    customerId?: string;
+    expectedCloseDate?: string;
+    probability?: number;
+    created_at?: string;
+
 }
 
 interface ContactResponse {
-    properties: {
-        data: ContactFeatures[];
-        pagination: [];
-    }
+    data: ContactFeatures[];
+    pagination: [];
 }
 
 interface DealResponse {
-    properties: {
-        data: DealFeatures[];
-        pagination: [];
-    }
+    data: DealFeatures[];
+    pagination: [];
 }
 
 export const createServer = ({ authToken }: { authToken: string }) => {
@@ -109,7 +121,7 @@ export const createServer = ({ authToken }: { authToken: string }) => {
         async () => {
             const contactsUrl = `${API_BASE_10xCRM}/contacts`;
             const contactsData = await make10xCRMRequest<ContactResponse>(contactsUrl, authToken);
-
+            console.log(contactsData);
             if (!contactsData) {
                 return {
                     content: [
@@ -121,7 +133,7 @@ export const createServer = ({ authToken }: { authToken: string }) => {
                 };
             }
 
-            const features = contactsData.properties.data || [];
+            const features = contactsData.data || [];
             if (features.length === 0) {
                 return {
                     content: [
@@ -133,8 +145,8 @@ export const createServer = ({ authToken }: { authToken: string }) => {
                 };
             }
             // TODO: format return text
-            const formattedAlerts = features;
-            const contactsText = `Contacts:\n\n${formattedAlerts.join("\n")}`;
+            const formattedContacts = features.map(formatContact);
+            const contactsText = `Contacts:\n\n${formattedContacts.join("\n")}`;
 
             return {
                 content: [
@@ -152,10 +164,11 @@ export const createServer = ({ authToken }: { authToken: string }) => {
         "Get a contact by ID or email",
         {
             id: z.string().describe("The ID or email of the contact to retrieve."),
+            // email: z.string().describe("The email of the contact to retrieve.")
         },
         async ({ id }) => {
             const contactsUrl = `${API_BASE_10xCRM}/contacts/${id}`;
-            const contactsData = await make10xCRMRequest<ContactResponse>(contactsUrl, authToken);
+            const contactsData = await make10xCRMRequest<ContactFeatures>(contactsUrl, authToken);
             console.log(contactsData);
             if (!contactsData) {
                 return {
@@ -167,9 +180,9 @@ export const createServer = ({ authToken }: { authToken: string }) => {
                     ],
                 };
             }
-
-            const features = contactsData.properties.data || [];
-            if (features.length === 0) {
+            const features = contactsData || [];
+            console.log(" features " + features);
+            if (features === null) {
                 return {
                     content: [
                         {
@@ -180,8 +193,9 @@ export const createServer = ({ authToken }: { authToken: string }) => {
                 };
             }
 
-            const formattedContacts = features;
-            const contactsText = `Contact for ${id}:\n\n${formattedContacts.join("\n")}`;
+            const formattedContacts = formatContact(features);
+            console.log(formattedContacts);
+            const contactsText = `Contact for ${id}:\n\n${formattedContacts}`;
 
             return {
                 content: [
@@ -201,11 +215,10 @@ export const createServer = ({ authToken }: { authToken: string }) => {
             dealInfo: z.string().describe(""),
         },
         async ({ dealInfo }) => {
-            const stateCode = dealInfo.toUpperCase();
-            const alertsUrl = `${API_BASE_10xCRM}/alerts?deals=${stateCode}`;
-            const alertsData = await make10xCRMRequest<DealResponse>(alertsUrl, authToken);
+            const dealsUrl = `${API_BASE_10xCRM}/deals`;
+            const dealsData = await make10xCRMRequest<DealResponse>(dealsUrl, authToken);
 
-            if (!alertsData) {
+            if (!dealsData) {
                 return {
                     content: [
                         {
@@ -216,26 +229,26 @@ export const createServer = ({ authToken }: { authToken: string }) => {
                 };
             }
 
-            const features = alertsData.properties.data || [];
-            if (features.length === 0) {
+            const features = dealsData.data || [];
+            if (features === null) {
                 return {
                     content: [
                         {
                             type: "text",
-                            text: `No active alerts for ${stateCode}`,
+                            text: `No active alerts for ${dealsData}`,
                         },
                     ],
                 };
             }
 
-            const formattedAlerts = features;
-            const alertsText = `Active alerts for ${stateCode}:\n\n${formattedAlerts.join("\n")}`;
+            const formattedDeals = features.map(formatDeal);
+            const dealsText = `Active alerts for ${dealsData}:\n\n${formattedDeals.join("\n")}`;
 
             return {
                 content: [
                     {
                         type: "text",
-                        text: alertsText,
+                        text: dealsText,
                     },
                 ],
             };
@@ -244,27 +257,27 @@ export const createServer = ({ authToken }: { authToken: string }) => {
 
     server.tool(
         "get-deal",
-        "Get deals by customer ID or email",
+        "Get deals by deal ID",
         {
-            id: z.string().describe("Customer ID or email"),
+            id: z.string().describe("Deal ID of the deal to retrieve."),
         },
         async ({ id }) => {
-            const alertsUrl = `${API_BASE_10xCRM}/deals?id=${id}`;
-            const alertsData = await make10xCRMRequest<DealResponse>(alertsUrl, authToken);
+            const dealsUrl = `${API_BASE_10xCRM}/deals/${id}`;
+            const dealsData = await make10xCRMRequest<DealFeatures>(dealsUrl, authToken);
 
-            if (!alertsData) {
+            if (!dealsData) {
                 return {
                     content: [
                         {
                             type: "text",
-                            text: "Failed to retrieve alerts data",
+                            text: "Failed to retrieve deals data",
                         },
                     ],
                 };
             }
 
-            const features = alertsData.properties.data || [];
-            if (features.length === 0) {
+            const features = dealsData || [];
+            if (features === null) {
                 return {
                     content: [
                         {
@@ -275,14 +288,14 @@ export const createServer = ({ authToken }: { authToken: string }) => {
                 };
             }
 
-            const formattedAlerts = features;
-            const alertsText = `Active alerts for ${id}:\n\n${formattedAlerts.join("\n")}`;
-
+            const formattedDeal = formatDeal(features);
+            const dealsText = `Active deal for ${id}:\n\n${formattedDeal}`;
+ 
             return {
                 content: [
                     {
                         type: "text",
-                        text: alertsText,
+                        text: dealsText,
                     },
                 ],
             };
@@ -310,7 +323,7 @@ export const createServer = ({ authToken }: { authToken: string }) => {
                 };
             }
 
-            const features = alertsData.properties.data || [];
+            const features = alertsData.data || [];
             if (features.length === 0) {
                 return {
                     content: [
@@ -335,7 +348,7 @@ export const createServer = ({ authToken }: { authToken: string }) => {
             };
         },
     );
-    
+
 
     return { server };
 }

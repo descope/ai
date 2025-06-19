@@ -1,0 +1,40 @@
+{
+  "name": "weather-mcp-server",
+  "version": "1.0.0",
+  "description": "Remote Weather MCP Server",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && shx chmod +x build/*.js",
+    "watch": "tsc --watch",
+    "start": "node build/index.js",
+    "dev": "concurrently \"npm run watch\" \"nodemon --watch build build/index.js\""
+  },
+  "files": [
+    "build"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@descope/mcp-express": "^1.0.3",
+    "@descope/node-sdk": "^1.6.13",
+    "@modelcontextprotocol/sdk": "^1.9.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "googleapis": "^150.0.1",
+    "node-fetch": "^3.3.2",
+    "zod": "^3.25.63"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.10",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.9",
+    "shx": "^0.3.4",
+    "typescript": "^5.7.3"
+  }
+}

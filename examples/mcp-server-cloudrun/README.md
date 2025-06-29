@@ -85,35 +85,53 @@ The server will start locally on port 3000 (or the port specified in your enviro
 Navigating to http://localhost:3000 will show you the features of the MCP server, along with instructions on how to connect it to MCP Clients like Claude, Cursor, etc.
 
 ## Deploying the Server to Google Cloud Run
-Now that you have the server working locally, you can begin the process of deploying it to Google Cloud Run. Cloud Run will build, host, and serve your container, providing a secure public URL that anyone can access.
+Now that you have the server working locally, you can begin the process of deploying it to Google Cloud Run. Cloud Run will build, host, and serve your container, providing a **secure public URL** that anyone can access.
 
 ### Step 1: Building and Pushing a Docker Image
-We will start by containerizing the application using Docker. A sample Dockerfile is included in this repository; you do not need to modify it.
+We will start by containerizing the application using [**Docker**](https://www.docker.com/). A sample Dockerfile is included in this repository; you do not need to modify it.
 
-1. **Build your image locally**: Open your terminal in the project directory and run:
+#### **1. Build your image locally**: 
+Open your terminal in the project directory and run:
 ```bash
 docker build -t nutrition-mcp-server . 
 ```
 This command builds your Docker image and tags it as `nutrition-mcp-server`.
 
-2. **Create an Artifact Registry Repository**: You need a container repository to store your image. Create one with
+#### **2. Setup your Google Cloud Project ID on the `gcloud` cli**
+
+You can select a Project, and get its Project ID from the [GCloud Project Selector Page](https://console.cloud.google.com/projectselector2/home/dashboard)
+
+(recommended) For your convenience, first set up an environment variable called `GCLOUD_PROJECT_ID`, which you can reference in the later commands:
+```bash
+export GCLOUD_PROJECT_ID="your gcloud project id"
+```
+Now, you can use the environment variable `$GCLOUD_PROJECT_ID` in the terminal commands.
+
+Now, setup the project ID in your GCloud config by running:
+```bash
+gcloud config set project $GCLOUD_PROJECT_ID
+```
+
+#### **3. Create an Artifact Registry Repository**: You need a container repository to store your image. Create one with
 ```bash
 gcloud artifacts repositories create remote-mcp-servers \
   --repository-format=docker \
   --location=us-central1 \
   --description="Repository for remote MCP servers" \
-  --project=$PROJECT_ID # replace with your google cloud project id, if not automatically populated
+  --project=$GCLOUD_PROJECT_ID # replace with your google cloud project id, if not automatically populated
 ```
 
-3. **Build and push the image** to Artifact Registry using Cloud Build
+#### **4. Build and push the image** to Artifact Registry using Cloud Build
 Submit the build and push the container to your repository:
 ```bash
-gcloud builds submit --region=us-central1 --tag us-central1-docker.pkg.dev/$PROJECT_ID/remote-mcp-servers/nutrition-mcp-server:latest
+gcloud builds submit --region=us-central1 --tag us-central1-docker.pkg.dev/$GCLOUD_PROJECT_ID/remote-mcp-servers/nutrition-mcp-server:latest
 ```
 
 ### Step 2: Create your Cloud Run Application
-1. First, we will setup a .env.yaml file which allows us to securely pass secrets to our Cloud Run Service.
-You can first copy the existing .env.yaml.example file
+#### **1. Create .env.yaml config file for CloudRun secrets**
+
+First, we will setup a .env.yaml file which allows us to securely pass secrets to our Cloud Run Service.
+You can first copy the existing `.env.yaml.example` file
 ```bash
 cp .env.yaml.example .env.yaml
 ```
@@ -123,12 +141,13 @@ DESCOPE_PROJECT_ID: "<your descope project id>"
 DESCOPE_MANAGEMENT_KEY: "<your descope management key>"
 SERVER_URL: "http://localhost:3000" # For local development
 # For production (replace with your cloud run worker URL)
-NUTRIONIX_APP_ID: 
-NUTRIONIX_APP_KEY: 
+NUTRIONIX_APP_ID: "<app id>"
+NUTRIONIX_APP_KEY: "<app key>"
 ```
 We will mention the above `.env.yaml` file in our command below
 
-2. Since our image is now stored in Artifact Registry, you can deploy it as a Cloud Run service:
+#### **2. Deploy as Cloud Run Service**
+Since our image is now stored in Artifact Registry, you can deploy it as a Cloud Run service:
 ```bash
 gcloud run deploy nutrition-mcp-server \
   --image us-central1-docker.pkg.dev/descope-mcp/remote-mcp-servers/nutrition-mcp-server:latest \
@@ -137,6 +156,17 @@ gcloud run deploy nutrition-mcp-server \
   --allow-unauthenticated \
   --env-vars-file .env.yaml 
 ```
+The reason we use the `--allow-unauthenticated` flag is to make the Cloud Run service **publicly accessible to anyone** without requiring Google Cloud IAM authentication.
+
+Authentication is handled within the application itself using Descope. 
+
+#### **3. Verify that the Deployment is complete**: After running the above command, you will get a message on the terminal, similar to:
+```bash
+Done.                                                                      
+Service [nutrition-mcp-server] revision [nutrition-mcp-server-00003-xf9] has been deployed and is serving 100 percent of traffic.
+Service URL: https://nutrition-mcp-server-998218601126.us-central1.run.app
+```
+Congratulations! You now have a remote MCP server deployed, and publicly accesible on the Service URL. You can now visit the URL mentioned, and connect the MCP server to an MCP Client like [CloudFlare Playground](https://playground.ai.cloudflare.com/), Claude Desktop, Cursor, etc.
 
 ## API Endpoints
 

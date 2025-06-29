@@ -3,4 +3,6 @@ build/
 *.log
 .env
 .env.local
+.env.yaml
 dist
+logs

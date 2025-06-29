@@ -24,6 +24,8 @@ These documentation files are in Markdown format and can be viewed in any Markdo
 
 - [`remote-mcp-server-express-fly`](./examples/remote-mcp-server-express-fly/README.md): An example of a Remote MCP Server using Express and Descope's MCP Auth SDK and deploying to Fly.io.
 
+- [`mcp-server-cloudrun`](./examples/mcp-server-cloudrun/README.md): An example of a remote MCP server with authentication using Descope's MCP Auth SDK deployed to Google Cloud Run.
+
 ## Contributing
 
 In order to use the repo locally:

@@ -170,7 +170,7 @@ Congratulations! You now have a remote MCP server deployed, and publicly accesib
 
 ## API Endpoints
 
-- `GET /sse`: Establishes an SSE connection for real-time weather data
+- `GET /sse`: Establishes an SSE connection for fetching data from the Nutrionix API.
 - `POST /message`: Handles incoming messages for the MCP protocol
 
 ## Authentication

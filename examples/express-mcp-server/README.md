@@ -53,7 +53,7 @@ The server will start on port 3000 (or the port specified in your environment va
 
 ## API Endpoints
 
-- `GET /mcp`: Handles incoming messages for the MCP protocol
+- `POST /mcp`: Handles incoming messages for the MCP protocol
 
 ## Authentication
 

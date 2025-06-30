@@ -78,7 +78,8 @@ npm install
 
 4. The setup is complete! To run the server locally:
 ```bash
-npm run dev
+npm run build
+npm run start
 ```
 
 The server will start locally on port 3000 (or the port specified in your environment variables).
@@ -140,7 +141,7 @@ and then, update the fields in your `.env.yaml` file
 DESCOPE_PROJECT_ID: "<your descope project id>"
 DESCOPE_MANAGEMENT_KEY: "<your descope management key>"
 SERVER_URL: "http://localhost:3000" # For local development
-# For production (replace with your cloud run worker URL)
+# For production (DON'T forget to replace with your CloudRun worker URL)
 NUTRIONIX_APP_ID: "<app id>"
 NUTRIONIX_APP_KEY: "<app key>"
 ```

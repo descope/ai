@@ -33,8 +33,7 @@ app.use(cors({
 }));
 app.options("*", cors());
 
-// Auth middleware
-//app.use(descopeMcpAuthRouter());
+// Auth middleware for session validation
 app.use(["/mcp"], descopeMcpBearerAuth());
 
 // Initialize transport

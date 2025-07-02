@@ -11,7 +11,7 @@ This example shows how to add auth to a Streamable HTTP MCP Server using Descope
 Before proceeding, make sure you have the following:
 
 - A valid Descope [Project ID](https://app.descope.com/settings/project) and [Management Key](https://app.descope.com/settings/company/managementkeys)
-- Dynamic Client Registration enabled on Inbound Apps in Descope
+- [Dynamic Client Registration](https://docs.descope.com/identity-federation/inbound-apps/creating-inbound-apps#method-2-dynamic-client-registration-dcr) enabled on Inbound Apps in Descope
 
 ## Speedily Deploy the Server
 

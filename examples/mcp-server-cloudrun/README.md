@@ -17,7 +17,7 @@ This example can be easily customized to integrate with arbitrary backend servic
 ## Preview the Application
 This Remote MCP Server is deployed to Google CloudRun here: [https://nutrition-mcp-server-998218601126.us-central1.run.app](https://nutrition-mcp-server-998218601126.us-central1.run.app)
 
-You can connect to the server using the [Cloudflare Playground](https://playground.ai.cloudflare.com/), [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) or any other MCP client such as Claude Desktop or Cursor. Be sure to include the `/sse` path in the connection URL, i.e, `https://nutrition-mcp-server-998218601126.us-central1.run.app/sse`
+You can connect to the server using the [Cloudflare Playground](https://playground.ai.cloudflare.com/), [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) or any other MCP client such as Claude Desktop or Cursor. Be sure to include the `/mcp` path in the connection URL, i.e, `https://nutrition-mcp-server-998218601126.us-central1.run.app/mcp`
 
 ## Features
 
@@ -170,9 +170,8 @@ Service URL: https://nutrition-mcp-server-998218601126.us-central1.run.app
 Congratulations! You now have a remote MCP server deployed, and publicly accesible on the Service URL. You can now visit the URL mentioned, and connect the MCP server to an MCP Client like [CloudFlare Playground](https://playground.ai.cloudflare.com/), Claude Desktop, Cursor, etc.
 
 ## API Endpoints
-
-- `GET /sse`: Establishes an SSE connection for fetching data from the Nutrionix API.
-- `POST /message`: Handles incoming messages for the MCP protocol
+- `GET /`: A homepage for the application, describing the features of the MCP server, and how to connect it to various MCP clients.
+- `POST /mcp`: Handles incoming messages for the MCP protocol.
 
 ## Authentication
 The server uses [Descope](https://www.descope.com/) for authentication. All MCP endpoints except the authentication router require a valid bearer token.

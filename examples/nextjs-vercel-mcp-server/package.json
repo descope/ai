@@ -1,5 +1,5 @@
 {
-  "name": "weather-mcp-server",
+  "name": "mcp-server-descope-nextjs",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -18,10 +18,9 @@
   },
   "dependencies": {
     "@descope/node-sdk": "^1.7.7",
-    "@modelcontextprotocol/sdk": "^1.10.1",
+    "@modelcontextprotocol/sdk": "^1.12.1",
     "@vercel/mcp-adapter": "^0.8.2",
     "ai": "^4.3.16",
-    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "next": "^15.3.3",
     "react": "^19.1.0",
@@ -30,7 +29,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20.19.6",
+    "@types/node": "^20.19.1",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",

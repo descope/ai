@@ -1,4 +1,3 @@
-import defineToolWithDescope from "./util";
 import { z } from "zod";
 
 const NWS_API_BASE = "https://api.weather.gov";
@@ -71,178 +70,178 @@ interface ForecastResponse {
   };
 }
 
-{
-  /* Params/Schemas */
-}
-const getAlertsSchema = z.object({
-  state: z.string().length(2).describe("Two-letter state code (e.g. CA, NY)"),
-});
-type GetAlertsParams = z.infer<typeof getAlertsSchema>;
+// Weather tool functions
+export function getAlerts(server: any) {
+  server.tool(
+    "get-alerts",
+    "Get weather alerts for a state",
+    {
+      state: z
+        .string()
+        .length(2)
+        .describe("Two-letter state code (e.g. CA, NY)"),
+    },
+    async ({ state }: { state: string }) => {
+      try {
+        const stateCode = state.toUpperCase();
+        const alertsUrl = `${NWS_API_BASE}/alerts?area=${stateCode}`;
+        const alertsData = await makeNWSRequest<AlertsResponse>(alertsUrl);
 
-const getForecastSchema = z.object({
-  latitude: z.number().min(-90).max(90).describe("Latitude of the location"),
-  longitude: z
-    .number()
-    .min(-180)
-    .max(180)
-    .describe("Longitude of the location"),
-});
-type GetForecastParams = z.infer<typeof getForecastSchema>;
+        if (!alertsData) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Failed to retrieve alerts data",
+              },
+            ],
+          };
+        }
 
-{
-  /* Weather Tools */
-}
-/**
- * getAlerts - Get weather alerts for a state using the National Weather Service API.
- * getForecast - Get weather forecast for a location using latitude and longitude coordinates.
- */
-export const getAlerts = defineToolWithDescope({
-  name: "getAlerts",
-  description: "Get weather alerts for a state",
-  paramsSchema: getAlertsSchema.shape,
-  execute: async ({ args, extra }) => {
-    const { state } = args as GetAlertsParams;
+        const features = alertsData.features || [];
+        if (features.length === 0) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `No active alerts for ${stateCode}`,
+              },
+            ],
+          };
+        }
 
-    try {
-      const stateCode = state.toUpperCase();
-      const alertsUrl = `${NWS_API_BASE}/alerts?area=${stateCode}`;
-      const alertsData = await makeNWSRequest<AlertsResponse>(alertsUrl);
+        const formattedAlerts = features.map(formatAlert);
+        const alertsText = `Active alerts for ${stateCode}:\n\n${formattedAlerts.join(
+          "\n"
+        )}`;
 
-      if (!alertsData) {
         return {
           content: [
             {
               type: "text",
-              text: "Failed to retrieve alerts data",
+              text: alertsText,
             },
           ],
         };
+      } catch (error) {
+        console.error("Error in getAlerts tool:", error);
+        throw new Error("Failed to retrieve weather alerts.");
       }
-
-      const features = alertsData.features || [];
-      if (features.length === 0) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `No active alerts for ${stateCode}`,
-            },
-          ],
-        };
-      }
-
-      const formattedAlerts = features.map(formatAlert);
-      const alertsText = `Active alerts for ${stateCode}:\n\n${formattedAlerts.join(
-        "\n"
-      )}`;
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: alertsText,
-          },
-        ],
-      };
-    } catch (error) {
-      console.error("Error in getAlerts tool:", error);
-      throw new Error("Failed to retrieve weather alerts.");
     }
-  },
-});
+  );
+}
 
-export const getForecast = defineToolWithDescope({
-  name: "getForecast",
-  description: "Get weather forecast for a location",
-  paramsSchema: getForecastSchema.shape,
-  execute: async ({ args, extra }) => {
-    const { latitude, longitude } = args as GetForecastParams;
+export function getForecast(server: any) {
+  server.tool(
+    "get-forecast",
+    "Get weather forecast for a location",
+    {
+      latitude: z
+        .number()
+        .min(-90)
+        .max(90)
+        .describe("Latitude of the location"),
+      longitude: z
+        .number()
+        .min(-180)
+        .max(180)
+        .describe("Longitude of the location"),
+    },
+    async ({
+      latitude,
+      longitude,
+    }: {
+      latitude: number;
+      longitude: number;
+    }) => {
+      try {
+        // Get grid point data
+        const pointsUrl = `${NWS_API_BASE}/points/${latitude.toFixed(
+          4
+        )},${longitude.toFixed(4)}`;
+        const pointsData = await makeNWSRequest<PointsResponse>(pointsUrl);
 
-    try {
-      // Get grid point data
-      const pointsUrl = `${NWS_API_BASE}/points/${latitude.toFixed(
-        4
-      )},${longitude.toFixed(4)}`;
-      const pointsData = await makeNWSRequest<PointsResponse>(pointsUrl);
+        if (!pointsData) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Failed to retrieve grid point data for coordinates: ${latitude}, ${longitude}. This location may not be supported by the NWS API (only US locations are supported).`,
+              },
+            ],
+          };
+        }
 
-      if (!pointsData) {
+        const forecastUrl = pointsData.properties?.forecast;
+        if (!forecastUrl) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Failed to get forecast URL from grid point data",
+              },
+            ],
+          };
+        }
+
+        // Get forecast data
+        const forecastData = await makeNWSRequest<ForecastResponse>(
+          forecastUrl
+        );
+        if (!forecastData) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Failed to retrieve forecast data",
+              },
+            ],
+          };
+        }
+
+        const periods = forecastData.properties?.periods || [];
+        if (periods.length === 0) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "No forecast periods available",
+              },
+            ],
+          };
+        }
+
+        // Format forecast periods
+        const formattedForecast = periods.map((period: ForecastPeriod) =>
+          [
+            `${period.name || "Unknown"}:`,
+            `Temperature: ${period.temperature || "Unknown"}°${
+              period.temperatureUnit || "F"
+            }`,
+            `Wind: ${period.windSpeed || "Unknown"} ${
+              period.windDirection || ""
+            }`,
+            `${period.shortForecast || "No forecast available"}`,
+            "---",
+          ].join("\n")
+        );
+
+        const forecastText = `Forecast for ${latitude}, ${longitude}:\n\n${formattedForecast.join(
+          "\n"
+        )}`;
+
         return {
           content: [
             {
               type: "text",
-              text: `Failed to retrieve grid point data for coordinates: ${latitude}, ${longitude}. This location may not be supported by the NWS API (only US locations are supported).`,
+              text: forecastText,
             },
           ],
         };
+      } catch (error) {
+        console.error("Error in getForecast tool:", error);
+        throw new Error("Failed to retrieve weather forecast.");
       }
-
-      const forecastUrl = pointsData.properties?.forecast;
-      if (!forecastUrl) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: "Failed to get forecast URL from grid point data",
-            },
-          ],
-        };
-      }
-
-      // Get forecast data
-      const forecastData = await makeNWSRequest<ForecastResponse>(forecastUrl);
-      if (!forecastData) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: "Failed to retrieve forecast data",
-            },
-          ],
-        };
-      }
-
-      const periods = forecastData.properties?.periods || [];
-      if (periods.length === 0) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: "No forecast periods available",
-            },
-          ],
-        };
-      }
-
-      // Format forecast periods
-      const formattedForecast = periods.map((period: ForecastPeriod) =>
-        [
-          `${period.name || "Unknown"}:`,
-          `Temperature: ${period.temperature || "Unknown"}°${
-            period.temperatureUnit || "F"
-          }`,
-          `Wind: ${period.windSpeed || "Unknown"} ${
-            period.windDirection || ""
-          }`,
-          `${period.shortForecast || "No forecast available"}`,
-          "---",
-        ].join("\n")
-      );
-
-      const forecastText = `Forecast for ${latitude}, ${longitude}:\n\n${formattedForecast.join(
-        "\n"
-      )}`;
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: forecastText,
-          },
-        ],
-      };
-    } catch (error) {
-      console.error("Error in getForecast tool:", error);
-      throw new Error("Failed to retrieve weather forecast.");
     }
-  },
-});
+  );
+}

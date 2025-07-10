@@ -1,5 +1,0 @@
-{
-  "/.well-known/oauth-protected-resource/route": "app/.well-known/oauth-protected-resource/route.js",
-  "/.well-known/oauth-authorization-server/route": "app/.well-known/oauth-authorization-server/route.js",
-  "/mcp/route": "app/mcp/route.js"
-}

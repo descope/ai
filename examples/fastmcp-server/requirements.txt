@@ -1,7 +1,0 @@
-mcp
-jwcrypto
-httpx
-pydantic
-pydantic-settings
-click
-starlette

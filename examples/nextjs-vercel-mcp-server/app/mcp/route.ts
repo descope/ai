@@ -255,6 +255,7 @@ async function verifyToken(
   if (!authToken) {
     const authHeader = req.headers.get("Authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
+      console.log("authHeader", authHeader);
       authToken = authHeader.substring(7);
     }
   }

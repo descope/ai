@@ -251,7 +251,15 @@ async function verifyToken(
   req: Request,
   token?: string
 ): Promise<AuthInfo | undefined> {
-  if (!token) {
+  let authToken = token;
+  if (!authToken) {
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      authToken = authHeader.substring(7);
+    }
+  }
+
+  if (!authToken) {
     throw new Error("No authorization token provided");
   }
 
@@ -261,7 +269,7 @@ async function verifyToken(
       baseUrl: process.env.DESCOPE_BASE_URL!,
     });
 
-    const authInfo = await descope.validateSession(token);
+    const authInfo = await descope.validateSession(authToken);
 
     if (!authInfo) {
       throw new Error("Invalid or expired token");

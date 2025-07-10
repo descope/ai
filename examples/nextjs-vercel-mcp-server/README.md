@@ -14,7 +14,7 @@ This example shows how to build an MCP server using the Vercel MCP adapter with 
 
 ## Deployment
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/descope/ai/tree/main/examples/express-vercel-mcp-server&env=DESCOPE_PROJECT_ID,DESCOPE_BASE_URL&envDescription=Required%20environment%20variables%20for%20the%20MCP%20server&envLink=https://github.com/descope/ai/tree/main/examples/express-vercel-mcp-server#requirements)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/descope/ai/tree/main/examples/nextjs-vercel-mcp-server&env=DESCOPE_PROJECT_ID,DESCOPE_BASE_URL&envDescription=Required%20environment%20variables%20for%20the%20MCP%20server&envLink=https://github.com/descope/ai/tree/main/examples/nextjs-vercel-mcp-server#requirements)
 
 You can connect to the server using the [Cloudflare Playground](https://playground.ai.cloudflare.com/), [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) or any other MCP client. Be sure to include the `/mcp` path in the connection URL.
 

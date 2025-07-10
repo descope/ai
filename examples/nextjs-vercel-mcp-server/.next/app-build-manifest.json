@@ -1,0 +1,25 @@
+{
+  "pages": {
+    "/.well-known/oauth-protected-resource/route": [
+      "static/chunks/webpack-b8929893121c31bf.js",
+      "static/chunks/4bd1b696-67ee12fb04071d3b.js",
+      "static/chunks/32-b4a54f52fed64995.js",
+      "static/chunks/main-app-9fc1d19b0ee5e2b5.js",
+      "static/chunks/app/.well-known/oauth-protected-resource/route-b44b4f0f5840bf58.js"
+    ],
+    "/.well-known/oauth-authorization-server/route": [
+      "static/chunks/webpack-b8929893121c31bf.js",
+      "static/chunks/4bd1b696-67ee12fb04071d3b.js",
+      "static/chunks/32-b4a54f52fed64995.js",
+      "static/chunks/main-app-9fc1d19b0ee5e2b5.js",
+      "static/chunks/app/.well-known/oauth-authorization-server/route-56201409fdcab3c2.js"
+    ],
+    "/mcp/route": [
+      "static/chunks/webpack-b8929893121c31bf.js",
+      "static/chunks/4bd1b696-67ee12fb04071d3b.js",
+      "static/chunks/32-b4a54f52fed64995.js",
+      "static/chunks/main-app-9fc1d19b0ee5e2b5.js",
+      "static/chunks/app/mcp/route-f96fa80a21d91343.js"
+    ]
+  }
+}

@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   createMcpHandler,
-  experimental_withMcpAuth,
+  experimental_withMcpAuth as withMcpAuth,
 } from "@vercel/mcp-adapter";
 import DescopeClient from "@descope/node-sdk";
 import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
@@ -252,33 +252,36 @@ async function verifyToken(
   token?: string
 ): Promise<AuthInfo | undefined> {
   if (!token) {
-    return undefined;
+    throw new Error("No authorization token provided");
   }
 
-  const descope = DescopeClient({
-    projectId: process.env.DESCOPE_PROJECT_ID!,
-    baseUrl: process.env.DESCOPE_BASE_URL!,
-  });
+  try {
+    const descope = DescopeClient({
+      projectId: process.env.DESCOPE_PROJECT_ID!,
+      baseUrl: process.env.DESCOPE_BASE_URL!,
+    });
 
-  const authInfo = await descope.validateSession(token).catch((e) => {
-    return undefined;
-  });
+    const authInfo = await descope.validateSession(token);
 
-  if (!authInfo) {
-    return undefined;
+    if (!authInfo) {
+      throw new Error("Invalid or expired token");
+    }
+
+    const scope = authInfo.token.scope as string | undefined;
+    const scopes = scope ? scope.split(" ").filter(Boolean) : [];
+
+    const clientId = authInfo.token.azp as string;
+
+    return {
+      token: authInfo.jwt,
+      clientId,
+      scopes,
+      expiresAt: authInfo.token.exp,
+    };
+  } catch (error) {
+    console.error("Token verification failed:", error);
+    throw new Error("Invalid authorization token");
   }
-
-  const scope = authInfo.token.scope as string | undefined;
-  const scopes = scope ? scope.split(" ").filter(Boolean) : [];
-
-  const clientId = authInfo.token.azp as string;
-
-  return {
-    token: authInfo.jwt,
-    clientId,
-    scopes,
-    expiresAt: authInfo.token.exp,
-  };
 }
 
 const mcpHandler = async (req: Request) => {
@@ -309,8 +312,43 @@ const mcpHandler = async (req: Request) => {
   )(req);
 };
 
-const handler = experimental_withMcpAuth(mcpHandler, verifyToken, {
+const handler = withMcpAuth(mcpHandler, verifyToken, {
   required: true,
 });
 
-export { handler as GET, handler as POST, handler as DELETE };
+// Add CORS headers for cross-origin requests
+const corsHandler = async (req: Request) => {
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, mcp-protocol-version",
+        "Access-Control-Max-Age": "86400",
+      },
+    });
+  }
+
+  // Handle actual requests
+  const response = await handler(req);
+
+  // Add CORS headers to the response
+  const headers = new Headers(response.headers);
+  headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, mcp-protocol-version"
+  );
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+};
+
+export { corsHandler as GET, corsHandler as POST, corsHandler as DELETE };

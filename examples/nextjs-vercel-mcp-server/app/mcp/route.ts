@@ -313,4 +313,39 @@ const handler = experimental_withMcpAuth(mcpHandler, verifyToken, {
   required: true,
 });
 
-export { handler as GET, handler as POST, handler as DELETE };
+// Add CORS headers for cross-origin requests
+const corsHandler = async (req: Request) => {
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, mcp-protocol-version",
+        "Access-Control-Max-Age": "86400",
+      },
+    });
+  }
+
+  // Handle actual requests
+  const response = await handler(req);
+
+  // Add CORS headers to the response
+  const headers = new Headers(response.headers);
+  headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, mcp-protocol-version"
+  );
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+};
+
+export { corsHandler as GET, corsHandler as POST, corsHandler as DELETE };

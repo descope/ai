@@ -13,6 +13,7 @@
   "type": "module",
   "dependencies": {
     "@descope/mcp-express": "^1.0.4",
+    "@descope/node-sdk": "^1.7.8",
     "@modelcontextprotocol/sdk": "^1.10.1",
     "cors": "^2.8.5",
     "express": "^4.18.2",

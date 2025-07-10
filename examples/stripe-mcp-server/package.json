@@ -1,0 +1,45 @@
+{
+  "name": "stripe-mcp-server",
+  "version": "1.0.0",
+  "description": "Stripe MCP Server with Streamable HTTP Transport and Descope Auth",
+  "type": "module",
+  "main": "build/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "shx rm -rf build",
+    "build": "npm run clean && tsc && shx chmod +x build/*.js",
+    "build:watch": "tsc --watch",
+    "start": "node --no-deprecation build/index.js",
+    "prepare": "npm run build",
+    "dev": "concurrently \"npm run build:watch\" \"nodemon --watch build --delay 1000ms build/index.js\"",
+    "dev:no-deprecation": "concurrently \"npm run build:watch\" \"nodemon --watch build --delay 1000ms --exec 'node --no-deprecation build/index.js'\""
+  },
+  "files": [
+    "build",
+    "public"
+  ],
+  "keywords": ["stripe", "mcp", "server", "express"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@descope/mcp-express": "^1.0.4",
+    "@descope/node-sdk": "^1.6.13",
+    "@modelcontextprotocol/sdk": "^1.10.0",
+    "@stripe/agent-toolkit": "^0.7.10",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "node-fetch": "^3.3.2",
+    "serverless-http": "^3.2.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.10.10",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.9",
+    "shx": "^0.3.4",
+    "typescript": "^5.7.3"
+  }
+}

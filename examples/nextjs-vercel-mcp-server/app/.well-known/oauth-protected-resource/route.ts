@@ -7,6 +7,7 @@ export async function GET(req: Request) {
       authorization_servers: [`${origin}`],
       // scopes_supported: [],
       resource_name: "Descope MCP Server",
+      // resource_documentation: `${origin}/docs`
     },
     {
       headers: {

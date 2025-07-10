@@ -1,7 +1,7 @@
 /// <reference types="node" />
 
 export async function GET() {
-  const baseUrl = process.env.DESCOPE_BASE_URL || "https://api.descope.com";
+  const baseUrl = process.env.DESCOPE_BASE_URL || "https://api.descope.org";
 
   return Response.json(
     {

@@ -1,4 +1,4 @@
-# Express MCP Server with Vercel MCP Adapter and Descope Node SDK
+# NextJS MCP Server with Vercel MCP Adapter and Descope Node SDK
 
 ![Descope Banner](https://github.com/descope/.github/assets/32936811/d904d37e-e3fa-4331-9f10-2880bb708f64)
 
@@ -16,7 +16,7 @@ This example shows how to build an MCP server using the Vercel MCP adapter with 
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/descope/ai/tree/main/examples/nextjs-vercel-mcp-server&env=DESCOPE_PROJECT_ID,DESCOPE_BASE_URL&envDescription=Required%20environment%20variables%20for%20the%20MCP%20server&envLink=https://github.com/descope/ai/tree/main/examples/nextjs-vercel-mcp-server#requirements)
 
-You can connect to the server using the [Cloudflare Playground](https://playground.ai.cloudflare.com/), [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) or any other MCP client. Be sure to include the `/mcp` path in the connection URL.
+You can connect to the server using the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) or any other MCP client. Be sure to include the `/mcp` path in the connection URL.
 
 ## Features
 

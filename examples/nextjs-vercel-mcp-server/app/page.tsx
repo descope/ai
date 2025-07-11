@@ -128,16 +128,14 @@ export default function Home() {
               <div className="space-y-6">
                 <div>
                   <h4 className="text-gray-400 mb-2 font-medium">Server URL</h4>
-                  <CodeBlock className="text-green-400" language="url">
-                    {serverUrl}
-                  </CodeBlock>
+                  <CodeBlock className="text-green-400">{serverUrl}</CodeBlock>
                 </div>
 
                 <div>
                   <h4 className="text-gray-400 mb-2 font-medium">
                     Configuration
                   </h4>
-                  <CodeBlock className="text-blue-300" language="json">{`{
+                  <CodeBlock className="text-blue-300">{`{
   "mcpServers": {
     "weather": {
       "command": "npx",
@@ -212,7 +210,7 @@ export default function Home() {
 
                 <div>
                   <h4 className="text-gray-400 mb-2 font-medium">Zed</h4>
-                  <CodeBlock className="text-blue-300" language="json">{`{
+                  <CodeBlock className="text-blue-300">{`{
   "context_servers": {
     "weather": {
       "command": {

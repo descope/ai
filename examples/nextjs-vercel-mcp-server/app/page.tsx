@@ -63,7 +63,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-[#181c2b] via-[#232946] to-[#3a1c71] font-sans">
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl font-extrabold font-heading text-white mb-6 tracking-tight drop-shadow-lg flex items-center">
+          <h1 className="text-5xl font-extrabold font-heading text-white mb-6 tracking-tight drop-shadow-lg flex items-center justify-center">
             <span className="inline-block align-middle text-6xl mr-3">🌤️</span>
             <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent align-middle">
               Weather MCP Server
@@ -119,112 +119,44 @@ export default function Home() {
             .
           </p>
 
-          <section className="grid md:grid-cols-2 gap-8 mb-12">
-            <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-3xl p-8 shadow-xl">
-              <h3 className="text-2xl font-bold text-white mb-6">
-                Quick Start
-              </h3>
+          <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-3xl p-8 shadow-xl mb-8">
+            <h3 className="text-2xl font-bold text-white mb-6">
+              IDE Integration
+            </h3>
 
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-gray-400 mb-2 font-medium">Server URL</h4>
-                  <CodeBlock className="text-green-400">{serverUrl}</CodeBlock>
-                </div>
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-gray-400 mb-2 font-medium">Server URL</h4>
+                <p className="text-gray-300 mb-2">
+                  Use this URL to connect your IDE:
+                </p>
+                <CodeBlock className="text-blue-300">{serverUrl}</CodeBlock>
+              </div>
 
-                <div>
-                  <h4 className="text-gray-400 mb-2 font-medium">
-                    Configuration
-                  </h4>
-                  <CodeBlock className="text-blue-300">{`{
+              <div>
+                <h4 className="text-gray-400 mb-2 font-medium">Cursor</h4>
+                <p className="text-gray-300 mb-2">
+                  Open Settings → Tools & Integrations → MCP and add this
+                  configuration:
+                </p>
+                <CodeBlock>{`{
   "mcpServers": {
     "weather": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "${serverUrl}"]
+      "url": "${serverUrl}"
     }
   }
 }`}</CodeBlock>
-                </div>
+              </div>
+
+              <div>
+                <h4 className="text-gray-400 mb-2 font-medium">Other IDEs</h4>
+                <p className="text-gray-300">
+                  For Zed, VSCode, and other IDEs, simply add the server URL to
+                  your MCP configuration in the IDE's settings.
+                </p>
               </div>
             </div>
-
-            <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-3xl p-8 shadow-xl">
-              <h3 className="text-2xl font-bold text-white mb-6">
-                IDE Integration
-              </h3>
-
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-gray-400 mb-2 font-medium">Windsurf</h4>
-                  <ol className="list-decimal pl-6 space-y-2 text-gray-300">
-                    <li>Open Settings</li>
-                    <li>
-                      Navigate to{" "}
-                      <span className="text-white font-medium">
-                        Cascade → Model Context Provider Servers
-                      </span>
-                    </li>
-                    <li>
-                      Select{" "}
-                      <span className="text-white font-medium">Add Server</span>
-                    </li>
-                  </ol>
-                </div>
-
-                <div>
-                  <h4 className="text-gray-400 mb-2 font-medium">Cursor</h4>
-                  <ol className="list-decimal pl-6 space-y-2 text-gray-300">
-                    <li>
-                      Press{" "}
-                      <kbd className="px-2 py-1 bg-gray-800 rounded text-white font-medium">
-                        ⌘ + ⇧ + J
-                      </kbd>{" "}
-                      to open Settings
-                    </li>
-                    <li>
-                      Select <span className="text-white font-medium">MCP</span>
-                    </li>
-                    <li>
-                      Select{" "}
-                      <span className="text-white font-medium">
-                        Add new global MCP server
-                      </span>
-                    </li>
-                  </ol>
-                </div>
-
-                <div>
-                  <h4 className="text-gray-400 mb-2 font-medium">VSCode</h4>
-                  <p className="text-gray-300">
-                    Read more{" "}
-                    <a
-                      href="https://code.visualstudio.com/docs/copilot/chat/mcp-servers"
-                      className="text-purple-300 hover:text-pink-400 transition-colors"
-                    >
-                      here
-                    </a>
-                  </p>
-                  <p className="text-gray-400 text-sm mt-1">
-                    Note: Requires VSCode 1.99 or above
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-gray-400 mb-2 font-medium">Zed</h4>
-                  <CodeBlock className="text-blue-300">{`{
-  "context_servers": {
-    "weather": {
-      "command": {
-        "command": "npx",
-        "args": ["-y", "mcp-remote", "${serverUrl}"]
-      }
-    },
-    "settings": {}
-  }
-}`}</CodeBlock>
-                </div>
-              </div>
-            </div>
-          </section>
+          </div>
 
           <section className="mb-12">
             <h2 className="text-2xl font-bold font-heading text-white mb-6">

@@ -1,123 +1,98 @@
-# Securing MCP Server-Client Architecture with Descope Using Ollama, LLaMA Stack in Python
+# FastMCP Weather Server Example (Python)
 
-As AI workloads scale in sensitivity and compute cost, it's crucial to secure interactions between clients and inference servers. This post demonstrates how to secure a Python-based MCP server-client architecture using Ollama and the LLaMA model stack, protected via OAuth 2.0 using Descope.
+![Descope Banner](https://github.com/descope/.github/assets/32936811/d904d37e-e3fa-4331-9f10-2880bb708f64)
 
-## Prerequisites
+## Introduction
+
+This example demonstrates how to implement OAuth authentication with an external provider (Descope) using [FastAPI](https://fastapi.tiangolo.com/) and [FastMCP](https://github.com/fastmcp/fastmcp) for Model Context Protocol (MCP) tools.
+
+Here, FastMCP tools are mounted in a FastAPI server, rather than converting FastAPI APIs to MCP tools.
+
+## Requirements
 
 - Python 3.10+
-- Docker & Docker Compose (optional)
-- Descope Account and Project
-- Ollama installed (ollama serve)
-- Descope Python SDK
-- HTTP libraries: requests, httpx
+- [Descope Project ID](https://app.descope.com/settings/project)
+- [Dynamic Client Registration](https://docs.descope.com/identity-federation/inbound-apps/creating-inbound-apps#method-2-dynamic-client-registration-dcr) enabled on Inbound Apps in Descope
 
-## Run ollama
+## Quick Start
 
-```bash
-ollama run llama2:3b --keepalive 60m
-```
-
-## Run llama stack (optional)
+### 1. Clone the repository
 
 ```bash
-INFERENCE_MODEL=llama2:3b uv run --with llama-stack llama stack build --template ollama --image-type venv --run
+git clone https://github.com/descope/ai.git
+cd examples/fastmcp-server
 ```
 
-## Run MCP Server and Client
+### 2. Set up environment variables
 
-Setup virtual environment
+Create a `.env` file with:
+
+```env
+DESCOPE_PROJECT_ID=your_project_id
+DESCOPE_BASE_URL=https://api.descope.com
+```
+
+### 3. Install dependencies
 
 ```bash
-uv venv
-source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Add Python dependencies
+### 4. Run the server
 
 ```bash
-uv add fastmcp descope llama-stack-client
+python server.py
 ```
 
-### Configure Credentials
+### 5. Open the landing page
 
-Update the following files with your Descope credentials:
+Visit [http://localhost:3000](http://localhost:3000) for documentation and quick start info.
 
-1. In `mcp-llama-stack-descope.py`:
+## Features
+
+- Real-time weather data and alerts from the National Weather Service API
+- Secure OAuth 2.0 authentication using Descope
+- MCP-compliant tool endpoints
+- Modern, self-documenting landing page
+
+## API Endpoints
+
+- `GET /` — Landing page and documentation
+- `GET /mcp-server/mcp/` — Main MCP endpoint (requires Bearer token)
+- `GET /.well-known/oauth-authorization-server` — OAuth 2.0 server metadata
+- `GET /.well-known/oauth-protected-resource` — Resource metadata
+
+## Authentication
+
+The server uses Descope for authentication. All MCP endpoints require a valid Bearer token.  
+Tokens are validated using FastMCP’s built-in `BearerAuthProvider`. Read more about it [here](https://gofastmcp.com/servers/auth/bearer)
+
+## Adding Tools
+
+Just use the `@mcp.tool` decorator:
 
 ```python
-mcp = FastMCP(
-    name="SecureApp",
-    auth_server_provider=DescopeOAuthProvider(
-        project_id="YOUR_PROJECT_ID",
-        management_key="YOUR_MANAGEMENT_KEY",
-        client_id="YOUR_CLIENT_ID",
-        client_secret="YOUR_CLIENT_SECRET"
-    ),
+@mcp.tool
+def get_alerts(state: str) -> str:
     ...
-)
 ```
 
-2. In `client-descope.py`:
+FastMCP will automatically expose this as an MCP tool!
 
-```python
-PROJECT_ID = "YOUR_PROJECT_ID"
-MANAGEMENT_KEY = "YOUR_MANAGEMENT_KEY"
-CLIENT_ID = "YOUR_CLIENT_ID"
-CLIENT_SECRET = "YOUR_CLIENT_SECRET"
-```
+## Note on Well-Known Endpoints
 
-### Run FastMCP Server
+Ideally, FastMCP should support setting up the `.well-known` endpoints out of the box, similar to how [MCPAuth](https://github.com/descope/mcpauth) works.
 
-```bash
-uv run mcp-llama-stack-descope.py
-```
+For now, this example uses FastAPI to serve these endpoints manually, but future versions of FastMCP may make this even easier.
 
-### Run FastMCP Client
+## Troubleshooting
 
-```bash
-uv run client-descope.py
-```
+- If you encounter authentication issues, try clearing the authentication files:
+  ```bash
+  rm -rf ~/.mcp-auth
+  ```
+- For OAuth-related issues, check that your `DESCOPE_PROJECT_ID` environment variable is set correctly.
 
-## Available Tools
+**Summary:**
 
-The server provides the following tools:
-
-1. `add`: Simple addition of two numbers
-2. `generate_text`: Text generation using LlamaStack's LLM
-   - Parameters:
-     - prompt: The input text to generate from
-     - model: The model to use (default: llama2:3b)
-     - temperature: Controls randomness (0.0 to 1.0)
-     - max_tokens: Maximum length of the generated response
-3. `list_ollama_models`: List available models in the LlamaStack server
-
-## Security Features
-
-- OAuth 2.0 authentication via Descope
-- Secure token management
-- Client credentials flow for server-to-server communication
-- Token validation and revocation
-- Proper error handling and logging
-
-## Error Handling
-
-The implementation includes comprehensive error handling for:
-
-- Authentication failures
-- Token validation errors
-- LLM inference errors
-- Network issues
-- Invalid requests
-
-## Logging
-
-The server and client both implement detailed logging for:
-
-- Authentication events
-- API calls
-- Error conditions
-- Performance metrics
-
-## Contributing
-
-Feel free to submit issues and enhancement requests!
+This repo is a reference for building secure, standards-compliant MCP servers with FastAPI and FastMCP, using OAuth for authentication. It demonstrates best practices for mounting tools, handling OAuth metadata, and integrating with real-world identity providers like Descope.

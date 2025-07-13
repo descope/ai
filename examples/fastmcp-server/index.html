@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Weather MCP Server</title>
     <script>
-      const SERVER_URL = window.location.origin + "/mcp";
+      const SERVER_URL = window.location.origin + "/mcp-server/mcp";
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -171,7 +171,7 @@
             >Descope</a
           >
           <a
-            href="https://github.com/descope/mcpauth"
+            href="https://mcp-auth.dev/docs/configure-server/mcp-auth"
             class="hover:text-primary"
             >auth</a
           >
@@ -342,7 +342,9 @@
         <div class="card rounded-lg p-6 mb-6">
           <div class="mb-4">
             <h3 class="text-lg font-semibold text-white mb-2">MCP Server</h3>
-            <code class="bg-gray-800 px-2 py-1 rounded">GET /mcp</code>
+            <code class="bg-gray-800 px-2 py-1 rounded"
+              >GET /mcp-server/mcp</code
+            >
             <p class="mt-1 text-gray-300">The main MCP server endpoint</p>
           </div>
           <div class="mb-4">

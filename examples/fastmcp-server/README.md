@@ -81,7 +81,7 @@ FastMCP will automatically expose this as an MCP tool!
 
 ## Note on Well-Known Endpoints
 
-Ideally, FastMCP should support setting up the `.well-known` endpoints out of the box, similar to how [MCPAuth](https://github.com/descope/mcpauth) works.
+Ideally, FastMCP should support setting up the `.well-known` endpoints out of the box, similar to how [MCPAuth](https://mcp-auth.dev/docs/configure-server/mcp-auth) works.
 
 For now, this example uses FastAPI to serve these endpoints manually, but future versions of FastMCP may make this even easier.
 
@@ -92,7 +92,3 @@ For now, this example uses FastAPI to serve these endpoints manually, but future
   rm -rf ~/.mcp-auth
   ```
 - For OAuth-related issues, check that your `DESCOPE_PROJECT_ID` environment variable is set correctly.
-
-**Summary:**
-
-This repo is a reference for building secure, standards-compliant MCP servers with FastAPI and FastMCP, using OAuth for authentication. It demonstrates best practices for mounting tools, handling OAuth metadata, and integrating with real-world identity providers like Descope.

@@ -1,7 +1,8 @@
 mcp
-jwcrypto
 httpx
 pydantic
 pydantic-settings
 click
-starlette
+aiohttp
+fastmcp
+fastapi

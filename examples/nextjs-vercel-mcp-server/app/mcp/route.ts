@@ -1,6 +1,6 @@
 import {
   createMcpHandler,
-  experimental_withMcpAuth,
+  withMcpAuth,
 } from "@vercel/mcp-adapter";
 import DescopeClient from "@descope/node-sdk";
 import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
@@ -74,7 +74,7 @@ const mcpHandler = async (req: Request) => {
   )(req);
 };
 
-const handler = experimental_withMcpAuth(mcpHandler, verifyToken, {
+const handler = withMcpAuth(mcpHandler, verifyToken, {
   required: true,
 });
 

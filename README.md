@@ -42,3 +42,4 @@ If you need help you can email [Descope Support](mailto:support@descope.com)
 ## License
 
 This project is licensed under the [MIT License](./LICENSE).
+

@@ -1,0 +1,8 @@
+mcp
+httpx
+pydantic
+pydantic-settings
+click
+aiohttp
+fastmcp
+fastapi

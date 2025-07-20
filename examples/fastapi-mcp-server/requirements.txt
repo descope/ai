@@ -1,0 +1,6 @@
+fastapi==0.116.1
+fastapi_mcp==0.3.7
+Pillow==11.3.0
+pydantic==2.11.7
+pytesseract==0.3.13
+Requests==2.32.4

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Depends, Security, HTTPException
 from fastapi.responses import JSONResponse
 from PIL import Image
 import pytesseract
@@ -7,9 +7,23 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 from pydantic import BaseModel, HttpUrl
 
-from fastapi_mcp import FastApiMCP
+from fastapi_mcp import FastApiMCP, AuthConfig
+from app.auth.auth import TokenVerifier
+
+import urllib.request
+from app.auth.auth_config import get_settings
+
+# We use PyJWKClient, which internally uses Python's built-in urllib.request, which sends requests
+# without a standard User-Agent header (e.g., it sends "Python-urllib/3.x").
+# Some CDNs or API gateways (like the one serving Descope's JWKS) may block such requests as they resemble bot traffic or security scanners.
+opener = urllib.request.build_opener()
+opener.addheaders = [('User-agent', 'Mozilla/5.0 (DescopeFastAPISampleApp)')]
+urllib.request.install_opener(opener)
+
 
 app = FastAPI()
+auth = TokenVerifier()
+config = get_settings()
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,8 +36,9 @@ app.add_middleware(
 class OCRRequest(BaseModel):
     image_url: HttpUrl  # Ensures it's a valid URL
 
-@app.post("/ocr")
-async def perform_ocr(request: OCRRequest):
+
+@app.post("/mcp")
+async def perform_ocr(request: OCRRequest, auth_result: str = Security(auth)):
     """
     Perform Optical Character Recognition (OCR) on a remote image URL.
 
@@ -110,10 +125,36 @@ async def perform_ocr(request: OCRRequest):
     except Exception as e:
         # Catch-all for OCR or image errors
         raise HTTPException(status_code=500, detail=f"OCR failed: {str(e)}")
-    
+
+
 mcp = FastApiMCP(
     app,
     name="Image Tools MCP Server",
     description="MCP Server for Image transforms including OCR, etc.",
+    auth_config=AuthConfig(
+        custom_oauth_metadata={
+            "issuer": HttpUrl(f"{config.descope_api_base_url}/v1/apps/{config.descope_project_id}"),
+            "jwks_uri": HttpUrl(f"{config.descope_api_base_url}/{config.descope_project_id}/.well-known/jwks.json"),
+            "authorization_endpoint": HttpUrl(f"{config.descope_api_base_url}/oauth2/v1/apps/authorize"),
+            "response_types_supported": ["code"],
+            "subject_types_supported": ["public"],
+            "id_token_signing_alg_values_supported": ["RS256"],
+            "code_challenge_methods_supported": ["S256"],
+            "token_endpoint": HttpUrl(f"{config.descope_api_base_url}/oauth2/v1/apps/token"),
+            "userinfo_endpoint": HttpUrl(f"{config.descope_api_base_url}/oauth2/v1/apps/userinfo"),
+            "scopes_supported": ["openid"],
+            "claims_supported": [
+                "iss", "aud", "iat", "exp", "sub", "name", "email",
+                "email_verified", "phone_number", "phone_number_verified",
+                "picture", "family_name", "given_name"
+            ],
+            "revocation_endpoint": HttpUrl(f"{config.descope_api_base_url}/oauth2/v1/apps/revoke"),
+            "registration_endpoint": HttpUrl(f"{config.descope_api_base_url}/v1/mgmt/inboundapp/app/{config.descope_project_id}/register"),
+            "grant_types_supported": ["authorization_code", "refresh_token"],
+            "token_endpoint_auth_methods_supported": ["client_secret_post"],
+            "end_session_endpoint": HttpUrl(f"{config.descope_api_base_url}/oauth2/v1/apps/logout")
+        },
+        dependencies=[Depends(auth)],
+    ),
 )
 mcp.mount()

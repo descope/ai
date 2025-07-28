@@ -43,62 +43,7 @@ class OCRRequest(BaseModel):
 @app.post("/ocr", operation_id="optical-character-recognition")
 async def perform_ocr(request: OCRRequest, auth_result: str = Security(auth)):
     """
-    Perform Optical Character Recognition (OCR) on a remote image URL.
-
-    **Note:** This endpoint only works with publicly accessible image URLs.
-        - It does **NOT** support file uploads, base64-encoded images, or attachments (yet).
-        - It does **NOT** work with:
-            - Private URLs (e.g., behind authentication or firewalls)
-            - Expired signed URLs
-            - Local file paths like `file:///home/user/image.png`
-
-    This endpoint accepts a public image URL in the request body (as JSON),
-    downloads the image, runs OCR using Tesseract, and returns the extracted text.
-
-    **Request**
-    ----------
-    Content-Type: application/json
-
-    JSON Body:
-    {
-        "image_url": "https://example.com/image.jpg"
-    }
-
-    - `image_url` must be a valid HTTP or HTTPS link pointing to an image file.
-    - Supported formats: PNG, JPEG, TIFF, etc.
-
-    **Response**
-    -----------
-    200 OK
-    {
-        "text": "<Extracted OCR text here>"
-    }
-
-    400 Bad Request
-    {
-        "detail": "Failed to fetch image: <error>" 
-        // or
-        "detail": "Provided URL does not point to an image."
-    }
-
-    500 Internal Server Error
-    {
-        "detail": "OCR failed: <error message>"
-    }
-
-    **Examples**
-    ------------
-    Using `curl`:
-        curl -X POST http://localhost:8000/ocr \
-             -H "Content-Type: application/json" \
-             -d '{"image_url": "https://example.com/image.jpg"}'
-
-    **Notes**
-    ---------
-    - Tesseract OCR must be installed and accessible via system PATH.
-    - If the image is unreachable, not an image, or corrupted, appropriate errors will be returned.
-    - No data is stored; the operation is stateless and real-time.
-
+    Perform Optical Character Recognition (OCR) on a publicly accessible remote image URL.
     Parameters
     ----------
     request : OCRRequest
@@ -138,63 +83,11 @@ async def scan_barcode(request: BarcodeRequest, auth_result: str = Security(auth
     """
     Scan a barcode or QR code from a publicly accessible image URL.
 
-    **Note**:
-    This endpoint ONLY supports **public HTTP(S) image URLs**. It does **NOT** support:
-    - private URLs (e.g., behind authentication or firewalls)
-    - raw image file uploads
-
-    This endpoint accepts a POST request containing a JSON payload with a single field `url`,
-    which must point to an image hosted on a public server. The image is fetched, validated,
-    and scanned for one or more barcodes or QR codes using the ZBar engine.
-
     Parameters:
     -----------
     request : BarcodeRequest
         A Pydantic model containing:
         - barcode_url (HttpUrl): A valid, publicly accessible HTTP(S) URL pointing to an image file.
-
-    Returns:
-    --------
-    JSON response
-
-    Raises:
-    -------
-    - 400 Bad Request:
-        - If the image cannot be fetched (invalid URL, network issue, etc.)
-        - If the content at the URL is not a valid image
-        - If a request-level error occurs (e.g: timeout)
-    - 422 Unprocessable Entity:
-        - If no barcode or QR code is found in the image
-    - 500 Internal Server Error:
-        - For any unexpected or unhandled exceptions during processing
-
-    Example Request:
-    ----------------
-    POST /scan-barcode
-    Content-Type: application/json
-    {
-        "barcode_url": "https://miro.medium.com/v2/resize:fit:405/1*k0h04CRy0j8MbBbqsodGAA.png"
-    }
-
-    Example Response:
-    -----------------
-    200 OK
-
-    {
-        "success": true,
-        "barcodes": [
-            {
-                "type": "QRCODE",
-                "data": "hello",
-                "bounds": {
-                    "left": 34,
-                    "top": 22,
-                    "width": 210,
-                    "height": 210
-                }
-            }
-        ]
-    }
     """
 
     try:

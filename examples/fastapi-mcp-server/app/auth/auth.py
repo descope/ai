@@ -1,20 +1,10 @@
 from typing import Optional, List
 import jwt
 from jwt import PyJWKClient
-from fastapi import Depends, status, HTTPException
+from fastapi import Depends
 from fastapi.security import SecurityScopes, HTTPAuthorizationCredentials, HTTPBearer
 from app.auth.auth_config import get_settings
-
-class UnauthenticatedException(HTTPException):
-    """Raised when a request is missing valid authentication credentials."""
-    def __init__(self, detail: str = "Authentication required"):
-        super().__init__(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)
-
-class UnauthorizedException(HTTPException):
-    """Raised when an authenticated user lacks necessary permissions."""
-    def __init__(self, detail: str = "You are not authorized to access this resource"):
-        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
-
+from app.auth.exceptions import UnauthenticatedException, UnauthorizedException
 
 class TokenVerifier:
     def __init__(self):
@@ -28,9 +18,8 @@ class TokenVerifier:
         token: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))
     ):
         if token is None:
-            print("No Token!")
             raise UnauthenticatedException
-        print("Token")
+        
         token = token.credentials
 
         key = self._get_signing_key(token)

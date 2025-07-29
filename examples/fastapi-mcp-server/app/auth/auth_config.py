@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     
     @property
     def issuer_candidates(self) -> str:
-        return [f'{self.descope_api_base_url}/v1/apps/{self.descope_project_id}', self.descope_project_id, ]
+        return [f'{self.descope_api_base_url}/v1/apps/{self.descope_project_id}', self.descope_project_id]
     
     @property
     def audience(self) -> str:

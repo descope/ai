@@ -31,7 +31,6 @@ class TokenVerifier:
     
     def _get_signing_key(self, token: str):
         try:
-            print(self.config.jwks_url)
             return self.jwks_client.get_signing_key_from_jwt(token).key
         except Exception as e:
             raise UnauthorizedException(f"Failed to fetch signing key: {str(e)}")

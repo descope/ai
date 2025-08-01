@@ -65,11 +65,16 @@ The server should now be running at http://localhost:8000.
 3. Once authenticated, you will now have access to the tools (OCR, Scan-Barcode).
 
 ### Cursor/Claude
-Since the current `fastapi-mcp` server supports only **SSE transport** (not streamable HTTP), we use `mcp-remote` to bridge.
-
 Add this configuration to your MCP tool config (e.g., in Cursor: Cmd/Ctrl + Shift + J → Tools & Integrations → MCP tools):
 ```json
-"image-tools": {
+"image-tools-server": {
+  "url": "http://localhost:8000/mcp"
+}
+```
+**Note**: Due to some Cursor bugs, and since the current `fastapi-mcp` server supports only **SSE transport** (not streamable HTTP), sometimes, the authentication is not triggered. Instead, you can modify your configuration to use `mcp-remote` to bridge:
+
+```json
+"image-tools-server": {
   "command": "npx",
   "args": [
     "mcp-remote",
@@ -77,7 +82,6 @@ Add this configuration to your MCP tool config (e.g., in Cursor: Cmd/Ctrl + Shif
   ]
 }
 ```
-Replace `image-tools` with your desired MCP server name.
 
 ## Debugging
 - Auth Issues with MCP? Clear your MCP authentication cache:

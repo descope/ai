@@ -188,6 +188,8 @@ The project uses AWS CDK for infrastructure as code. The deployment will create:
 - IAM roles and permissions
 - Secrets Manager access
 
+**⚠️ Important**: Make sure Docker is running before deployment. AWS CDK uses Docker to bundle your code in a Lambda-compatible environment.
+
 1. **Deploy the stack**:
 ```bash
 npm run cdk-deploy
@@ -263,15 +265,32 @@ This will start the server on port 3000 with hot reloading.
 1. **500 Internal Server Error**: Check CloudWatch logs for the Lambda function
 2. **Authentication Errors**: Verify your Descope credentials in Secrets Manager
 3. **CORS Issues**: The API Gateway is configured to allow all origins for development
+4. **Docker Build Errors**: Ensure Docker is running before deployment (`npm run cdk-deploy`)
 
 ### Viewing Logs
 To view Lambda function logs:
+
+**Via AWS CLI:**
 ```bash
 aws logs tail /aws/lambda/LambdaMcpServerStack-mcpFunction --follow
 ```
 
-## Contributing
-Feel free to submit issues and enhancement requests!
+**Via AWS Console:**
+1. Go to [AWS CloudWatch Console](https://console.aws.amazon.com/cloudwatch/)
+2. Navigate to "Log groups" → `/aws/lambda/LambdaMcpServerStack-mcpFunction`
+3. Click on the latest log stream to view real-time logs
 
-## License
-This project is licensed under the MIT License.
+### Managing Secrets
+**Via AWS CLI:**
+```bash
+# View secret details
+aws secretsmanager describe-secret --secret-id aws-weather-mcp-server
+
+# Update secret values
+aws secretsmanager update-secret --secret-id aws-weather-mcp-server --secret-string '{"DESCOPE_PROJECT_ID":"your-id","DESCOPE_MANAGEMENT_KEY":"your-key","SERVER_URL":"your-url"}'
+```
+
+**Via AWS Console:**
+1. Go to [AWS Secrets Manager Console](https://console.aws.amazon.com/secretsmanager/)
+2. Find the secret named `aws-weather-mcp-server`
+3. Click "Edit" to update values or "Retrieve secret value" to view current values

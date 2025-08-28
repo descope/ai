@@ -63,11 +63,17 @@ public class AuthenticationFilter implements Filter {
             }
             
             String token = authHeader.substring(7); // Remove "Bearer " prefix
+<<<<<<< HEAD
             System.out.println("Token: " + token);
             
             try {
                 // Validate the token using the authentication service
                 log.info("[{}] Validating token: {}", requestId, token);
+=======
+            
+            try {
+                // Validate the token using the authentication service
+>>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
                 String userId = authService.validateInboundToken(authHeader);
                 log.info("[{}] Authentication successful for user: {}", requestId, userId);
                 

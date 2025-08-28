@@ -217,12 +217,21 @@ public class App {
         }
     }
     
+<<<<<<< HEAD
     // MCP Servlet with simple authentication
     static class McpServlet extends HttpServlet {
         private final HttpServletSseServerTransportProvider mcpTransport;
         private final AuthenticationService authService;
         
         public McpServlet(HttpServletSseServerTransportProvider mcpTransport) {
+=======
+    // Authenticated MCP Servlet that requires Bearer token
+    static class AuthenticatedMcpServlet extends HttpServlet {
+        private final HttpServletSseServerTransportProvider mcpTransport;
+        private final AuthenticationService authService;
+        
+        public AuthenticatedMcpServlet(HttpServletSseServerTransportProvider mcpTransport) {
+>>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
             this.mcpTransport = mcpTransport;
             this.authService = new AuthenticationService();
         }
@@ -257,6 +266,7 @@ public class App {
                 }
             }
             
+<<<<<<< HEAD
             // Check if this is an OAuth discovery endpoint (no Authorization header required)
             String authHeader = request.getHeader("Authorization");
             String requestUri = request.getRequestURI();
@@ -277,6 +287,15 @@ public class App {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\": \"Authentication required\", \"message\": \"Authorization header with Bearer token is required\"}");
+=======
+            // Check if this is a metadata request (no Authorization header required)
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || authHeader.trim().isEmpty()) {
+                log.info("[{}] No Authorization header - allowing metadata request to pass through", requestId);
+                // Allow the request to pass through to the MCP transport for metadata
+                mcpTransport.service(request, response);
+                log.info("[{}] Metadata request completed", requestId);
+>>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
                 return;
             }
             
@@ -288,6 +307,7 @@ public class App {
                 return;
             }
             
+<<<<<<< HEAD
             try {
                 // Validate token and get user ID
                 String userId = authService.validateInboundToken(authHeader);
@@ -304,6 +324,24 @@ public class App {
                     // Always clear auth info after request
                     TokenUtils.clearAuthInfo();
                 }
+=======
+            String token = authHeader.substring(7); // Remove "Bearer " prefix
+            log.info("[{}] Token received (length: {})", requestId, token.length());
+            
+            try {
+                // Validate token using Descope authentication service
+                String userId = authService.validateInboundToken(authHeader);
+                log.info("[{}] Token validation successful for user: {}", requestId, userId);
+                
+                // Add user ID to request attributes for downstream use
+                request.setAttribute("userId", userId);
+                request.setAttribute("authToken", token);
+                
+                // Forward to the actual MCP transport
+                mcpTransport.service(request, response);
+                
+                log.info("[{}] MCP request completed successfully", requestId);
+>>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
                 
             } catch (Exception e) {
                 log.error("[{}] Authentication error", requestId, e);
@@ -361,7 +399,11 @@ public class App {
                 (exchange, arguments) -> {
                     try {
                         // Scope definition
+<<<<<<< HEAD
                         String[] requiredScopes = {"outbound.token.fetch"};
+=======
+                        String[] requiredScopes = {"calendar:read"};
+>>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
                         
                         // Validate token and get both inbound token and user ID
                         TokenUtils.TokenValidationResult auth = TokenUtils.validateTokenAndGetUser(exchange, requiredScopes);
@@ -393,7 +435,11 @@ public class App {
                 (exchange, arguments) -> {
                     try {
                         // Scope definition
+<<<<<<< HEAD
                         String[] requiredScopes = {"outbound.token.fetch"};
+=======
+                        String[] requiredScopes = {"calendar:read"};
+>>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
                         
                         // Validate token and get both inbound token and user ID
                         TokenUtils.TokenValidationResult auth = TokenUtils.validateTokenAndGetUser(exchange, requiredScopes);
@@ -456,7 +502,11 @@ public class App {
                 (exchange, arguments) -> {
                     try {
                         // Scope definition
+<<<<<<< HEAD
                         String[] requiredScopes = {"outbound.token.fetch"};
+=======
+                        String[] requiredScopes = {"calendar:write"};
+>>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
                         
                         // Validate token and get both inbound token and user ID
                         TokenUtils.TokenValidationResult auth = TokenUtils.validateTokenAndGetUser(exchange, requiredScopes);
@@ -508,8 +558,13 @@ public class App {
         contextHandler.addServlet(healthServletHolder, "/health");
         log.info("Added Health Check servlet at /health");
         
+<<<<<<< HEAD
         // Add the MCP transport provider as a servlet
         ServletHolder servletHolder = new ServletHolder(new McpServlet(transportProvider));
+=======
+        // Add the MCP transport provider as a servlet (temporarily remove other endpoints)
+        ServletHolder servletHolder = new ServletHolder(transportProvider);
+>>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
         contextHandler.addServlet(servletHolder, "/*");
         log.info("Added MCP transport provider at /*");
 

@@ -5,11 +5,24 @@ from pydantic import BaseModel, HttpUrl
 from httpx import AsyncClient, RequestError
 from typing import List
 from PIL import Image
-import pytesseract
-from io import BytesIO
 import requests
-from pyzbar.pyzbar import decode as decode_barcode
+from io import BytesIO
 import urllib.request
+
+# Handle optional dependencies gracefully
+try:
+    import pytesseract
+    TESSERACT_AVAILABLE = True
+except ImportError:
+    TESSERACT_AVAILABLE = False
+    pytesseract = None
+
+try:
+    from pyzbar.pyzbar import decode as decode_barcode
+    ZBAR_AVAILABLE = True
+except ImportError:
+    ZBAR_AVAILABLE = False
+    decode_barcode = None
 
 from app.auth.auth import TokenVerifier
 from app.auth.auth_config import get_settings

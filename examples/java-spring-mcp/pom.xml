@@ -67,6 +67,7 @@
             <artifactId>java-sdk</artifactId>
             <version>[1.0.0,)</version>
         </dependency>
+<<<<<<< HEAD
         
         <!-- Logging implementation -->
         <dependency>
@@ -118,6 +119,8 @@
             <artifactId>spring-boot-starter-security</artifactId>
             <version>3.2.0</version>
         </dependency>
+=======
+>>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
 
     <!-- Test -->
     <dependency>

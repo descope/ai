@@ -113,7 +113,10 @@ public class AuthenticationService {
             inboundToken.substring(7) : inboundToken;
 
         log.debug("Validating inbound token with scopes");
+<<<<<<< HEAD
         log.debug("Clean token: {}", cleanToken);
+=======
+>>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
         
         try {
             // Use Descope SDK to validate the session token

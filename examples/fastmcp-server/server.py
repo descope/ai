@@ -7,10 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 import logging
-import jwt
-import json
-from typing import Optional
-from contextvars import ContextVar
 
 load_dotenv()
 
@@ -27,24 +23,7 @@ DESCOPE_BASE_URL = os.getenv("DESCOPE_BASE_URL", "https://api.descope.com")
 if not DESCOPE_PROJECT_ID:
     raise ValueError("DESCOPE_PROJECT_ID environment variable must be set")
 
-# Context variable to store the current token
-current_token: ContextVar[Optional[str]] = ContextVar('current_token', default=None)
-
-class TokenAwareBearerAuthProvider(BearerAuthProvider):
-    """Custom auth provider that stores the token for access in tools."""
-    
-    async def authenticate(self, request: Request) -> bool:
-        # Extract token from Authorization header
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:]  # Remove "Bearer " prefix
-            # Store token in context for tools to access
-            current_token.set(token)
-        
-        # Call parent authentication
-        return await super().authenticate(request)
-
-auth = TokenAwareBearerAuthProvider(
+auth = BearerAuthProvider(
     jwks_uri=f"{DESCOPE_BASE_URL}/{DESCOPE_PROJECT_ID}/.well-known/jwks.json",
     issuer=f"{DESCOPE_BASE_URL}/v1/apps/{DESCOPE_PROJECT_ID}",
     algorithm="RS256",
@@ -53,21 +32,6 @@ auth = TokenAwareBearerAuthProvider(
 # FastMCP server for tools with built-in auth
 mcp = FastMCP(name="Weather MCP Server", auth=auth)
 mcp_app = mcp.http_app(path='/mcp')
-
-# Helper function to decode JWT token (for informational purposes only)
-def decode_token_info(token: str) -> dict:
-    """Decode JWT token to get payload information (without verification)."""
-    try:
-        # Decode without verification to get payload
-        payload = jwt.decode(token, options={"verify_signature": False})
-        return payload
-    except Exception as e:
-        return {"error": f"Failed to decode token: {str(e)}"}
-
-# Helper function to get current token
-def get_current_token() -> Optional[str]:
-    """Get the current access token from the request context."""
-    return current_token.get()
 
 # Create FastAPI app with FastMCP lifespan
 app = FastAPI(lifespan=mcp_app.lifespan)
@@ -216,194 +180,6 @@ async def get_forecast(latitude: float, longitude: float) -> str:
         formatted_forecast.append(period_text)
 
     return f"Forecast for {latitude}, {longitude}:\n\n{''.join(formatted_forecast)}"
-
-@mcp.tool
-async def get_token_info() -> str:
-    """Get information about the current access token being used for authentication.
-    This tool demonstrates how to access token information in your MCP tools.
-    """
-    # Note: In a real implementation, you would get the token from the request context
-    # This is a demonstration of what token information looks like
-    
-    result = "Token Information:\n\n"
-    result += "This tool shows what information is available in the access token.\n"
-    result += "In a real implementation, you would extract the token from the request context.\n\n"
-    
-    result += "Typical JWT token payload includes:\n"
-    result += "- iss (issuer): The token issuer (Descope)\n"
-    result += "- aud (audience): The intended audience\n"
-    result += "- exp (expiration): Token expiration time\n"
-    result += "- iat (issued at): Token issuance time\n"
-    result += "- sub (subject): User identifier\n"
-    result += "- name: User's display name\n"
-    result += "- email: User's email address\n"
-    result += "- scopes: Granted permissions\n\n"
-    
-    result += "To access the actual token in your tools, you would need to:\n"
-    result += "1. Extract the Authorization header from the request\n"
-    result += "2. Parse the Bearer token\n"
-    result += "3. Decode the JWT payload (for informational purposes)\n"
-    result += "4. Use the token information as needed\n\n"
-    
-    result += "Example token structure:\n"
-    example_token = {
-        "iss": f"{DESCOPE_BASE_URL}/v1/apps/{DESCOPE_PROJECT_ID}",
-        "aud": "your_application",
-        "exp": 1234567890,
-        "iat": 1234567890,
-        "sub": "user_123",
-        "name": "John Doe",
-        "email": "john@example.com",
-        "scopes": ["openid", "profile", "email"]
-    }
-    result += json.dumps(example_token, indent=2)
-    
-    return result
-
-@mcp.tool
-async def get_user_info() -> str:
-    """Get information about the current user using the access token.
-    This demonstrates how to use the access token with Descope APIs.
-    """
-    token = get_current_token()
-    if not token:
-        return "Error: No access token available"
-    
-    try:
-        # Decode token to get user information
-        token_info = decode_token_info(token)
-        
-        result = "Current User Information:\n\n"
-        result += f"User ID: {token_info.get('sub', 'N/A')}\n"
-        result += f"Name: {token_info.get('name', 'N/A')}\n"
-        result += f"Email: {token_info.get('email', 'N/A')}\n"
-        result += f"Token Issuer: {token_info.get('iss', 'N/A')}\n"
-        result += f"Token Expires: {token_info.get('exp', 'N/A')}\n"
-        result += f"Scopes: {', '.join(token_info.get('scope', '').split()) if token_info.get('scope') else 'N/A'}\n\n"
-        
-        result += "Token Payload (decoded):\n"
-        result += json.dumps(token_info, indent=2)
-        
-        return result
-    except Exception as e:
-        return f"Error getting user info: {str(e)}"
-
-@mcp.tool
-async def validate_token_with_descope() -> str:
-    """Validate the current access token with Descope's userinfo endpoint.
-    This demonstrates making authenticated requests to Descope APIs.
-    """
-    token = get_current_token()
-    if not token:
-        return "Error: No access token available"
-    
-    try:
-        # Make request to Descope's userinfo endpoint
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        }
-        
-        userinfo_url = f"{DESCOPE_BASE_URL}/oauth2/v1/apps/userinfo"
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.get(userinfo_url, headers=headers) as response:
-                if response.status == 200:
-                    user_data = await response.json()
-                    
-                    result = "Token Validation with Descope: SUCCESS\n\n"
-                    result += "User Information from Descope API:\n"
-                    result += f"User ID: {user_data.get('sub', 'N/A')}\n"
-                    result += f"Name: {user_data.get('name', 'N/A')}\n"
-                    result += f"Email: {user_data.get('email', 'N/A')}\n"
-                    result += f"Email Verified: {user_data.get('email_verified', 'N/A')}\n"
-                    result += f"Picture: {user_data.get('picture', 'N/A')}\n\n"
-                    
-                    result += "Full Response:\n"
-                    result += json.dumps(user_data, indent=2)
-                    
-                    return result
-                else:
-                    error_text = await response.text()
-                    return f"Token validation failed. Status: {response.status}, Error: {error_text}"
-                    
-    except Exception as e:
-        return f"Error validating token with Descope: {str(e)}"
-
-@mcp.tool
-async def call_descope_api_with_token(api_endpoint: str = "userinfo") -> str:
-    """Make a custom API call to Descope using the current access token.
-    Args:
-        api_endpoint: The Descope API endpoint to call (default: userinfo)
-    """
-    token = get_current_token()
-    if not token:
-        return "Error: No access token available"
-    
-    try:
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        }
-        
-        # Map common endpoints
-        endpoint_map = {
-            "userinfo": f"{DESCOPE_BASE_URL}/oauth2/v1/apps/userinfo",
-            "introspect": f"{DESCOPE_BASE_URL}/oauth2/v1/apps/introspect",
-            "revoke": f"{DESCOPE_BASE_URL}/oauth2/v1/apps/revoke"
-        }
-        
-        url = endpoint_map.get(api_endpoint.lower(), api_endpoint)
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers) as response:
-                result = f"API Call to: {url}\n"
-                result += f"Status: {response.status}\n\n"
-                
-                if response.status == 200:
-                    data = await response.json()
-                    result += "Response:\n"
-                    result += json.dumps(data, indent=2)
-                else:
-                    error_text = await response.text()
-                    result += f"Error: {error_text}"
-                
-                return result
-                    
-    except Exception as e:
-        return f"Error calling Descope API: {str(e)}"
-
-@mcp.tool
-async def exchange_token_for_descope_user() -> str:
-    """Exchange the access token for Descope user information using Descope SDK.
-    This demonstrates using the token with Descope's Python SDK.
-    """
-    token = get_current_token()
-    if not token:
-        return "Error: No access token available"
-    
-    try:
-        # Note: This would require the Descope SDK to be installed
-        # For now, we'll show the concept and make a direct API call
-        
-        result = "Token Exchange for Descope User:\n\n"
-        result += "Current Access Token (first 50 chars):\n"
-        result += f"{token[:50]}...\n\n"
-        
-        result += "To use this token with Descope SDK:\n"
-        result += "1. Initialize DescopeClient with your project ID\n"
-        result += "2. Use the token for authenticated requests\n"
-        result += "3. Access user information and permissions\n\n"
-        
-        # Decode token to show what information is available
-        token_info = decode_token_info(token)
-        result += "Available Token Information:\n"
-        result += json.dumps(token_info, indent=2)
-        
-        return result
-        
-    except Exception as e:
-        return f"Error exchanging token: {str(e)}"
 
 if __name__ == "__main__":
     import uvicorn

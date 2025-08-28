@@ -76,7 +76,6 @@ public class GoogleCalendarService {
             // Build the authorization header: Descope_project_id:<inbound_token>
             String projectId = getDescopeProjectId();
             String authHeader = String.format("Bearer %s:%s", projectId, cleanToken);
-            log.info("Auth header: " + authHeader);
             
             log.debug("Making outbound app token request to Descope with auth header: {}:...", projectId);
             log.debug("Request body: {}", requestBody);

@@ -279,19 +279,13 @@ public class App {
             log.info("[{}] Token received (length: {})", requestId, token.length());
             
             try {
-                // Validate token (basic validation - just check if it's not empty)
-                // In a real implementation, you would validate with Descope SDK
-                if (token.trim().isEmpty()) {
-                    log.warn("[{}] Authentication failed: Empty token", requestId);
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\": \"Invalid token\"}");
-                    return;
-                }
+                // Validate token using Descope authentication service
+                String userId = authService.validateInboundToken(authHeader);
+                log.info("[{}] Token validation successful for user: {}", requestId, userId);
                 
-                // For now, we'll accept any non-empty token for testing
-                // TODO: Replace with actual Descope SDK validation
-                log.info("[{}] Token validation passed, forwarding to MCP transport", requestId);
+                // Add user ID to request attributes for downstream use
+                request.setAttribute("userId", userId);
+                request.setAttribute("authToken", token);
                 
                 // Forward to the actual MCP transport
                 mcpTransport.service(request, response);
@@ -488,13 +482,13 @@ public class App {
 
         // Add the OAuth Authorization Server servlet
         ServletHolder oauthServletHolder = new ServletHolder(new OAuthAuthorizationServerServlet());
-        contextHandler.addServlet(oauthServletHolder, "/oauth/.well-known/openid-configuration");
-        log.info("Added OAuth Authorization Server servlet at /oauth/.well-known/openid-configuration");
+        contextHandler.addServlet(oauthServletHolder, "/.well-known/oauth-authorization-server");
+        log.info("Added OAuth Authorization Server servlet at /.well-known/oauth-authorization-server");
         
         // Add the OAuth Protected Resource servlet
         ServletHolder protectedServletHolder = new ServletHolder(new OAuthProtectedResourceServlet());
-        contextHandler.addServlet(protectedServletHolder, "/oauth/protected-metadata-resource");
-        log.info("Added OAuth Protected Resource servlet at /oauth/protected");
+        contextHandler.addServlet(protectedServletHolder, "/.well-known/oauth-protected-resource");
+        log.info("Added OAuth Protected Resource servlet at /.well-known/oauth-protected-resource");
         
         // Add the Health Check servlet
         ServletHolder healthServletHolder = new ServletHolder(new HealthCheckServlet());

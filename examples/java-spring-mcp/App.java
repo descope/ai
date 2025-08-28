@@ -22,7 +22,6 @@ import java.util.Map;
 public class App {
 
     private static final Logger log = LoggerFactory.getLogger(App.class);
-    private static final WeatherGetter weatherGetter = new WeatherGetter();
     private static final GoogleCalendarService googleCalendarService = new GoogleCalendarService();
     private static final AuthenticationService authService = new AuthenticationService();
 
@@ -45,46 +44,6 @@ public class App {
                         .logging()                 // Enable logging support
                         .build())
                 .build();
-
-        // Register a weather tool
-        McpServerFeatures.SyncToolSpecification weatherTool = new McpServerFeatures.SyncToolSpecification(
-                new McpSchema.Tool(
-                        "weather",
-                        "fetches weather from lat and long",
-                        new McpSchema.JsonSchema(
-                                "object",
-                                Map.of("latitude", Map.of("type", "number", "minimum", -90, "maximum", 90),
-                                        "longitude", Map.of("type", "number", "minimum", -180, "maximum", 180)),
-                                List.of("latitude", "longitude"),
-                                false)
-                ),
-                (exchange, arguments) -> {
-                    try {
-                        // Scope definition
-                        String[] requiredScopes = {"weather:read"};
-                        
-                        // Validate token and get both inbound token and user ID
-                        TokenUtils.TokenValidationResult auth = TokenUtils.validateTokenAndGetUser(exchange, requiredScopes);
-                        log.debug("Weather tool accessed by user: {}", auth.getUserId());
-                        
-                        Double latitude = (Double) arguments.get("latitude");
-                        Double longitude = (Double) arguments.get("longitude");
-                        
-                        var weather = "Sorry, unable to fetch weather.";
-                        try {
-                            weather = weatherGetter.getForecast(latitude, longitude);
-                        } catch (Exception e) {
-                            log.error("Unable to retrieve weather data", e);
-                            throw new RuntimeException(e);
-                        }
-                        return new McpSchema.CallToolResult(List.of(new McpSchema.TextContent(weather)), false);
-                    } catch (Exception e) {
-                        log.error("Authentication failed for weather tool", e);
-                        return new McpSchema.CallToolResult(List.of(new McpSchema.TextContent("Error: " + e.getMessage())), false);
-                    }
-                }
-        );
-        syncServer.addTool(weatherTool);
 
         // Register Google Calendar tools using outbound app pattern
         McpServerFeatures.SyncToolSpecification upcomingEventsTool = new McpServerFeatures.SyncToolSpecification(

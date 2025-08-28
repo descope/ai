@@ -13,6 +13,7 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,18 +32,32 @@ public class GoogleCalendarService {
     
     private static final String GOOGLE_OUTBOUND_APP_ID = "google-calendar"; // Fixed app ID as specified
     
+    // Descope configuration constants
+    private static final String DESCOPE_BASE_URL = System.getenv("DESCOPE_BASE_URL") != null ? 
+        System.getenv("DESCOPE_BASE_URL") : "https://api.descope.com";
+    
     private final DescopeClient descopeClient;
     private final OutboundAppsByTokenService outboundAppsService;
 
     public GoogleCalendarService() {
-        // Initialize Descope client using environment variables
         this.descopeClient = new DescopeClient();
         this.outboundAppsService = descopeClient.getManagementServices().getOutboundAppsByTokenService();
+    }
+    
+    /**
+     * Get the Descope project ID from environment variables
+     */
+    private String getDescopeProjectId() {
+        String projectId = System.getenv("DESCOPE_PROJECT_ID");
+        if (projectId == null || projectId.trim().isEmpty()) {
+            throw new RuntimeException("DESCOPE_PROJECT_ID environment variable is not set");
+        }
+        return projectId;
     }
 
     /**
      * Get an outbound app token from Descope using the inbound token and user ID
-     * This method uses the Descope SDK pattern shown in the test examples
+     * This method makes a manual HTTP request to the Descope outbound app token endpoint
      */
     public String getOutboundAppToken(String inboundToken, String userId) throws IOException {
         try {
@@ -51,14 +66,43 @@ public class GoogleCalendarService {
                 cleanToken = inboundToken.substring(7);
             }
             
-            FetchLatestOutboundAppUserTokenRequest request = new FetchLatestOutboundAppUserTokenRequest();
-            request.setAppId(GOOGLE_OUTBOUND_APP_ID);
-            request.setUserId(userId);
+            // Build the request body
+            String requestBody = String.format(
+                "{\"appId\": \"%s\", \"userId\": \"%s\"}",
+                GOOGLE_OUTBOUND_APP_ID,
+                userId
+            );
             
-            FetchOutboundAppUserTokenResponse response = outboundAppsService.fetchLatestOutboundAppUserToken(cleanToken, request);
-            return response.getToken().getAccessToken();
-        } catch (DescopeException e) {
-            log.error("Failed to get outbound token from Descope SDK", e);
+            // Build the authorization header: Descope_project_id:<inbound_token>
+            String projectId = getDescopeProjectId();
+            String authHeader = String.format("Bearer %s:%s", projectId, cleanToken);
+            log.info("Auth header: " + authHeader);
+            
+            log.debug("Making outbound app token request to Descope with auth header: {}:...", projectId);
+            log.debug("Request body: {}", requestBody);
+            
+            // Make the HTTP request manually
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                HttpPost request = new HttpPost(DESCOPE_BASE_URL + "/v1/mgmt/outbound/app/user/token/latest");
+                request.setHeader("Authorization", authHeader);
+                request.setHeader("Content-Type", "application/json");
+                request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+                
+                return client.execute(request, response -> {
+                    if (response.getCode() == 200) {
+                        JsonNode responseBody = MAPPER.readTree(response.getEntity().getContent());
+                        String accessToken = responseBody.get("token").get("accessToken").asText();
+                        log.debug("Successfully obtained outbound app token");
+                        return accessToken;
+                    } else {
+                        String errorBody = EntityUtils.toString(response.getEntity());
+                        log.error("Failed to get outbound token. Status: {}, Response: {}", response.getCode(), errorBody);
+                        throw new RuntimeException("Failed to get outbound token. Status: " + response.getCode() + ", Response: " + errorBody);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            log.error("Failed to get outbound token", e);
             throw new RuntimeException("Failed to get outbound token: " + e.getMessage(), e);
         }
     }

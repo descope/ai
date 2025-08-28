@@ -59,11 +59,7 @@ public class App {
                 (exchange, arguments) -> {
                     try {
                         // Scope definition
-<<<<<<< HEAD
                         String[] requiredScopes = {"outbound.token.fetch"};
-=======
-                        String[] requiredScopes = {"calendar:read"};
->>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
                         
                         // Validate token and get both inbound token and user ID
                         TokenUtils.TokenValidationResult auth = TokenUtils.validateTokenAndGetUser(exchange, requiredScopes);
@@ -94,11 +90,7 @@ public class App {
                 (exchange, arguments) -> {
                     try {
                         // Scope definition
-<<<<<<< HEAD
                         String[] requiredScopes = {"outbound.token.fetch"};
-=======
-                        String[] requiredScopes = {"calendar:read"};
->>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
                         
                         // Validate token and get both inbound token and user ID
                         TokenUtils.TokenValidationResult auth = TokenUtils.validateTokenAndGetUser(exchange, requiredScopes);
@@ -129,11 +121,7 @@ public class App {
                 (exchange, arguments) -> {
                     try {
                         // Scope definition
-<<<<<<< HEAD
                         String[] requiredScopes = {"outbound.token.fetch"};
-=======
-                        String[] requiredScopes = {"calendar:search"};
->>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
                         
                         // Validate token and get both inbound token and user ID
                         TokenUtils.TokenValidationResult auth = TokenUtils.validateTokenAndGetUser(exchange, requiredScopes);
@@ -163,11 +151,7 @@ public class App {
                 (exchange, arguments) -> {
                     try {
                         // Scope definition
-<<<<<<< HEAD
                         String[] requiredScopes = {"outbound.token.fetch"};
-=======
-                        String[] requiredScopes = {"calendar:write"};
->>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
                         
                         // Validate token and get both inbound token and user ID
                         TokenUtils.TokenValidationResult auth = TokenUtils.validateTokenAndGetUser(exchange, requiredScopes);

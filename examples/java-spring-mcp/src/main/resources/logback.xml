@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-<<<<<<< HEAD
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -14,19 +13,4 @@
     <!-- Set specific loggers to DEBUG for more detailed output -->
     <logger name="com.github.stantonk" level="DEBUG"/>
     <logger name="com.descope" level="DEBUG"/>
-=======
-
-    <!-- Console Appender -->
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
-    <!-- Root logger configuration -->
-    <root level="INFO">
-        <appender-ref ref="CONSOLE" />
-    </root>
-
->>>>>>> c30ff510c86942f7ac81d024aa288c56c3b40d6a
 </configuration>

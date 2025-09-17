@@ -1,4 +1,6 @@
 import os
+import ssl
+import certifi
 import aiohttp
 from fastmcp import FastMCP
 from fastmcp.server.auth import RemoteAuthProvider
@@ -34,14 +36,14 @@ token_verifier = JWTVerifier(
 auth = RemoteAuthProvider(
     token_verifier=token_verifier,
     authorization_servers=[f"{DESCOPE_BASE_URL}/v1/apps/{DESCOPE_PROJECT_ID}"],
-    base_url=f"{SERVER_URL}/mcp-server/mcp"  # Full URL including path
+    base_url=SERVER_URL  # Base URL without path
 )
 
 # Create FastMCP server with the configured Descope auth provider
 mcp = FastMCP(name="Weather MCP Server", auth=auth)
 
 # Create the app with the MCP path
-app = mcp.http_app(path="/mcp-server/mcp")
+app = mcp.http_app(path="/mcp")
 
 # Helper function for making NWS API requests
 async def make_nws_request(url: str) -> dict:
@@ -50,7 +52,10 @@ async def make_nws_request(url: str) -> dict:
         "User-Agent": USER_AGENT,
         "Accept": "application/geo+json"
     }
-    async with aiohttp.ClientSession() as session:
+    # Create SSL context with certifi's certificate bundle
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    connector = aiohttp.TCPConnector(ssl=ssl_context)
+    async with aiohttp.ClientSession(connector=connector) as session:
         try:
             async with session.get(url, headers=headers) as response:
                 if not response.ok:

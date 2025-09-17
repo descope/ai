@@ -8,6 +8,7 @@ from fastmcp.server.auth.providers.jwt import JWTVerifier
 from pydantic import AnyHttpUrl
 from dotenv import load_dotenv
 import logging
+from starlette.responses import FileResponse
 
 load_dotenv()
 
@@ -44,6 +45,10 @@ mcp = FastMCP(name="Weather MCP Server", auth=auth)
 
 # Create the app with the MCP path
 app = mcp.http_app(path="/mcp")
+
+@app.route("/", methods=["GET"])
+async def serve_index(request):
+    return FileResponse(os.path.join(os.path.dirname(__file__), "index.html"))
 
 # Helper function for making NWS API requests
 async def make_nws_request(url: str) -> dict:

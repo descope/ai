@@ -3,9 +3,7 @@ import ssl
 import certifi
 import aiohttp
 from fastmcp import FastMCP
-from fastmcp.server.auth import RemoteAuthProvider
-from fastmcp.server.auth.providers.jwt import JWTVerifier
-from pydantic import AnyHttpUrl
+from fastmcp.server.auth.providers.descope import DescopeProvider
 from dotenv import load_dotenv
 import logging
 from starlette.responses import FileResponse
@@ -26,18 +24,11 @@ SERVER_URL = os.getenv("SERVER_URL", "http://localhost:3000")
 if not DESCOPE_PROJECT_ID:
     raise ValueError("DESCOPE_PROJECT_ID environment variable must be set")
 
-# Configure token validation for Descope
-token_verifier = JWTVerifier(
-    jwks_uri=f"{DESCOPE_BASE_URL}/{DESCOPE_PROJECT_ID}/.well-known/jwks.json",
-    issuer=f"{DESCOPE_BASE_URL}/v1/apps/{DESCOPE_PROJECT_ID}",
-    audience=DESCOPE_PROJECT_ID
-)
-
-# Create the remote auth provider with OAuth discovery endpoints
-auth = RemoteAuthProvider(
-    token_verifier=token_verifier,
-    authorization_servers=[f"{DESCOPE_BASE_URL}/v1/apps/{DESCOPE_PROJECT_ID}"],
-    base_url=SERVER_URL  # Base URL without path
+# Create the Descope auth provider
+auth = DescopeProvider(
+    project_id=DESCOPE_PROJECT_ID,
+    base_url=SERVER_URL,
+    descope_base_url=DESCOPE_BASE_URL
 )
 
 # Create FastMCP server with the configured Descope auth provider

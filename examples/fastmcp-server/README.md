@@ -4,13 +4,14 @@
 
 ## Introduction
 
-This example demonstrates how to implement OAuth authentication with an external provider (Descope) using [FastAPI](https://fastapi.tiangolo.com/) and [FastMCP](https://github.com/fastmcp/fastmcp) for Model Context Protocol (MCP) tools.
+This example demonstrates how to implement OAuth authentication with an external provider (Descope) using [FastMCP](https://github.com/fastmcp/fastmcp) for Model Context Protocol (MCP) tools.
 
-Here, FastMCP tools are mounted in a FastAPI server, rather than converting FastAPI APIs to MCP tools.
+The server uses FastMCP's RemoteAuthProvider (introduced in 2.11.0) to handle OAuth discovery endpoints and token validation. This enables seamless integration with Descope's Dynamic Client Registration (DCR) capabilities, allowing MCP clients to automatically register and authenticate without manual configuration.
 
 ## Requirements
 
 - Python 3.10+
+- FastMCP 2.11.0+
 - [Descope Project ID](https://app.descope.com/settings/project)
 - [Dynamic Client Registration](https://docs.descope.com/identity-federation/inbound-apps/creating-inbound-apps#method-2-dynamic-client-registration-dcr) enabled on Inbound Apps in Descope
 
@@ -30,6 +31,7 @@ Create a `.env` file with:
 ```env
 DESCOPE_PROJECT_ID=your_project_id
 DESCOPE_BASE_URL=https://api.descope.com
+SERVER_URL=<Your Server URL> # defaults to http://localhost:3000
 ```
 
 ### 3. Install dependencies
@@ -46,7 +48,7 @@ python server.py
 
 ### 5. Open the landing page
 
-Visit [http://localhost:3000](http://localhost:3000) for documentation and quick start info.
+Visit your server url or [http://localhost:3000](http://localhost:3000) for documentation and quick start info.
 
 ## Features
 
@@ -65,7 +67,13 @@ Visit [http://localhost:3000](http://localhost:3000) for documentation and quick
 ## Authentication
 
 The server uses Descope for authentication. All MCP endpoints require a valid Bearer token.  
-Tokens are validated using FastMCP’s built-in `BearerAuthProvider`. Read more about it [here](https://gofastmcp.com/servers/auth/bearer)
+Tokens are validated using FastMCP's built-in `RemoteAuthProvider` with JWT verification. This enables full OAuth 2.1 support including dynamic client registration.
+
+The authentication flow:
+1. The server validates tokens using Descope's JWKS endpoint
+2. The server exposes OAuth discovery endpoints for client configuration
+3. Clients can dynamically register and obtain tokens from Descope
+4. The server validates tokens and their audience claims
 
 ## Adding Tools
 
@@ -79,11 +87,14 @@ def get_alerts(state: str) -> str:
 
 FastMCP will automatically expose this as an MCP tool!
 
-## Note on Well-Known Endpoints
+## OAuth Discovery
 
-Ideally, FastMCP should support setting up the `.well-known` endpoints out of the box, similar to how [MCPAuth](https://mcp-auth.dev/docs/configure-server/mcp-auth) works.
+FastMCP's RemoteAuthProvider automatically sets up the required OAuth discovery endpoints:
 
-For now, this example uses FastAPI to serve these endpoints manually, but future versions of FastMCP may make this even easier.
+- `/.well-known/oauth-authorization-server` - Provides OAuth server metadata
+- `/.well-known/oauth-protected-resource` - Describes this server as a protected resource
+
+These endpoints enable MCP clients to automatically discover and authenticate with the Descope identity provider.
 
 ## Troubleshooting
 

@@ -1,12 +1,12 @@
 import os
+import ssl
+import certifi
 import aiohttp
 from fastmcp import FastMCP
-from fastmcp.server.auth import BearerAuthProvider
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastmcp.server.auth.providers.descope import DescopeProvider
 from dotenv import load_dotenv
 import logging
+from starlette.responses import FileResponse
 
 load_dotenv()
 
@@ -19,74 +19,27 @@ USER_AGENT = "weather-app/1.0"
 # Get Descope configuration from environment variables
 DESCOPE_PROJECT_ID = os.getenv("DESCOPE_PROJECT_ID")
 DESCOPE_BASE_URL = os.getenv("DESCOPE_BASE_URL", "https://api.descope.com")
+SERVER_URL = os.getenv("SERVER_URL", "http://localhost:3000")
 
 if not DESCOPE_PROJECT_ID:
     raise ValueError("DESCOPE_PROJECT_ID environment variable must be set")
 
-auth = BearerAuthProvider(
-    jwks_uri=f"{DESCOPE_BASE_URL}/{DESCOPE_PROJECT_ID}/.well-known/jwks.json",
-    issuer=f"{DESCOPE_BASE_URL}/v1/apps/{DESCOPE_PROJECT_ID}",
-    algorithm="RS256",
+# Create the Descope auth provider
+auth = DescopeProvider(
+    project_id=DESCOPE_PROJECT_ID,
+    base_url=SERVER_URL,
+    descope_base_url=DESCOPE_BASE_URL
 )
 
-# FastMCP server for tools with built-in auth
+# Create FastMCP server with the configured Descope auth provider
 mcp = FastMCP(name="Weather MCP Server", auth=auth)
-mcp_app = mcp.http_app(path='/mcp')
 
-# Create FastAPI app with FastMCP lifespan
-app = FastAPI(lifespan=mcp_app.lifespan)
+# Create the app with the MCP path
+app = mcp.http_app(path="/mcp")
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Mount the MCP app at /mcp-server
-app.mount("/mcp-server", mcp_app)
-
-# Add the metadata route for OAuth server discovery
-@app.get("/.well-known/oauth-authorization-server")
-async def oauth_authorization_server():
-    return {
-        "issuer": f"{DESCOPE_BASE_URL}/v1/apps/{DESCOPE_PROJECT_ID}",
-        "jwks_uri": f"{DESCOPE_BASE_URL}/{DESCOPE_PROJECT_ID}/.well-known/jwks.json",
-        "authorization_endpoint": f"{DESCOPE_BASE_URL}/oauth2/v1/apps/authorize",
-        "response_types_supported": ["code"],
-        "subject_types_supported": ["public"],
-        "id_token_signing_alg_values_supported": ["RS256"],
-        "code_challenge_methods_supported": ["S256"],
-        "token_endpoint": f"{DESCOPE_BASE_URL}/oauth2/v1/apps/token",
-        "userinfo_endpoint": f"{DESCOPE_BASE_URL}/oauth2/v1/apps/userinfo",
-        "scopes_supported": ["openid"],
-        "claims_supported": [
-            "iss", "aud", "iat", "exp", "sub", "name", "email",
-            "email_verified", "phone_number", "phone_number_verified",
-            "picture", "family_name", "given_name"
-        ],
-        "revocation_endpoint": f"{DESCOPE_BASE_URL}/oauth2/v1/apps/revoke",
-        "registration_endpoint": f"{DESCOPE_BASE_URL}/v1/mgmt/inboundapp/app/{DESCOPE_PROJECT_ID}/register",
-        "grant_types_supported": ["authorization_code", "refresh_token"],
-        "token_endpoint_auth_methods_supported": ["client_secret_post"],
-        "end_session_endpoint": f"{DESCOPE_BASE_URL}/oauth2/v1/apps/logout"
-    }
-
-# Have to add this manually, since MCPAuth doesn't support this yet
-@app.get("/.well-known/oauth-protected-resource")
-async def oauth_protected_resource(request: Request):
-    base_url = str(request.base_url).rstrip("/")
-    return {
-        "resource": base_url,
-        "authorization_servers": [base_url],
-        "resource_name": "Weather MCP Server",
-    }
-
-@app.get("/")
-async def read_index():
-    return FileResponse("index.html")
+@app.route("/", methods=["GET"])
+async def serve_index(request):
+    return FileResponse(os.path.join(os.path.dirname(__file__), "index.html"))
 
 # Helper function for making NWS API requests
 async def make_nws_request(url: str) -> dict:
@@ -95,7 +48,10 @@ async def make_nws_request(url: str) -> dict:
         "User-Agent": USER_AGENT,
         "Accept": "application/geo+json"
     }
-    async with aiohttp.ClientSession() as session:
+    # Create SSL context with certifi's certificate bundle
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    connector = aiohttp.TCPConnector(ssl=ssl_context)
+    async with aiohttp.ClientSession(connector=connector) as session:
         try:
             async with session.get(url, headers=headers) as response:
                 if not response.ok:
@@ -183,4 +139,4 @@ async def get_forecast(latitude: float, longitude: float) -> str:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=3000)
+    uvicorn.run(app, host="localhost", port=3000)

@@ -4,44 +4,34 @@
 
 ## Introduction
 
-This example shows how to build an MCP server using the Vercel MCP adapter with Descope's Node SDK for session validation. The server provides a simple echo tool and demonstrates how to integrate Descope authentication with the Model Context Protocol (MCP) using Vercel's serverless functions.
+This example shows how to build an MCP server using the Vercel [MCP Handler](https://github.com/vercel/mcp-handler) with Descope's Node SDK for session validation. The server provides a simple echo tool and demonstrates how to integrate Descope authentication with the Model Context Protocol (MCP) using Vercel's serverless functions.
 
 ## Key Components
 
-- **Vercel MCP Adapter**: Handles the MCP protocol communication and serverless function deployment
+- **Vercel's [mcp-handler](https://github.com/vercel/mcp-handler)**: Handles the MCP protocol communication and serverless function deployment
 - **Descope Node SDK**: Validates user sessions and provides authentication context
 - **Echo Tool**: A simple example tool that returns a "Hello, world!" message
 
 ## Deployment
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/descope/ai/tree/main/examples/nextjs-vercel-mcp-server&env=DESCOPE_PROJECT_ID,DESCOPE_BASE_URL&envDescription=Required%20environment%20variables%20for%20the%20MCP%20server&envLink=https://github.com/descope/ai/tree/main/examples/nextjs-vercel-mcp-server#requirements)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdescope%2Fai%2Ftree%2Fmain%2Fexamples%2Fnextjs-vercel-mcp-server&env=NEXT_PUBLIC_DESCOPE_PROJECT_ID&envDescription=Your%20Descope%20Project%20ID&envLink=https%3A%2F%2Fapp.descope.com%2Fsettings%2Fproject)
 
-You can connect to the server using the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) or any other MCP client. Be sure to include the `/api` path in the connection URL.
-
-## Features
-
-- **Session Validation**: Uses Descope Node SDK to validate JWT tokens and extract user context
-- **Echo Tool**: Simple example tool demonstrating MCP integration
-- **MCP Protocol**: Implements the Model Context Protocol for AI tool integration
-- **Serverless Deployment**: Deploys as Vercel serverless functions for scalability
-- **Type Safety**: Full TypeScript support with proper type definitions
+You can connect to the server using the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) or any other MCP client. Be sure to include the `/api/mcp` path in the connection URL.
 
 ## Requirements
 
 Before proceeding, make sure you have the following:
 
-- [Node.js](https://nodejs.org/) (version 18 or later)
+- [Node.js](https://nodejs.org/) (version 20 or later)
 - A valid Descope [Project ID](https://app.descope.com/settings/project)
-- The Descope Inbound Apps feature enabled
-- Git installed
 
 ## Running the Server
 
 First, add the environment variables in a `.env` file at the root:
 
 ```bash
-DESCOPE_PROJECT_ID=      # Your Descope project ID
-DESCOPE_BASE_URL=        # Your Descope base URL (optional, defaults to https://api.descope.com)
+NEXT_PUBLIC_DESCOPE_PROJECT_ID=      # Your Descope project ID
+NEXT_PUBLIC_DESCOPE_BASE_URL=        # Your Descope base URL (optional, defaults to https://api.descope.com)
 ```
 
 Then, install dependencies:
@@ -73,7 +63,7 @@ The server uses Descope's Node SDK for session validation. The `verifyToken` fun
 
 ## Managing API Keys and OAuth Tokens for Tools
 
-If you want Descope to manage your API keys or OAuth tokens for tools, you can use functions in the Node SDK to fetch outbound app tokens at either a user or tenant level:
+If you want Descope to manage your API keys or OAuth tokens for your MCP, you can use functions in the Node SDK to fetch outbound app tokens at either a user or tenant level:
 
 ```typescript
 // Fetch user token with specific scopes

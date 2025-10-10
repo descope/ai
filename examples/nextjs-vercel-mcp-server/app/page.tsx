@@ -59,7 +59,7 @@ export default function Home() {
               </code>
             </li>
             <li>
-              Connect your IDE to{" "}
+              Connect your MCP Client (Claude, Cursor, etc.) to{" "}
               <code className="bg-black/[.05] dark:bg-white/[.06] px-1.5 py-0.5 rounded font-semibold">
                 http://localhost:3000/api/mcp
               </code>

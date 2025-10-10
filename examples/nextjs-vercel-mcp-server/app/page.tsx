@@ -140,7 +140,7 @@ export default function Home() {
         </a>
         <a
           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com"
+          href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdescope%2Fai%2Ftree%2Fmain%2Fexamples%2Fnextjs-vercel-mcp-server&env=NEXT_PUBLIC_DESCOPE_PROJECT_ID&envDescription=Your%20Descope%20Project%20ID&envLink=https%3A%2F%2Fapp.descope.com%2Fsettings%2Fproject"
           target="_blank"
           rel="noopener noreferrer"
         >

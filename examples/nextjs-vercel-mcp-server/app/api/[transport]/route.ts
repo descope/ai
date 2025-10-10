@@ -2,7 +2,7 @@ import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import DescopeClient from "@descope/node-sdk";
 
-const DESCOPE_PROJECT_ID = process.env.DESCOPE_PROJECT_ID;
+const DESCOPE_PROJECT_ID = process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID;
 
 if (!DESCOPE_PROJECT_ID) {
   throw new Error("DESCOPE_PROJECT_ID environment variable is required");

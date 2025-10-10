@@ -5,20 +5,30 @@ export default function Home() {
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start max-w-4xl">
         <div className="flex flex-col items-center sm:items-start">
-          <Image
-            className="dark:invert"
-            src="/next.svg"
-            alt="Next.js logo"
-            width={180}
-            height={38}
-            priority
-          />
+          <div className="flex items-center gap-4">
+            <Image
+              className="dark:invert"
+              src="/next.svg"
+              alt="Next.js logo"
+              width={180}
+              height={38}
+              priority
+            />
+            <span className="text-3xl text-gray-400 font-light">+</span>
+            <Image
+              src="/descope-logo.png"
+              alt="Descope logo"
+              width={80}
+              height={38}
+              priority
+            />
+          </div>
           <h1 className="text-3xl sm:text-4xl font-bold mt-6 text-center sm:text-left">
-            NextJS MCP Server
+            NextJS MCP Server + Descope Auth
           </h1>
           <p className="text-lg text-center sm:text-left mt-4 text-gray-600 dark:text-gray-400">
-            A Stateless Streamable HTTP Model Context Protocol (MCP) server
-            secured by Descope Auth and hosted on Vercel.
+            A Streamable HTTP Model Context Protocol (MCP) server secured by
+            Descope Auth and hosted on Vercel.
           </p>
         </div>
 
@@ -75,17 +85,11 @@ export default function Home() {
               </div>
             </li>
             <li className="flex gap-3">
-              <span className="text-xl">⚡</span>
-              <div>
-                <strong>Serverless Deployment:</strong> Deploys as Vercel
-                serverless functions for scalability
-              </div>
-            </li>
-            <li className="flex gap-3">
               <span className="text-xl">🔑</span>
               <div>
-                <strong>API Key Management:</strong> Use Descope's outbound
-                application feature to securely manage API keys and OAuth tokens
+                <strong>API Key Management:</strong> Use Descope's Outbound
+                Applications to securely manage API keys and OAuth tokens for
+                your MCP tools.
               </div>
             </li>
           </ul>
@@ -110,7 +114,7 @@ export default function Home() {
           </a>
           <a
             className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto"
-            href="https://modelcontextprotocol.io"
+            href="https://docs.descope.com/mcp"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -119,21 +123,6 @@ export default function Home() {
         </div>
       </main>
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://github.com/modelcontextprotocol/typescript-sdk?tab=readme-ov-file#without-session-management-stateless"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Stateless MCP
-        </a>
         <a
           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
           href="https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http"

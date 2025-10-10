@@ -1,33 +1,17 @@
-export async function GET(req: Request) {
-  const origin = new URL(req.url).origin;
+import {
+  protectedResourceHandler,
+  metadataCorsOptionsRequestHandler,
+} from "mcp-handler";
 
-  return Response.json(
-    {
-      resource: `${origin}`,
-      authorization_servers: [`${origin}`],
-      // scopes_supported: [],
-      resource_name: "Descope MCP Server",
-      // resource_documentation: `${origin}/docs`
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, mcp-protocol-version",
-      },
-    }
-  );
-}
+const DESCOPE_BASE_URL =
+  process.env.DESCOPE_BASE_URL || "https://api.descope.com";
+const DESCOPE_PROJECT_ID = process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID;
 
-export async function OPTIONS() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, mcp-protocol-version",
-      "Content-Type": "application/json",
-    },
-  });
-}
+const handler = protectedResourceHandler({
+  authServerUrls: [`${DESCOPE_BASE_URL}/v1/apps/${DESCOPE_PROJECT_ID}`],
+});
+
+const optionsHandler = metadataCorsOptionsRequestHandler();
+
+export const GET = handler;
+export const OPTIONS = metadataCorsOptionsRequestHandler();

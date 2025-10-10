@@ -11,4 +11,7 @@ const handler = protectedResourceHandler({
   authServerUrls: [`${DESCOPE_BASE_URL}/v1/apps/${DESCOPE_PROJECT_ID}`],
 });
 
-export { handler as GET, metadataCorsOptionsRequestHandler as OPTIONS };
+const optionsHandler = metadataCorsOptionsRequestHandler();
+
+export const GET = handler;
+export const OPTIONS = metadataCorsOptionsRequestHandler();

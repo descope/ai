@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Weather MCP Server",
-  description: "A remote MCP server for weather with Descope auth",
+  title: "MCP Server with Next.js and Descope",
+  description: "A Remote MCP server with Descope Auth",
 };
 
 export default function RootLayout({

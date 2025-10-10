@@ -22,6 +22,7 @@
     "@vercel/mcp-adapter": "^1.0.0",
     "ai": "^4.3.16",
     "dotenv": "^16.5.0",
+    "mcp-handler": "^1.0.2",
     "next": "^15.3.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

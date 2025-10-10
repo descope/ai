@@ -38,7 +38,7 @@ export default function Home() {
             <li>
               Clone the repository and install dependencies with{" "}
               <code className="bg-black/[.05] dark:bg-white/[.06] px-1.5 py-0.5 rounded font-semibold">
-                npm install
+                pnpm install
               </code>
             </li>
             <li>
@@ -55,7 +55,7 @@ export default function Home() {
             <li>
               Run the development server with{" "}
               <code className="bg-black/[.05] dark:bg-white/[.06] px-1.5 py-0.5 rounded font-semibold">
-                npm run dev
+                pnpm run dev
               </code>
             </li>
             <li>

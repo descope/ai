@@ -1,6 +1,6 @@
 {
   "name": "mcp-server-descope-nextjs",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "pnpm": {
@@ -19,7 +19,6 @@
   "dependencies": {
     "@descope/node-sdk": "^1.7.7",
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "@vercel/mcp-adapter": "^1.0.0",
     "ai": "^4.3.16",
     "dotenv": "^16.5.0",
     "mcp-handler": "^1.0.2",

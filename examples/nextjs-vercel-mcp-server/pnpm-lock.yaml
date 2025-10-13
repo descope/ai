@@ -16,9 +16,6 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.1
         version: 1.20.0
-      '@vercel/mcp-adapter':
-        specifier: ^1.0.0
-        version: 1.0.0(@modelcontextprotocol/sdk@1.20.0)(next@15.5.4(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       ai:
         specifier: ^4.3.16
         version: 4.3.19(react@19.2.0)(zod@3.25.76)
@@ -440,16 +437,6 @@ packages:
 
   '@types/react@19.2.2':
     resolution: {integrity: sha512-6mDvHUFSjyT2B2yeNx2nUgMxh9LtOWvkhIU3uePn2I2oyNymUAX1NIsdgviM4CH+JSrp2D2hsMvJOkxY+0wNRA==}
-
-  '@vercel/mcp-adapter@1.0.0':
-    resolution: {integrity: sha512-o/QA4LhYCJvuL7/i8CfKPpOm29u25/L4m1LWH44EQZ8cfYJlc4B7Bu+YzDHl23m8A3hDxCJQmlgZEGmsPAQ0vQ==}
-    hasBin: true
-    peerDependencies:
-      '@modelcontextprotocol/sdk': ^1.12.0
-      next: '>=13.0.0'
-    peerDependenciesMeta:
-      next:
-        optional: true
 
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
@@ -1425,13 +1412,6 @@ snapshots:
   '@types/react@19.2.2':
     dependencies:
       csstype: 3.1.3
-
-  '@vercel/mcp-adapter@1.0.0(@modelcontextprotocol/sdk@1.20.0)(next@15.5.4(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
-    dependencies:
-      '@modelcontextprotocol/sdk': 1.20.0
-      mcp-handler: 1.0.2(@modelcontextprotocol/sdk@1.20.0)(next@15.5.4(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
-    optionalDependencies:
-      next: 15.5.4(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
 
   accepts@2.0.0:
     dependencies:

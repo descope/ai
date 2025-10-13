@@ -1,6 +1,14 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [origin, setOrigin] = useState("http://localhost:3000");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start max-w-4xl">
@@ -61,7 +69,7 @@ export default function Home() {
             <li>
               Connect your MCP Client (Claude, Cursor, etc.) to{" "}
               <code className="bg-black/[.05] dark:bg-white/[.06] px-1.5 py-0.5 rounded font-semibold">
-                http://localhost:3000/api/mcp
+                {origin}/api/mcp
               </code>
             </li>
           </ol>

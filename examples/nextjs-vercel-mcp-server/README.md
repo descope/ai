@@ -1,4 +1,4 @@
-# NextJS MCP Server with Vercel MCP Adapter and Descope Node SDK
+# NextJS MCP Server with Vercel MCP Handler and Descope Node SDK
 
 ![Descope Banner](https://github.com/descope/.github/assets/32936811/d904d37e-e3fa-4331-9f10-2880bb708f64)
 

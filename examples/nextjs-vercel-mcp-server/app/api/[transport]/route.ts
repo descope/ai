@@ -3,6 +3,7 @@ import { z } from "zod";
 import DescopeClient from "@descope/node-sdk";
 
 const DESCOPE_PROJECT_ID = process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID;
+const DESCOPE_BASE_URL = process.env.NEXT_PUBLIC_DESCOPE_BASE_URL;
 
 if (!DESCOPE_PROJECT_ID) {
   throw new Error("DESCOPE_PROJECT_ID environment variable is required");
@@ -10,6 +11,7 @@ if (!DESCOPE_PROJECT_ID) {
 
 const descopeClient = DescopeClient({
   projectId: DESCOPE_PROJECT_ID,
+  baseUrl: DESCOPE_BASE_URL
 });
 
 const handler = createMcpHandler(

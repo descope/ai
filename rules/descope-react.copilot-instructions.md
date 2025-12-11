@@ -389,9 +389,9 @@ function OneTapLogin() {
       const credential = await sdk.oneTap.prompt()
 
       // Verify credential with Descope
-      const response = await sdk.oneTap.verify(credential)
+      const response = await sdk.oneTap?.verify(credential)
 
-      if (response.ok) {
+      if (response?.ok) {
         console.log('Successfully authenticated with One Tap')
         navigate('/dashboard')
       }

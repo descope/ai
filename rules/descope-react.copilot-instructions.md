@@ -386,7 +386,7 @@ function OneTapLogin() {
 
     try {
       // Display One Tap prompt and get credential
-      const credential = await sdk.oneTap.prompt()
+      const credential = await sdk.oneTap?.prompt()
 
       // Verify credential with Descope
       const response = await sdk.oneTap?.verify(credential)

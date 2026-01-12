@@ -20,7 +20,7 @@
   "dependencies": {
     "@descope/mcp-express": "^1.0.3",
     "@descope/node-sdk": "^1.6.13",
-    "@modelcontextprotocol/sdk": "^1.24.0",
+    "@modelcontextprotocol/sdk": "^1.25.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

@@ -4,5 +4,5 @@ pydantic
 pydantic-settings
 click
 aiohttp
-fastmcp==2.12.4
+fastmcp==2.14.0
 PyJWT

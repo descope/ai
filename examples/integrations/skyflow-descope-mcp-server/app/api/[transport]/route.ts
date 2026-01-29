@@ -2,7 +2,7 @@ import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import DescopeClient from "@descope/node-sdk";
 
-const DESCOPE_PROJECT_ID = "P2v9EBlmO4XTrOwMRfsY1jeUONxU";
+const DESCOPE_PROJECT_ID = process.env.DESCOPE_PROJECT_ID!;
 const DESCOPE_BASE_URL =
   process.env.NEXT_PUBLIC_DESCOPE_BASE_URL || "https://api.descope.com";
 const SKYFLOW_VAULT_URL_IDENTIFIER = process.env.SKYFLOW_VAULT_URL_IDENTIFIER!;

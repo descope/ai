@@ -107,12 +107,41 @@ async function handleReadEmails(userId: string, userToken: string) {
         }
       );
 
-      const connectData = await connectResponse.json();
+      if (!connectResponse.ok) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: Failed to initiate Descope Gmail connection (status ${connectResponse.status}).`,
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      const connectData: any = await connectResponse.json();
+      const connectUrl = connectData?.url;
+
+      if (typeof connectUrl !== "string" || !connectUrl) {
+        return {
+          content: [
+            {
+              type: "text",
+              text:
+                "Error: Descope connect response did not include a connection URL. Please try again later or contact support.",
+            },
+          ],
+          isError: true,
+        };
+      }
+
       return {
-        content: [{
-          type: "text",
-          text: `NEEDS_CONNECTION:${connectData.url}`
-        }],
+        content: [
+          {
+            type: "text",
+            text: `NEEDS_CONNECTION:${connectUrl}`,
+          },
+        ],
         isError: true,
       };
     }

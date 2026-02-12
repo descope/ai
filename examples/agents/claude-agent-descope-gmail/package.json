@@ -1,0 +1,37 @@
+{
+  "name": "claude-agent-descope-gmail",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "mcp": "ts-node src/mcp-http-server.ts",
+    "start": "tsx src/cli-agent.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kashvipahuja-dev/claude-agent-descope-gmail.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kashvipahuja-dev/claude-agent-descope-gmail/issues"
+  },
+  "homepage": "https://github.com/kashvipahuja-dev/claude-agent-descope-gmail#readme",
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.7",
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@descope/node-sdk": "^1.9.1",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

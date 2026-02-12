@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "mcp": "ts-node src/mcp-http-server.ts",
+    "mcp": "ts-node src/mcp-stdio.ts",
     "start": "tsx src/cli-agent.ts"
   },
   "repository": {

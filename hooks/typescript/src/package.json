@@ -1,0 +1,36 @@
+{
+  "name": "@descope/agent-hooks",
+  "version": "1.0.0",
+  "description": "Descope OAuth hooks for AI agent MCP server authentication",
+  "type": "module",
+  "main": "dist/descope-agent-hooks.js",
+  "types": "dist/descope-agent-hooks.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "descope",
+    "mcp",
+    "oauth",
+    "agent",
+    "hooks",
+    "cursor",
+    "claude-code",
+    "token-exchange",
+    "ciba"
+  ],
+  "author": "Descope",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/descope/agent-hooks.git",
+    "directory": "typescript"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

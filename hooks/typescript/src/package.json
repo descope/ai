@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Descope OAuth hooks for AI agent MCP server authentication",
   "type": "module",
-  "main": "dist/descope-agent-hooks.js",
-  "types": "dist/descope-agent-hooks.d.ts",
+  "main": "dist/descope-auth-hooks.js",
+  "types": "dist/descope-auth-hooks.d.ts",
   "files": [
     "dist"
   ],
@@ -28,7 +28,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/descope/agent-hooks.git",
-    "directory": "typescript"
+    "directory": "hooks/typescript"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

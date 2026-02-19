@@ -24,7 +24,7 @@
     "@anthropic-ai/claude-agent-sdk": "^0.2.7",
     "@anthropic-ai/sdk": "^0.71.2",
     "@descope/node-sdk": "^1.9.1",
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1"
   },

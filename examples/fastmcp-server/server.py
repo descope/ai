@@ -17,6 +17,7 @@ NWS_API_BASE = "https://api.weather.gov"
 USER_AGENT = "weather-app/1.0"
 
 # Get Descope configuration from environment variables
+CONFIG_URL = os.getenv("DESCOPE_CONFIG_URL")
 DESCOPE_PROJECT_ID = os.getenv("DESCOPE_PROJECT_ID")
 DESCOPE_BASE_URL = os.getenv("DESCOPE_BASE_URL", "https://api.descope.com")
 SERVER_URL = os.getenv("SERVER_URL", "http://localhost:3000")
@@ -25,14 +26,13 @@ if not DESCOPE_PROJECT_ID:
     raise ValueError("DESCOPE_PROJECT_ID environment variable must be set")
 
 # Create the Descope auth provider
-auth = DescopeProvider(
-    project_id=DESCOPE_PROJECT_ID,
-    base_url=SERVER_URL,
-    descope_base_url=DESCOPE_BASE_URL
+auth_provider = DescopeProvider(
+    config_url=CONFIG_URL,
+    base_url=SERVER_URL
 )
 
 # Create FastMCP server with the configured Descope auth provider
-mcp = FastMCP(name="Weather MCP Server", auth=auth)
+mcp = FastMCP(name="Weather MCP Server", auth=auth_provider)
 
 # Create the app with the MCP path
 app = mcp.http_app(path="/mcp")

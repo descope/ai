@@ -37,13 +37,13 @@ SERVER_URL=<Your Server URL> # defaults to http://localhost:3000
 ### 3. Install dependencies
 
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 ### 4. Run the server
 
 ```bash
-python server.py
+uv run python server.py
 ```
 
 ### 5. Open the landing page
@@ -70,6 +70,7 @@ The server uses Descope for authentication. All MCP endpoints require a valid Be
 Tokens are validated using FastMCP's built-in `RemoteAuthProvider` with JWT verification. This enables full OAuth 2.1 support including dynamic client registration.
 
 The authentication flow:
+
 1. The server validates tokens using Descope's JWKS endpoint
 2. The server exposes OAuth discovery endpoints for client configuration
 3. Clients can dynamically register and obtain tokens from Descope

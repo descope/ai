@@ -1,0 +1,297 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Descope MCP Express SDK 
+
+## Project Overview
+
+This SDK implements the [Model Context Protocol (MCP) Specification](mdc:https:/spec.modelcontextprotocol.io/specification/2025-03-26/basic/authorization) for Express applications, providing OAuth 2.1 integration with Descope authentication.
+
+### Key Components
+
+- **Provider**: Core class that initializes the Descope client and OAuth endpoints
+  - Manages Descope client initialization and OAuth endpoints configuration
+  
+- **Router**: Implements authorization server metadata and endpoints
+  - Sets up Express routes for OAuth endpoints
+  
+- **Middleware**: Validates bearer tokens for protected routes
+  - Handles token validation and error responses
+
+### Main Features
+
+- OAuth 2.1 authorization server implementation
+- Dynamic client registration
+- Token endpoint and validation
+- Bearer token authentication
+- PKCE support
+
+## Code Organization
+
+The Descope MCP Express SDK follows a modular structure with these main components:
+
+### Key Implementation Components
+
+- **Provider Implementation**: Core provider that manages OAuth configuration and Descope client
+- **Router**: Express router with OAuth endpoints
+- **Authentication Middleware**: Bearer token validation 
+- **OAuth Handlers**: Implementations for metadata, authorization, and registration endpoints
+
+### Module Dependencies
+
+- `@descope/node-sdk` - Core Descope functionality
+- `express` - Web framework
+- `zod` - Schema validation
+- `cors` - Cross-origin resource sharing
+- `dotenv` - Environment variable management
+
+## OAuth Implementation
+
+This SDK implements OAuth 2.1 with the following RFC specifications:
+
+- **RFC 8414**: Authorization Server Metadata
+- **RFC 7591**: Dynamic Client Registration
+- **RFC 7009**: Token Revocation
+
+### Core OAuth Components
+
+- **Authorization**: Authorization endpoint implementation
+  
+- **Token**: Handled by Descope backend
+
+- **Metadata**: OAuth server metadata (.well-known endpoint)
+  
+- **Registration**: Dynamic client registration
+
+### OAuth Flow
+
+1. Client registration through the `/register` endpoint
+2. Authorization through the Descope-hosted authorization page
+3. Token issuance through the Descope API
+4. Token validation via middleware
+
+### MCP Integration
+
+The SDK implements the necessary components to make an Express application MCP-compliant, allowing AI applications to securely authenticate and access protected resources.
+
+## Usage Guide
+
+### Setup
+
+1. Install the package:
+   ```bash
+   npm install @descope/mcp-express
+   ```
+
+2. Configure environment variables:
+   ```
+   DESCOPE_PROJECT_ID=your_project_id
+   DESCOPE_MANAGEMENT_KEY=your_management_key
+   SERVER_URL=your_mcp_server_url
+   ```
+
+3. Basic implementation:
+   ```typescript
+   import express from "express";
+   import {
+     descopeMcpAuthRouter,
+     descopeMcpBearerAuth,
+   } from "@descope/mcp-express";
+
+   const app = express();
+
+   // Add OAuth endpoints (metadata, registration, etc.)
+   app.use(descopeMcpAuthRouter());
+
+   // Protect routes with bearer token authentication
+   app.use(["/api", "/data"], descopeMcpBearerAuth());
+
+   app.listen(3000);
+   ```
+
+### Key Middleware
+
+- `descopeMcpAuthRouter()`: Adds OAuth endpoints (/.well-known/oauth-authorization-server, /register, etc.)
+- `descopeMcpBearerAuth()`: Middleware to protect routes with bearer token authentication
+
+### TypeScript Integration
+
+For proper typing support, extend the Express Request interface:
+
+```typescript
+declare module "express-serve-static-core" {
+  interface Request {
+    auth?: AuthInfo;
+  }
+}
+```
+
+This allows typesafe access to `req.auth` properties.
+
+## Advanced Configuration
+
+### Custom Provider Configuration
+
+```typescript
+import { DescopeMcpProvider } from "@descope/mcp-express";
+
+const provider = new DescopeMcpProvider({
+  // Project credentials
+  projectId: "YOUR_PROJECT_ID",
+  managementKey: "YOUR_MANAGEMENT_KEY",
+  serverUrl: "https://your-server.com",
+  
+  // Optional: Custom Descope base URL (if you've set up a custom domain)
+  baseUrl: "https://auth.your-domain.com",
+  
+  // Dynamic client registration options
+  dynamicClientRegistrationOptions: {
+    authPageUrl: `https://api.descope.com/login/YOUR_PROJECT_ID?flow=consent`,
+    permissionScopes: [
+      {
+        name: "read",
+        description: "Read access",
+        required: true
+      },
+      {
+        name: "write",
+        description: "Write access",
+        required: false
+      }
+    ],
+    isDisabled: false // Set to true to disable dynamic registration
+  },
+  
+  // Token verification options
+  verifyTokenOptions: {
+    requiredScopes: ["read"],
+    audience: "your-api-audience",
+  }
+});
+```
+
+### Inbound Apps with Dynamic Client Registration
+
+This SDK uses Descope's inbound apps with dynamic client registration, allowing AI clients to register themselves programmatically. When an AI client registers:
+
+1. A new application entry is created in Descope's system
+2. Client credentials are generated and returned to the client
+3. The client can then use these credentials for OAuth authorization
+
+### Custom Consent Flows
+
+By default, the SDK uses the `consent` flow ID in the authorization URL:
+
+```typescript
+authPageUrl: `https://api.descope.com/login/YOUR_PROJECT_ID?flow=consent`
+```
+
+You can replace `consent` with any custom flow ID, but the custom flow **must** include a consent action within it. For example:
+
+```typescript
+// Using a custom flow ID
+authPageUrl: `https://api.descope.com/login/YOUR_PROJECT_ID?flow=my_custom_consent_flow`
+```
+
+### Custom Domain Support
+
+If you've configured a custom domain through Descope, you can use it instead of the default `api.descope.com` domain:
+
+```typescript
+// Using a custom domain for the auth page URL
+dynamicClientRegistrationOptions: {
+  authPageUrl: `https://auth.your-domain.com/login/YOUR_PROJECT_ID?flow=consent`
+}
+
+// Also set the baseUrl to use your custom domain for all Descope API calls
+baseUrl: "https://auth.your-domain.com"
+```
+
+Using your custom domain provides branded authentication experiences and can help meet compliance requirements for your application.
+
+When creating your custom flow in the Descope Console:
+1. Ensure it includes the OAuth consent screen action
+2. Configure the scopes and permissions that will be displayed to users
+3. Add any additional authentication steps as needed
+
+### Custom URL Paths
+
+The default router mounts endpoints at standard paths:
+- `/.well-known/oauth-authorization-server` - Metadata endpoint
+- `/authorize` - Authorization redirection endpoint
+- `/register` - Dynamic client registration endpoint
+
+You can mount the router at a different base path:
+
+```typescript
+// Mount OAuth endpoints under /auth
+app.use("/auth", descopeMcpAuthRouter(provider));
+
+// This results in:
+// - /auth/.well-known/oauth-authorization-server
+// - /auth/authorize
+// - /auth/register
+```
+
+### Error Handling
+
+The middleware automatically handles OAuth errors with appropriate status codes and headers. For custom error handling:
+
+```typescript
+app.use((err, req, res, next) => {
+  if (err instanceof OAuthError) {
+    // Custom OAuth error handling
+    res.status(err.statusCode).json({
+      error: err.errorCode,
+      error_description: err.message,
+      custom_field: "your custom data"
+    });
+  } else {
+    next(err);
+  }
+});
+```
+
+## MCP Specification Compliance
+
+This SDK implements the [Model Context Protocol (MCP)](mdc:https:/spec.modelcontextprotocol.io/specification/2025-03-26/basic/authorization) authorization specification, which standardizes how AI applications authenticate with context providers.
+
+### MCP Authorization Flow
+
+1. **Dynamic Registration**: AI clients register with the MCP server, receiving client credentials
+2. **Authorization**: User consent is obtained through the Descope authorization page
+3. **Token Exchange**: Authorization code is exchanged for an access token
+4. **Resource Access**: Access token is used to authenticate requests to protected resources
+
+### Key MCP Features Implemented
+
+- **OAuth 2.1 Provider**: Full implementation of the OAuth 2.1 provider role
+- **PKCE Support**: Protection against authorization code interception attacks
+- **Dynamic Client Registration**: Allows AI clients to register programmatically
+- **Bearer Token Authentication**: Validates access tokens for protected resources
+
+### Types of MCP Clients
+
+This SDK can work with different types of AI clients:
+
+- **Public clients**: Browser-based or mobile applications (uses PKCE)
+- **Confidential clients**: Server-based applications with client authentication
+- **AI agents**: Models that need access to context-providing APIs
+
+### Scopes and Permissions
+
+MCP leverages OAuth scopes to define granular permissions. Configure custom scopes via:
+
+```typescript
+dynamicClientRegistrationOptions: {
+  permissionScopes: [
+    {
+      name: "custom-scope",
+      description: "Description of what this scope allows",
+      required: true // Whether clients must request this scope
+    }
+  ]
+}
+```

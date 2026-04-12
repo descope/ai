@@ -1,0 +1,7 @@
+.env
+dist/
+node_modules/
+.vercel
+.next
+# Real Skyflow service-account JSON must never be committed; copy from credentials.example.json
+scripts/credentials.json

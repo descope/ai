@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather MCP Server</title>
+  <script>
+    const SERVER_URL = window.location.origin + '/mcp';
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: "#8B5CF6", // Purple
+            secondary: "#6366F1", // Indigo
+            accent: "#EC4899", // Pink
+            dark: {
+              DEFAULT: "#111827",
+              lighter: "#1F2937",
+            }
+          },
+          fontFamily: {
+            sans: ["Inter", "system-ui", "sans-serif"],
+            heading: ["Space Grotesk", "system-ui", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+    body {
+      background-color: #111827;
+      color: #F3F4F6;
+    }
+
+    pre {
+      background: #1F2937 !important;
+      color: #E5E7EB !important;
+      position: relative;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      word-break: break-word;
+      border-radius: 0.5rem;
+      padding: 0.7rem;
+      border: 1px solid #374151;
+      text-shadow: none;
+      -webkit-text-fill-color: #E5E7EB;
+    }
+
+    pre code {
+      background: transparent !important;
+      color: inherit !important;
+      text-shadow: none;
+      -webkit-text-fill-color: inherit;
+    }
+
+    pre .copy-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      color: #8B5CF6;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+
+    pre .copy-button:hover {
+      background: rgba(139, 92, 246, 0.2);
+    }
+
+    pre .copy-button.copied {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: rgba(139, 92, 246, 0.2);
+    }
+
+    .card {
+      background: #1F2937;
+      border: 1px solid #374151;
+      transition: all 0.2s;
+    }
+
+    .card:hover {
+      border-color: #8B5CF6;
+    }
+
+    code {
+      background: #374151;
+      color: #E5E7EB;
+    }
+
+    a {
+      color: #8B5CF6;
+      transition: all 0.2s;
+      text-decoration: underline !important;
+    }
+
+    a:hover {
+      color: #A78BFA;
+    }
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set server URL
+      document.getElementById('server-url').textContent = SERVER_URL;
+
+      // Set configuration JSON
+      const config = {
+        mcpServers: {
+          weather: {
+            url: SERVER_URL
+          }
+        }
+      };
+      document.getElementById('config-json').textContent = JSON.stringify(config, null, 2);
+
+      // Copy button functionality
+      const preBlocks = document.querySelectorAll('pre');
+      preBlocks.forEach(pre => {
+        const button = document.createElement('button');
+        button.className = 'copy-button';
+        button.textContent = 'Copy';
+        button.onclick = () => {
+          const code = pre.querySelector('code')?.textContent || '';
+          navigator.clipboard.writeText(code).then(() => {
+            button.textContent = 'Copied!';
+            button.classList.add('copied');
+            setTimeout(() => {
+              button.textContent = 'Copy';
+              button.classList.remove('copied');
+            }, 2000);
+          });
+        };
+        pre.appendChild(button);
+      });
+    });
+  </script>
+</head>
+
+<body class="font-sans leading-relaxed flex flex-col min-h-screen">
+  <main class="container mx-auto px-4 pb-12 flex-grow pt-8">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-4xl font-bold font-heading text-white mb-6">🌤️ Weather MCP Server</h1>
+      <p class="text-lg text-gray-300 mb-8">
+        A <a
+          href="https://github.com/modelcontextprotocol/typescript-sdk?tab=readme-ov-file#without-session-management-stateless">Stateless</a>
+        <a href="https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http">Streamable
+          HTTP</a>
+        <a href="https://modelcontextprotocol.com/" class="hover:text-primary">Model Context Protocol
+          (MCP)</a> server for weather data from the <a href="https://www.weather.gov/documentation/services-web-api"
+          class="hover:text-primary">National
+          Weather Service API</a> secured by
+        <a href="https://www.descope.com/" class="hover:text-primary">Descope</a>
+        <a href="https://www.npmjs.com/package/@descope/mcp-express">auth</a> and hosted on <a
+          href="https://netlify.com/" class="hover:text-primary">Netlify</a>.
+      </p>
+
+      <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">Quick Start</h2>
+      <div class="card rounded-lg p-6 mb-6">
+        <h3 class="text-xl font-semibold text-white mb-3">Server URL</h3>
+        <pre><code class="px-2 py-1 rounded" id="server-url"></code></pre>
+      </div>
+
+      <div class="card rounded-lg p-6 mb-6">
+        <h3 class="text-xl font-semibold text-white mb-3">Configuration</h3>
+        <pre><code id="config-json"></code></pre>
+      </div>
+
+      <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">IDE Integration</h2>
+      <div class="card rounded-lg p-6 mb-6">
+        <h3 class="text-xl font-semibold text-white mb-3">Windsurf</h3>
+        <ol class="list-decimal pl-6 space-y-2 text-gray-300">
+          <li>Open Settings</li>
+          <li>Navigate to <strong class="font-semibold text-white">Cascade</strong> → <strong
+              class="font-semibold text-white">Model
+              Context Provider Servers</strong></li>
+          <li>Select <strong class="font-semibold text-white">Add Server</strong></li>
+        </ol>
+
+        <h3 class="text-xl font-semibold text-white mt-6 mb-3">Cursor</h3>
+        <ol class="list-decimal pl-6 space-y-2 text-gray-300">
+          <li>Press <strong class="font-semibold text-white">Cmd + Shift + J</strong> to open Settings</li>
+          <li>Select <strong class="font-semibold text-white">MCP Tools</strong></li>
+          <li>Select <strong class="font-semibold text-white"> + New MCP server</strong></li>
+        </ol>
+
+        <h3 class="text-xl font-semibold text-white mt-6 mb-3">VSCode</h3>
+        <p class="mb-2 text-gray-300">Read more <a href="https://code.visualstudio.com/docs/copilot/chat/mcp-servers"
+            class="hover:text-primary">here</a></p>
+        <p class="text-gray-400">Note: Requires VSCode 1.99 or above</p>
+      </div>
+
+      <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">Available Tools</h2>
+      <div class="card rounded-lg p-6 mb-6">
+        <div class="mb-6">
+          <h3 class="text-xl font-semibold text-white mb-3">Weather Alerts</h3>
+          <code class="bg-gray-800 px-2 py-1 rounded">get-alerts</code>
+          <p class="mt-2 text-gray-300">Get real-time weather alerts for any US state using the <a
+              href="https://www.weather.gov/documentation/services-web-api" class="hover:text-primary">National Weather
+              Service API</a>. This tool provides
+            detailed information about active weather warnings, watches, and advisories.</p>
+          <div class="mt-3 bg-gray-700 p-4 rounded">
+            <p class="font-semibold mb-2 text-white">Parameters:</p>
+            <ul class="list-disc pl-6 space-y-1 text-gray-300">
+              <li><code class="bg-gray-700 px-1 rounded">state</code>: Two-letter state code (e.g., "CA"
+                for California)</li>
+            </ul>
+            <p class="mt-3 font-semibold mb-2 text-white">Returns:</p>
+            <ul class="list-disc pl-6 space-y-1 text-gray-300">
+              <li>Event type (e.g., Flood Warning, Severe Thunderstorm Watch)</li>
+              <li>Affected area description</li>
+              <li>Alert severity level</li>
+              <li>Current status</li>
+              <li>Detailed headline information</li>
+            </ul>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-xl font-semibold text-white mb-3">Weather Forecast</h3>
+          <code class="bg-gray-800 px-2 py-1 rounded">get-forecast</code>
+          <p class="mt-2 text-gray-300">Get detailed weather forecasts for any location in the United States
+            using latitude and
+            longitude coordinates. This tool provides comprehensive weather information including
+            temperature, wind conditions, and short-term forecasts from the National Weather Service.</p>
+          <div class="mt-3 bg-gray-700 p-4 rounded">
+            <p class="font-semibold mb-2 text-white">Parameters:</p>
+            <ul class="list-disc pl-6 space-y-1 text-gray-300">
+              <li><code class="bg-gray-700 px-1 rounded">latitude</code>: Location latitude (-90 to 90)
+              </li>
+              <li><code class="bg-gray-700 px-1 rounded">longitude</code>: Location longitude (-180 to
+                180)</li>
+            </ul>
+            <p class="mt-3 font-semibold mb-2 text-white">Returns:</p>
+            <ul class="list-disc pl-6 space-y-1 text-gray-300">
+              <li>Forecast period name (e.g., "This Afternoon", "Tonight")</li>
+              <li>Temperature in Fahrenheit or Celsius</li>
+              <li>Wind speed and direction</li>
+              <li>Short-term weather forecast description</li>
+            </ul>
+            <p class="mt-3 text-sm text-gray-400">Note: This tool supports locations within the United
+              States only, as provided by the National Weather Service.</p>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">Example Workflows</h2>
+      <div class="card rounded-lg p-6 mb-6">
+        <div class="bg-gray-700 rounded-lg p-4 mb-4">
+          <h4 class="text-lg font-semibold text-white mb-2">Travel Planning</h4>
+          <p class="text-gray-300">"What's the weather forecast for San Francisco next week?"</p>
+        </div>
+        <div class="bg-gray-700 rounded-lg p-4 mb-4">
+          <h4 class="text-lg font-semibold text-white mb-2">Event Planning</h4>
+          <p class="text-gray-300">"Check weather alerts for outdoor events in New York"</p>
+        </div>
+        <div class="bg-gray-700 rounded-lg p-4">
+          <h4 class="text-lg font-semibold text-white mb-2">Agriculture</h4>
+          <p class="text-gray-300">"Get weather alerts for farming regions in Iowa"</p>
+        </div>
+      </div>
+
+      <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">Troubleshooting</h2>
+      <div class="card rounded-lg p-6 mb-6">
+        <p class="mb-4 text-gray-300">If you encounter issues with <code
+            class="bg-gray-800 px-2 py-1 rounded">mcp-remote</code>, try clearing the authentication files:
+        </p>
+        <pre><code>rm -rf ~/.mcp-auth</code></pre>
+      </div>
+    </div>
+  </main>
+  <footer class="bg-gray-900 py-6 mt-12">
+    <div class="container mx-auto px-4 text-center text-gray-400">
+      <p>&copy; 2025 Descope. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+
+</html>

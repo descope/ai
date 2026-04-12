@@ -1,0 +1,10 @@
+/.git
+/node_modules
+.dockerignore
+.env
+Dockerfile
+
+.env.yaml
+!.env.project
+!.env.vault
+logs

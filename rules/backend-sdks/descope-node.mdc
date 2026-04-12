@@ -1,0 +1,333 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Descope Node.js SDK Integration Guide
+
+This guide provides comprehensive information about integrating and using the Descope SDK in your Node.js applications.
+
+## Requirements
+
+- Node.js version 14 or above
+- npm or yarn package manager
+
+## Installation and Setup
+
+Install the Descope SDK:
+```bash
+npm install @descope/node-sdk
+```
+
+Initialize the SDK:
+```javascript
+const { Descope } = require('@descope/node-sdk')
+
+// For authentication only
+const descope = Descope({
+    projectId: 'YOUR_PROJECT_ID'
+})
+
+// For management functions
+const descopeManagement = Descope({
+    projectId: 'YOUR_PROJECT_ID',
+    managementKey: 'YOUR_MANAGEMENT_KEY'
+})
+```
+
+## Authentication Methods
+
+### 1. Magic Link Authentication
+```javascript
+// Generate and send magic link
+await descope.magicLink.signUp({
+    loginId: 'user@example.com',
+    redirectUrl: 'https://your-app.com/callback'
+})
+
+// Verify magic link
+const authResponse = await descope.magicLink.verify(token)
+```
+
+### 2. OTP (One-Time Password)
+```javascript
+// Start OTP flow
+await descope.otp.signUpOrIn({
+    loginId: 'user@example.com',
+    deliveryMethod: 'email' // or 'sms', 'whatsapp', 'voice'
+})
+
+// Verify OTP
+const authResponse = await descope.otp.verify({
+    loginId: 'user@example.com',
+    code: '123456'
+})
+```
+
+### 3. Enchanted Link
+```javascript
+// Start enchanted link flow
+const enchantedLinkRes = await descope.enchantedLink.signIn('user@example.com', 'https://your-app.com/callback')
+const { linkId, pendingRef } = enchantedLinkRes.data
+
+// Poll for session
+const jwtResponse = await descope.enchantedLink.waitForSession(pendingRef)
+
+// Verify enchanted link
+await descope.enchantedLink.verify(token)
+```
+
+### 4. OAuth/Social Sign-In
+```javascript
+// Initialize OAuth flow
+const authURL = descope.oauth.start({
+    provider: 'google', // or 'github', 'facebook', etc.
+    redirectUrl: 'https://your-app.com/oauth/callback'
+})
+
+// Handle OAuth callback
+const authResponse = await descope.oauth.exchange(code)
+```
+
+### 5. SAML/SSO
+```javascript
+// Start SAML flow
+const urlRes = await descope.saml.start('tenant-id', 'https://your-app.com/callback')
+
+// Exchange SAML token
+const authResponse = await descope.saml.exchange(code)
+```
+
+### 6. TOTP (Time-based One-Time Password)
+```javascript
+// Start TOTP enrollment
+const totpResponse = await descope.totp.signUp({
+    loginId: 'user@example.com'
+})
+// totpResponse will contain provisioningURL, image, and key
+
+// Verify TOTP
+const authResponse = await descope.totp.verify({
+    loginId: 'user@example.com',
+    code: '123456'
+})
+```
+
+### 7. Passwords
+```javascript
+// Sign up with password
+const authResponse = await descope.password.signUp(
+    'user@example.com',
+    'securePassword123',
+    {
+        name: 'John Doe',
+        phone: '+1234567890'
+    }
+)
+
+// Sign in with password
+const authResponse = await descope.password.signIn('user@example.com', 'securePassword123')
+
+// Reset password
+await descope.password.sendReset('user@example.com', 'https://your-app.com/reset-password')
+
+// Update password (when authenticated)
+await descope.password.update('user@example.com', 'newPassword123', refreshToken)
+
+// Replace password
+const authResponse = await descope.password.replace('user@example.com', 'oldPassword', 'newPassword')
+```
+
+## Session Management
+
+### Token Validation
+```javascript
+// Validate session JWT
+const validationResponse = await descope.validateSession(sessionJwt)
+
+// Refresh session
+const refreshResponse = await descope.refresh(refreshToken)
+
+// Combined validate and refresh
+const authInfo = await descope.validateAndRefreshSession(sessionJwt, refreshToken)
+```
+
+### Express Middleware
+```javascript
+const express = require('express')
+const { Descope } = require('@descope/node-sdk')
+
+const app = express()
+const descope = Descope({ projectId: 'YOUR_PROJECT_ID' })
+
+// Create middleware
+const authMiddleware = async (req, res, next) => {
+    try {
+        const sessionToken = req.headers.authorization?.split(' ')[1]
+        const refreshToken = req.cookies?.refreshToken
+        
+        const authInfo = await descope.validateAndRefreshSession(sessionToken, refreshToken)
+        req.user = authInfo
+        next()
+    } catch (error) {
+        res.status(401).json({ error: 'Unauthorized' })
+    }
+}
+
+// Use middleware
+app.use('/protected', authMiddleware)
+```
+
+## Role & Permission Validation
+
+### Tenant-Based Validation
+```javascript
+// Validate tenant permissions
+const hasPermissions = descope.validateTenantPermissions(
+    authInfo,
+    'tenant-id',
+    ['permission1', 'permission2']
+)
+
+// Validate tenant roles
+const hasRoles = descope.validateTenantRoles(
+    authInfo,
+    'tenant-id',
+    ['role1', 'role2']
+)
+
+// Get matched permissions/roles
+const matchedPermissions = descope.getMatchedTenantPermissions(
+    authInfo,
+    'tenant-id',
+    ['permission1', 'permission2']
+)
+
+const matchedRoles = descope.getMatchedTenantRoles(
+    authInfo,
+    'tenant-id',
+    ['role1', 'role2']
+)
+```
+
+### Global Validation
+```javascript
+// Validate permissions
+const hasPermissions = descope.validatePermissions(
+    authInfo,
+    ['permission1', 'permission2']
+)
+
+// Validate roles
+const hasRoles = descope.validateRoles(
+    authInfo,
+    ['role1', 'role2']
+)
+
+// Get matched permissions/roles
+const matchedPermissions = descope.getMatchedPermissions(
+    authInfo,
+    ['permission1', 'permission2']
+)
+
+const matchedRoles = descope.getMatchedRoles(
+    authInfo,
+    ['role1', 'role2']
+)
+```
+
+## Session Termination
+
+```javascript
+// Logout current session
+await descope.logout(refreshToken)
+
+// Logout all sessions
+await descope.logoutAll(refreshToken)
+```
+
+## Error Handling
+
+```javascript
+const { DescopeErrors } = require('@descope/node-sdk')
+
+try {
+    const response = await descope.otp.signIn.email(loginId)
+    if (response.error) {
+        switch (response.error.errorCode) {
+            case DescopeErrors.userNotFound:
+                // Handle user not found
+                break
+            case DescopeErrors.rateLimited:
+                // Handle rate limiting
+                break
+            default:
+                // Handle other errors
+                // response.error contains errorCode, errorDescription, and errorMessage
+        }
+    }
+} catch (error) {
+    // Handle technical errors
+}
+```
+
+## Custom Public Key
+
+You can provide your own public key instead of downloading it from Descope's servers:
+
+```javascript
+const descope = Descope({
+    projectId: 'YOUR_PROJECT_ID',
+    publicKey: '{"alg":"RS256", ... }'
+})
+```
+
+## Testing Utilities
+
+### Test Users
+```javascript
+// Create test user
+await descope.management.user.createTestUser('test@example.com', {
+    email: 'test@example.com',
+    name: 'Test User'
+})
+
+// Generate OTP for test user
+const { code } = await descope.management.user.generateOTPForTestUser(
+    'email',
+    'test@example.com'
+)
+
+// Generate magic link for test user
+const { link } = await descope.management.user.generateMagicLinkForTestUser(
+    'email',
+    'test@example.com',
+    'https://your-app.com/callback'
+)
+
+// Generate enchanted link for test user
+const { link, pendingRef } = await descope.management.user.generateEnchantedLinkForTestUser(
+    'test@example.com',
+    'https://your-app.com/callback'
+)
+
+// Clean up test users
+await descope.management.user.deleteAllTestUsers()
+```
+
+## Best Practices
+
+1. **Environment Variables**
+```javascript
+const descope = Descope({
+    projectId: process.env.DESCOPE_PROJECT_ID,
+    managementKey: process.env.DESCOPE_MANAGEMENT_KEY
+})
+```
+
+Remember to:
+1. Never expose your management key in client-side code
+2. Always validate tokens on the server side
+3. Implement proper error handling
+4. Follow security best practices
+5. Keep dependencies updated

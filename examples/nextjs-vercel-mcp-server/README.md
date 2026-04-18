@@ -30,8 +30,13 @@ Before proceeding, make sure you have the following:
 First, add the environment variables in a `.env` file at the root:
 
 ```bash
-NEXT_PUBLIC_DESCOPE_PROJECT_ID=      # Your Descope project ID
-NEXT_PUBLIC_DESCOPE_BASE_URL=        # Your Descope base URL (optional, defaults to https://api.descope.com)
+# Your Descope project ID
+NEXT_PUBLIC_DESCOPE_PROJECT_ID=
+# Your MCP server issuer URL from the Descope Console (MCP server config)
+DESCOPE_MCP_ISSUER_URL=
+
+# Your Descope base URL (optional)
+NEXT_PUBLIC_DESCOPE_BASE_URL=
 ```
 
 Then, install dependencies:
@@ -60,48 +65,6 @@ The server uses Descope's Node SDK for session validation. The `verifyToken` fun
 2. Uses the Descope Node SDK to validate the session
 3. Returns authentication context including user scopes and client ID
 4. All MCP endpoints require a valid bearer token
-
-## Managing API Keys and OAuth Tokens for Tools
-
-If you want Descope to manage your API keys or OAuth tokens for your MCP, you can use functions in the Node SDK to fetch outbound app tokens at either a user or tenant level:
-
-```typescript
-// Fetch user token with specific scopes
-const userToken =
-  await descopeClient.management.outboundApplication.fetchTokenByScopes(
-    "my-app-id",
-    "user-id",
-    ["read", "write"],
-    { withRefreshToken: false },
-    "tenant-id"
-  );
-
-// Fetch latest user token
-const latestUserToken =
-  await descopeClient.management.outboundApplication.fetchToken(
-    "my-app-id",
-    "user-id",
-    "tenant-id",
-    { forceRefresh: false }
-  );
-
-// Fetch tenant token with specific scopes
-const tenantToken =
-  await descopeClient.management.outboundApplication.fetchTenantTokenByScopes(
-    "my-app-id",
-    "tenant-id",
-    ["read", "write"],
-    { withRefreshToken: false }
-  );
-
-// Fetch latest tenant token
-const latestTenantToken =
-  await descopeClient.management.outboundApplication.fetchTenantToken(
-    "my-app-id",
-    "tenant-id",
-    { forceRefresh: false }
-  );
-```
 
 ## Available Tools
 

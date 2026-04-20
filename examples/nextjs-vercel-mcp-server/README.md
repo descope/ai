@@ -24,15 +24,20 @@ Before proceeding, make sure you have the following:
 
 - [Node.js](https://nodejs.org/) (version 20 or later)
 - A valid Descope [Project ID](https://app.descope.com/settings/project)
+- An MCP server registered in Descope (see below) so you have an **Issuer URL** for this deployment
 
 ## Running the Server
 
-First, add the environment variables in a `.env` file at the root:
+In the [Descope Console](https://app.descope.com/agentic-hub/mcp-servers), you will need to create an [MCP server](https://docs.descope.com/agentic-identity-hub/mcp-servers).
+
+Once completed, copy that MCP server’s **Issuer URL**—you will set it as `DESCOPE_MCP_ISSUER_URL`. Without it, clients cannot discover or use the hosted auth flows against your server.
+
+Then add the environment variables in a `.env` file at the root:
 
 ```bash
 # Your Descope project ID
 NEXT_PUBLIC_DESCOPE_PROJECT_ID=
-# Your MCP server issuer URL from the Descope Console (MCP server config)
+# Issuer URL from your MCP server in Descope (MCP server configuration)
 DESCOPE_MCP_ISSUER_URL=
 
 # Your Descope base URL (optional)

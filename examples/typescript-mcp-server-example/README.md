@@ -10,21 +10,19 @@ It exposes:
 ## Prerequisites
 
 - Node.js 20+ (or newer)
-- A Descope project
-- A Descope MCP server configured in Descope
+- A Descope Project
+- An "MCP Server" configured in Descope
 
-You must create the MCP server in Descope first so you can get the authorization server issuer URL used in this app.
+You must create the [MCP server](https://docs.descope.com/agentic-identity-hub/mcp-servers) in Descope first, so you can get the authorization server issuer URL used to protect this server.
 
 ## 1) Create the Descope MCP Server
 
 In Descope Console:
 
 1. Create or open your project.
-2. Create an [MCP server](https://docs.descope.com) for this service.
-3. Copy:
-   - `Project ID`
-   - MCP server issuer URL (authorization server), for example:
-     `https://api.descope.com/v1/apps/<tenant-or-env>/<project-id>/<inbound-app-id>`
+2. Create an [MCP server](https://app.descope.com/agentic-hub/mcp-servers) in Descope for this MCP Server.
+3. Copy the MCP server issuer URL, for example:
+   `https://api.descope.com/v1/apps/agentic/...`
 
 ## 2) Configure Environment Variables
 

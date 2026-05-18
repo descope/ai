@@ -6,11 +6,12 @@ const MCP_SERVER_ID = process.env.MCP_SERVER_ID!;
 const DESCOPE_CLIENT_ID = process.env.DESCOPE_CLIENT_ID!;
 
 export function authenticateUser() {
-  const authUrl = `https://api.descope.com/oauth2/v1/apps/agentic/${DESCOPE_PROJECT_ID}/${MCP_SERVER_ID}/authorize?response_type=code&client_id=${DESCOPE_CLIENT_ID}&redirect_uri=http://localhost:3000/callback&scope=google-read+google-send&flow=inbound-apps-user-consent`;
-  
+  const scopes = encodeURIComponent("google-read google-send outbound.token.fetch");
+  const authUrl = `https://api.descope.com/oauth2/v1/apps/agentic/${DESCOPE_PROJECT_ID}/${MCP_SERVER_ID}/authorize?response_type=code&client_id=${DESCOPE_CLIENT_ID}&redirect_uri=http://localhost:3000/callback&scope=${scopes}&flow=inbound-apps-user-consent`;
+
   console.log("\nOpening browser for authentication...");
   console.log(`\nIf browser doesn't open, visit:\n${authUrl}\n`);
-  
+
   exec(`open "${authUrl}"`, (error) => {
     if (error) {
       console.log("Could not open browser automatically");

@@ -13,7 +13,7 @@ The server uses FastMCP's RemoteAuthProvider (introduced in 2.11.0) to handle OA
 - Python 3.10+
 - FastMCP 2.11.0+
 - [Descope Project ID](https://app.descope.com/settings/project)
-- [Dynamic Client Registration](https://docs.descope.com/identity-federation/inbound-apps/creating-inbound-apps#method-2-dynamic-client-registration-dcr) enabled on Inbound Apps in Descope
+- [MCP Server](https://docs.descope.com/agentic-identity-hub/mcp-servers/settings) created in Descope with configured `./well-known` URL
 
 ## Quick Start
 
@@ -29,21 +29,27 @@ cd examples/fastmcp-server
 Create a `.env` file with:
 
 ```env
-DESCOPE_PROJECT_ID=your_project_id
+# Descope Config URL
+DESCOPE_CONFIG_URL=DESCOPE_WELL_KNOWN_URL
+# Descope Project ID
+DESCOPE_PROJECT_ID=DESCOPE_PROJECT_ID
+# Descope Base URL (Optional)
 DESCOPE_BASE_URL=https://api.descope.com
-SERVER_URL=<Your Server URL> # defaults to http://localhost:3000
+# Your Server URL
+SERVER_URL="http://localhost:3000"
+
 ```
 
 ### 3. Install dependencies
 
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 ### 4. Run the server
 
 ```bash
-python server.py
+uv run python server.py
 ```
 
 ### 5. Open the landing page
@@ -70,6 +76,7 @@ The server uses Descope for authentication. All MCP endpoints require a valid Be
 Tokens are validated using FastMCP's built-in `RemoteAuthProvider` with JWT verification. This enables full OAuth 2.1 support including dynamic client registration.
 
 The authentication flow:
+
 1. The server validates tokens using Descope's JWKS endpoint
 2. The server exposes OAuth discovery endpoints for client configuration
 3. Clients can dynamically register and obtain tokens from Descope

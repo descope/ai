@@ -175,7 +175,7 @@ async function main() {
       }
 
       const payload = JSON.parse(
-        Buffer.from(tokenData.access_token.split(".")[1], "base64").toString()
+        Buffer.from(tokenData.access_token.split(".")[1], "base64url").toString()
       );
       const uid = payload.sub ?? "";
 
@@ -234,7 +234,7 @@ async function main() {
   console.log("\nStep 2: Connecting to remote MCP server...");
 
   const transport = new StreamableHTTPClientTransport(
-    new URL("https://mcp-with-next-js-and-descope-beryl.vercel.app/api/mcp"),
+    new URL(process.env.MCP_SERVER_URL!),
     {
       requestInit: {
         headers: { Authorization: `Bearer ${userToken}` },
@@ -336,7 +336,7 @@ async function runAgent(userMessage: string, mcpClient: Client): Promise<string>
         CallToolResultSchema
       );
 
-      const resultContent = toolResult.content[0].text;
+      const resultContent = toolResult.content?.[0]?.text ?? "";
 
       // ── Approval flow (send email) ─────────────────────────────────────
       if (resultContent.startsWith("NEEDS_APPROVAL:")) {
@@ -392,16 +392,35 @@ async function runAgent(userMessage: string, mcpClient: Client): Promise<string>
           console.log("Please grant permission in your browser.");
           console.log("⏳ Waiting for you to complete the OAuth flow...\n");
 
-          // Give the user time to complete OAuth in browser
-          await new Promise((r) => setTimeout(r, 15_000));
-          console.log("Retrying...\n");
+          let tokenAvailable = false;
+          let attempts = 0;
+          while (attempts < 20 && !tokenAvailable) {
+            await new Promise(r => setTimeout(r, 3000));
+            attempts++;
+            const check = await fetch(
+              "https://api.descope.com/v1/mgmt/outbound/app/user/token/latest",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${DESCOPE_PROJECT_ID}:${userToken}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ appId: "gmail", loginId: userId }),
+              }
+            );
+            if (check.ok) {
+              console.log("✅ Permission granted! Retrying...\n");
+              tokenAvailable = true;
+            }
+          }
 
           messages.push({
             role: "user",
             content: [{
               type: "tool_result",
               tool_use_id: toolUse.id,
-              content: "Permission granted. Please retry.",
+              content: tokenAvailable ? "Permission granted. Please retry." : "Timeout waiting for permission.",
+              ...(tokenAvailable ? {} : { is_error: true }),
             }],
           });
           continue;

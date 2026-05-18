@@ -1,113 +1,117 @@
-# Claude MCP Gmail Agent with Human-in-the-Loop Approval
+# Claude Gmail Agent with Descope
 
-A secure AI agent that integrates Gmail using Claude's Agents SDK, Model Context Protocol (MCP), and Descope for authentication, authorization, and progressive OAuth scoping with human approval for sensitive actions.
+A Claude-powered AI agent that integrates with Gmail through the Model Context Protocol (MCP), using Descope's Agentic Identity Hub for authentication, progressive OAuth scoping, and human-in-the-loop email approval.
 
-## Features
+Read the full tutorial: [Build a Claude Gmail Agent with Descope](#) <!-- add blog link once published -->
 
-- 📧 Read emails from Gmail inbox
-- ✉️ Send emails with approval workflow
-- 🔐 Progressive OAuth scoping (permissions requested on-demand)
-- 🎫 Human-in-the-loop approval via Descope Enchanted Links
-- 🔒 Agent never directly handles Gmail tokens (Agent → MCP → Descope → Gmail)
+## What This Does
+
+- Authenticates users via Descope's OAuth 2.0 consent flow
+- Connects to a remote MCP server deployed on Vercel
+- Reads Gmail inbox using progressive OAuth scoping (`gmail.readonly`)
+- Sends emails with human-in-the-loop approval via Descope Enchanted Link (`gmail.send`)
+- Verifies MCP access token and enforces required scopes at connection time
+
+## Architecture
+
+```
+CLI Agent → Descope (auth) → Remote MCP Server (Vercel) → Gmail API
+```
+
+The MCP server handles all on-behalf-of token management. The agent never directly touches Gmail OAuth credentials — it calls tools, the MCP server fetches the right token from Descope, makes the API call, and returns the result.
+
+The MCP server is based on Descope's [Next.js MCP template](https://github.com/descope/mcp-with-next-js-and-descope). Deploy your own instance and point the agent at it.
 
 ## Prerequisites
 
 - Node.js 18+
-- Descope account and project
-- Anthropic API key
-- Google Cloud project with Gmail API enabled
+- [Anthropic API key](https://console.anthropic.com)
+- [Descope account](https://www.descope.com) with:
+  - A Gmail Connection configured in Agentic Identity Hub
+  - An MCP Server configured with `google-read` and `google-send` scopes
+- Google Cloud Console project with OAuth credentials (client ID and secret)
+- A deployed instance of the [Descope Next.js MCP template](https://github.com/descope/mcp-with-next-js-and-descope)
 
-## Quick Start
+## Setup
 
-### 1. Install Dependencies
+**1. Install dependencies**
 
 ```bash
 npm install
 ```
 
-### 2. Configure Descope
+**2. Configure environment variables**
 
-**Create Inbound App:**
-1. Go to Descope Console → Applications → Inbound Apps
-2. Create new application
-3. Add scopes: `google-read`, `google-send`
-4. Note your Project ID, MCP Server ID, Client ID, and Client Secret
-
-**Create Connection:**
-1. Go to Applications → Connections → Add Connection
-2. Select Gmail
-3. App ID: `gmail`
-4. OAuth Scopes: `gmail.readonly`, `gmail.send`
-5. Redirect URL: `http://localhost:3000/connection-complete`
-
-**Enable Enchanted Link:**
-1. Go to Authentication Methods → Enchanted Link
-2. Enable and configure
-
-### 3. Set Environment Variables
-
-Create a `.env` file:
-
-```env
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-DESCOPE_PROJECT_ID=your_descope_project_id_here
-DESCOPE_CLIENT_ID=your_descope_client_id_here
-DESCOPE_CLIENT_SECRET=your_descope_client_secret_here
-MCP_SERVER_ID=your_mcp_server_id_here
-```
-
-### 4. Run the Agent
+Copy the example env file and fill in your values:
 
 ```bash
-npm start
+cp .env.example .env
 ```
 
-## Usage
+```env
+ANTHROPIC_API_KEY=your_anthropic_api_key
 
-**Read emails:**
-```
-You: Read my latest emails
-```
+DESCOPE_PROJECT_ID=your_descope_project_id
+DESCOPE_CLIENT_ID=your_mcp_server_client_id
+DESCOPE_CLIENT_SECRET=your_mcp_server_client_secret
+MCP_SERVER_ID=your_mcp_server_id
 
-**Send email:**
-```
-You: Send an email to test@example.com with subject "Hello" and body "Test message"
-```
-
-The agent will request Gmail permissions only when needed and require approval before sending any email.
-
-## Architecture
-
-```
-User → Agent (Claude) → MCP Server → Descope → Gmail API
+MCP_SERVER_URL=https://your-vercel-app.vercel.app/api/mcp
 ```
 
-The agent never directly handles Gmail OAuth tokens. The MCP server requests them from Descope, creating an extra security boundary.
+You can find `DESCOPE_PROJECT_ID`, `DESCOPE_CLIENT_ID`, `DESCOPE_CLIENT_SECRET`, and `MCP_SERVER_ID` in your Descope Console under **Agentic Identity Hub → MCP Servers → your server → Usage Samples**.
 
-## Security
+**3. Run the agent**
 
-- **Authentication**: OAuth 2.0 via Descope Inbound Apps
-- **Authorization**: Tool-level scopes
-- **Progressive Scoping**: Gmail permissions requested on-demand
-- **Human Approval**: Enchanted Links for sensitive actions
-- **Token Isolation**: Agent never touches Gmail tokens
+```bash
+npx tsx src/cli-agent.ts
+```
+
+## How It Works
+
+**Authentication**
+
+On startup, the agent opens a browser for you to authenticate with Descope. After you authorize the `google-read` and `google-send` MCP scopes, you're redirected back and the agent receives an MCP access token.
+
+**Connection-time scope verification**
+
+When the agent connects to the remote MCP server, the server validates the token and checks for the `google-read` scope before allowing any tools to be called. Connections without the required scope are rejected immediately.
+
+**Reading emails**
+
+Type `read emails` in the chat. If you haven't connected Gmail yet, the agent opens a browser for you to grant `gmail.readonly` access. Once granted, the MCP server fetches your Gmail token from Descope on your behalf and returns your latest emails.
+
+**Sending emails**
+
+Type `send email to <address>` in the chat. The agent first checks for `gmail.send` permission (requesting it if needed), then triggers a human approval step. You'll receive an Enchanted Link in your email — click it to approve, and the email sends.
+
+**Exiting**
+
+Type `exit` to quit.
 
 ## Project Structure
 
 ```
 src/
-├── cli-agent.ts       # Main agent
-├── mcp-stdio.ts       # MCP server with Gmail tools
-├── auth.ts            # Descope authentication
-└── approval.ts        # Enchanted Link approval
+  cli-agent.ts   # Main agent: OAuth callbacks, MCP connection, chat loop
+  auth.ts        # Descope authentication helper
+  approval.ts    # Enchanted Link approval polling
 ```
 
-## Learn More
+## Environment Variables Reference
 
-- [Claude Agents SDK](https://github.com/anthropics/anthropic-sdk-typescript)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
-- [Descope Documentation](https://docs.descope.com/)
+| Variable | Description |
+|---|---|
+| `ANTHROPIC_API_KEY` | Your Anthropic API key |
+| `DESCOPE_PROJECT_ID` | Your Descope project ID |
+| `DESCOPE_CLIENT_ID` | MCP server OAuth client ID |
+| `DESCOPE_CLIENT_SECRET` | MCP server OAuth client secret |
+| `MCP_SERVER_ID` | Your Descope MCP server ID |
+| `MCP_SERVER_URL` | URL of your deployed MCP server |
 
-## License
+## Related
 
-MIT
+- [Descope Agentic Identity Hub docs](https://docs.descope.com/agentic-identity-hub)
+- [MCP specification](https://spec.modelcontextprotocol.io)
+- [Descope Next.js MCP template](https://github.com/descope/mcp-with-next-js-and-descope)
+- [Anthropic Claude SDK](https://github.com/anthropic-ai/sdk-python)

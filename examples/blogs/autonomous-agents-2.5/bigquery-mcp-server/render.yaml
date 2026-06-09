@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: descope-bigquery-mcp
+    runtime: python
+    plan: free
+    buildCommand: pip install --no-cache-dir uv && uv sync --frozen
+    startCommand: uv run fastmcp run server.py:mcp --transport streamable-http --host 0.0.0.0 --port 8000
+    healthCheckPath: /health
+    envVars:
+      - key: DESCOPE_CONFIG_URL
+        sync: false
+      - key: BIGQUERY_READ_OUTBOUND_APP_ID
+        value: bigquery-read-cert
+      - key: BIGQUERY_WRITE_OUTBOUND_APP_ID
+        value: bigquery-readwrite-cert

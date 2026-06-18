@@ -26,6 +26,8 @@ These documentation files are in Markdown format and can be viewed in any Markdo
 
 - [`mcp-server-cloudrun`](./examples/mcp-server-cloudrun/README.md): An example of a remote MCP server with authentication using Descope's MCP Auth SDK deployed to Google Cloud Run.
 
+- [`fastmcp-tool-scopes`](./examples/fastmcp-tool-scopes/README.md): A FastMCP 3 server secured by Descope that enforces **tool-level OAuth scopes** — each tool is authorized individually with `require_scopes`, so clients only see the tools their granted scopes allow.
+
 ## Contributing
 
 In order to use the repo locally:

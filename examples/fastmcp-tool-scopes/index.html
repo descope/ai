@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager MCP Server</title>
+    <script>
+      const SERVER_URL = window.location.origin + "/mcp";
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#8B5CF6", // Purple
+              secondary: "#6366F1", // Indigo
+              accent: "#EC4899", // Pink
+              dark: {
+                DEFAULT: "#111827",
+                lighter: "#1F2937",
+              },
+            },
+            fontFamily: {
+              sans: ["Inter", "system-ui", "sans-serif"],
+              heading: ["Space Grotesk", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+      body {
+        background-color: #111827;
+        color: #f3f4f6;
+      }
+
+      pre {
+        background: #1f2937 !important;
+        color: #e5e7eb !important;
+        position: relative;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        word-break: break-word;
+        border-radius: 0.5rem;
+        padding: 0.7rem;
+        border: 1px solid #374151;
+        text-shadow: none;
+        -webkit-text-fill-color: #e5e7eb;
+      }
+
+      pre code {
+        background: transparent !important;
+        color: inherit !important;
+        text-shadow: none;
+        -webkit-text-fill-color: inherit;
+      }
+
+      pre .copy-button {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        color: #8b5cf6;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: all 0.2s;
+      }
+
+      pre .copy-button:hover {
+        background: rgba(139, 92, 246, 0.2);
+      }
+
+      pre .copy-button.copied {
+        background: rgba(139, 92, 246, 0.2);
+        border-color: rgba(139, 92, 246, 0.2);
+      }
+
+      .card {
+        background: #1f2937;
+        border: 1px solid #374151;
+        transition: all 0.2s;
+      }
+
+      .card:hover {
+        border-color: #8b5cf6;
+      }
+
+      code {
+        background: #374151;
+        color: #e5e7eb;
+      }
+
+      .scope-badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.1rem 0.5rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(139, 92, 246, 0.4);
+        background: rgba(139, 92, 246, 0.12);
+        color: #c4b5fd;
+        font-family: ui-monospace, monospace;
+      }
+
+      a {
+        color: #8b5cf6;
+        transition: all 0.2s;
+        text-decoration: underline !important;
+      }
+
+      a:hover {
+        color: #a78bfa;
+      }
+    </style>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("server-url").textContent = SERVER_URL;
+
+        const config = {
+          mcpServers: {
+            tasks: {
+              url: SERVER_URL,
+            },
+          },
+        };
+        document.getElementById("config-json").textContent = JSON.stringify(
+          config,
+          null,
+          2
+        );
+
+        const preBlocks = document.querySelectorAll("pre");
+        preBlocks.forEach((pre) => {
+          const button = document.createElement("button");
+          button.className = "copy-button";
+          button.textContent = "Copy";
+          button.onclick = () => {
+            const code = pre.querySelector("code")?.textContent || "";
+            navigator.clipboard.writeText(code).then(() => {
+              button.textContent = "Copied!";
+              button.classList.add("copied");
+              setTimeout(() => {
+                button.textContent = "Copy";
+                button.classList.remove("copied");
+              }, 2000);
+            });
+          };
+          pre.appendChild(button);
+        });
+      });
+    </script>
+  </head>
+
+  <body class="font-sans leading-relaxed flex flex-col min-h-screen">
+    <main class="container mx-auto px-4 pb-12 flex-grow pt-8">
+      <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl font-bold font-heading text-white mb-6">
+          ✅ Task Manager MCP Server
+        </h1>
+        <p class="text-lg text-gray-300 mb-8">
+          A
+          <a href="https://modelcontextprotocol.com/" class="hover:text-primary"
+            >Model Context Protocol (MCP)</a
+          >
+          server that demonstrates
+          <strong class="text-white">tool-level OAuth scopes</strong>, secured by
+          <a href="https://www.descope.com/" class="hover:text-primary"
+            >Descope</a
+          >
+          <a
+            href="https://docs.descope.com/agentic-identity-hub/mcp-servers/settings"
+            class="hover:text-primary"
+            >auth</a
+          >
+          and built with
+          <a href="https://gofastmcp.com/" class="hover:text-primary"
+            >FastMCP 3</a
+          >. Every request is authenticated by Descope, and each tool is
+          authorized individually against the scopes in the caller's token.
+        </p>
+
+        <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">
+          Quick Start
+        </h2>
+        <div class="card rounded-lg p-6 mb-6">
+          <h3 class="text-xl font-semibold text-white mb-3">Server URL</h3>
+          <pre><code class="px-2 py-1 rounded" id="server-url"></code></pre>
+        </div>
+
+        <div class="card rounded-lg p-6 mb-6">
+          <h3 class="text-xl font-semibold text-white mb-3">Configuration</h3>
+          <pre><code id="config-json"></code></pre>
+        </div>
+
+        <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">
+          Tools &amp; Required Scopes
+        </h2>
+        <div class="card rounded-lg p-6 mb-6">
+          <p class="text-gray-300 mb-4">
+            Tools whose scope you don't hold are hidden from
+            <code class="px-1 rounded">tools/list</code> — clients only ever see
+            what their token allows.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-gray-300">
+              <thead>
+                <tr class="border-b border-gray-700 text-white">
+                  <th class="py-2 pr-4 font-semibold">Tool</th>
+                  <th class="py-2 pr-4 font-semibold">Required scope</th>
+                  <th class="py-2 font-semibold">Description</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-800">
+                <tr>
+                  <td class="py-2 pr-4"><code>list_tasks</code></td>
+                  <td class="py-2 pr-4">
+                    <span class="scope-badge">tasks:read</span>
+                  </td>
+                  <td class="py-2">List all tasks</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>get_task</code></td>
+                  <td class="py-2 pr-4">
+                    <span class="scope-badge">tasks:read</span>
+                  </td>
+                  <td class="py-2">Fetch a single task by id</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>create_task</code></td>
+                  <td class="py-2 pr-4">
+                    <span class="scope-badge">tasks:write</span>
+                  </td>
+                  <td class="py-2">Create a new task</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>complete_task</code></td>
+                  <td class="py-2 pr-4">
+                    <span class="scope-badge">tasks:write</span>
+                  </td>
+                  <td class="py-2">Mark a task as done</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>delete_task</code></td>
+                  <td class="py-2 pr-4">
+                    <span class="scope-badge">tasks:admin</span>
+                  </td>
+                  <td class="py-2">Delete a task (privileged)</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>purge_completed</code></td>
+                  <td class="py-2 pr-4">
+                    <span class="scope-badge">tasks:write</span>
+                    <span class="scope-badge">tasks:admin</span>
+                  </td>
+                  <td class="py-2">
+                    Delete all completed tasks (requires both scopes)
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">
+          API Endpoints
+        </h2>
+        <div class="card rounded-lg p-6 mb-6">
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold text-white mb-2">MCP Server</h3>
+            <code class="bg-gray-800 px-2 py-1 rounded">POST /mcp</code>
+            <p class="mt-1 text-gray-300">
+              The main MCP endpoint (requires a Bearer token)
+            </p>
+          </div>
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold text-white mb-2">
+              OAuth Metadata
+            </h3>
+            <code class="bg-gray-800 px-2 py-1 rounded"
+              >GET /.well-known/oauth-protected-resource/mcp</code
+            >
+            <p class="mt-1 text-gray-300">
+              Resource metadata for the MCP endpoint
+            </p>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-2">
+              Authorization Server Metadata
+            </h3>
+            <code class="bg-gray-800 px-2 py-1 rounded"
+              >GET /.well-known/oauth-authorization-server</code
+            >
+            <p class="mt-1 text-gray-300">
+              OAuth 2.1 authorization server metadata (from Descope)
+            </p>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">
+          Troubleshooting
+        </h2>
+        <div class="card rounded-lg p-6 mb-6">
+          <p class="mb-4 text-gray-300">
+            If you encounter authentication issues, try clearing the cached
+            authentication files:
+          </p>
+          <pre><code>rm -rf ~/.mcp-auth</code></pre>
+          <p class="mt-4 text-gray-300">
+            If a tool you expect is missing, confirm the scope is granted on your
+            token (decode your access token to inspect its scopes) and that the
+            scope is defined on your Descope MCP Server.
+          </p>
+        </div>
+      </div>
+    </main>
+    <footer class="bg-gray-900 py-6 mt-12">
+      <div class="container mx-auto px-4 text-center text-gray-400">
+        <p>Built with FastMCP 3 and Descope.</p>
+      </div>
+    </footer>
+  </body>
+</html>

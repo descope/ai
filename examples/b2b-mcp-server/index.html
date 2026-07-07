@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meridian MCP Server · Corporate Travel &amp; Expense</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20width%3D%2264%22%20height%3D%2264%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20role%3D%22img%22%20aria-label%3D%22Meridian%22%3E%20%3Ctitle%3EMeridian%3C%2Ftitle%3E%20%3Cdefs%3E%20%3ClinearGradient%20id%3D%22fg%22%20x1%3D%2216%22%20y1%3D%2214%22%20x2%3D%2250%22%20y2%3D%2252%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%20%3Cstop%20stop-color%3D%22%23A78BFA%22%2F%3E%20%3Cstop%20offset%3D%220.55%22%20stop-color%3D%22%238B5CF6%22%2F%3E%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23EC4899%22%2F%3E%20%3C%2FlinearGradient%3E%20%3C%2Fdefs%3E%20%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22%23111827%22%2F%3E%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2263%22%20height%3D%2263%22%20rx%3D%2214.5%22%20stroke%3D%22%23374151%22%2F%3E%20%3Cpath%20d%3D%22M16%2033%20H48%22%20stroke%3D%22url%28%23fg%29%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.55%22%2F%3E%20%3Cellipse%20cx%3D%2232%22%20cy%3D%2233%22%20rx%3D%227%22%20ry%3D%2216%22%20stroke%3D%22url%28%23fg%29%22%20stroke-width%3D%222.6%22%2F%3E%20%3Ccircle%20cx%3D%2232%22%20cy%3D%2233%22%20r%3D%2216%22%20stroke%3D%22url%28%23fg%29%22%20stroke-width%3D%223.2%22%2F%3E%20%3Crect%20x%3D%2227.8%22%20y%3D%2212.8%22%20width%3D%228.4%22%20height%3D%228.4%22%20rx%3D%221.5%22%20transform%3D%22rotate%2845%2032%2017%29%22%20fill%3D%22%23EC4899%22%2F%3E%20%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --purple: #8B5CF6;
+    --purple-2: #A78BFA;
+    --indigo: #6366F1;
+    --pink: #EC4899;
+    --bg: #111827;
+    --bg-2: #0d1320;
+    --card: #1F2937;
+    --card-2: #232f42;
+    --border: #374151;
+    --border-soft: #2b3648;
+    --text: #F3F4F6;
+    --text-dim: #9CA3AF;
+    --text-mute: #6B7280;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Barlow", Arial, Helvetica, sans-serif;
+    --cond: "Barlow Semi Condensed", var(--sans);
+    --maxw: 1140px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: rgba(139,92,246,0.32); }
+
+  a { color: var(--purple-2); text-decoration: none; transition: color .18s ease; }
+  a:hover { color: var(--pink); }
+
+  h1, h2, h3, h4 { font-family: var(--sans); font-weight: 600; letter-spacing: -0.015em; line-height: 1.14; margin: 0; }
+  p { margin: 0; }
+  code, pre { font-family: var(--mono); }
+
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- ambient background: meridian lines, not glow ---------- */
+  .bg-fx { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .bg-fx .halo {
+    position: absolute; top: -280px; left: 50%; transform: translateX(-50%);
+    width: 900px; height: 620px;
+    background: radial-gradient(ellipse at center, rgba(99,102,241,0.16), transparent 62%);
+  }
+  .bg-fx .grid-lines {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(148,163,184,0.045) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(148,163,184,0.045) 1px, transparent 1px);
+    background-size: 60px 60px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, black, transparent 76%);
+            mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, black, transparent 76%);
+  }
+  /* the meridian: a single bright latitude line under the hero */
+  .bg-fx .meridian {
+    position: absolute; top: 560px; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5) 30%, rgba(236,72,153,0.5) 70%, transparent);
+  }
+  .bg-fx .meridian::before {
+    content: ""; position: absolute; left: 50%; top: -3px; width: 7px; height: 7px;
+    transform: translateX(-50%) rotate(45deg); background: var(--purple-2);
+  }
+
+  main { position: relative; z-index: 1; }
+
+  /* ---------- nav ---------- */
+  nav { position: sticky; top: 0; z-index: 50; background: rgba(17,24,39,0.86); border-bottom: 1px solid var(--border-soft); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-family: var(--cond); font-weight: 600; font-size: 20px; letter-spacing: 0.01em; }
+  .brand .mark { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 8px; display: grid; place-items: center; background: var(--card); position: relative; }
+  .brand .mark svg { width: 19px; height: 19px; }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a { color: var(--text-dim); font-size: 14px; font-weight: 500; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--text-dim);
+    padding: 6px 13px; border: 1px solid var(--border); border-radius: 999px; background: var(--card);
+  }
+  .nav-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #34D399; box-shadow: 0 0 8px #34D399; }
+  @media (max-width: 760px) { .nav-links a:not(.nav-badge) { display: none; } }
+
+  /* ---------- buttons: Descope pill signature, no glow ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; position: relative;
+    font-family: var(--sans); font-size: 15px; font-weight: 600; cursor: pointer;
+    padding: 13px 24px; border-radius: 999px; border: 1px solid transparent;
+    transition: background .2s ease, border-color .2s ease, color .2s ease;
+  }
+  .btn .arw { transition: transform .2s ease; }
+  .btn:hover .arw { transform: translateX(4px); }
+  .btn-primary { background: var(--purple); color: #fff; }
+  .btn-primary:hover { background: #7c4ef0; color: #fff; }
+  .btn-ghost { background: transparent; border-color: var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--purple); color: var(--text); background: rgba(139,92,246,0.08); }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 90px 0 68px; text-align: center; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.02em;
+    color: var(--text-dim); text-transform: uppercase;
+    padding: 7px 6px 7px 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--card);
+    margin-bottom: 30px;
+  }
+  .eyebrow .code { font-weight: 600; color: var(--purple-2); background: rgba(139,92,246,0.14); border-radius: 999px; padding: 3px 10px; letter-spacing: 0.06em; }
+  .hero h1 {
+    font-family: var(--cond); font-size: clamp(42px, 7vw, 74px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.02;
+    margin: 0 auto 26px; max-width: 16ch;
+  }
+  .hero h1 .accent { color: var(--purple-2); }
+  .lede { font-size: clamp(17px, 2.2vw, 20px); color: var(--text-dim); max-width: 60ch; margin: 0 auto 20px; line-height: 1.6; }
+  .lede strong { color: var(--text); font-weight: 600; }
+  .hero-sub { font-size: 15.5px; color: var(--text-mute); max-width: 66ch; margin: 0 auto 34px; line-height: 1.66; }
+  .hero-sub .hl { color: var(--text-dim); }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center; margin-bottom: 26px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 10px 22px; justify-content: center; align-items: center; }
+  .meta-chip { display: inline-flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 12.5px; color: var(--text-mute); }
+  .meta-chip b { color: var(--text-dim); font-weight: 600; }
+  .meta-chip .tick { color: var(--purple); }
+  .meta-chip.demo { padding: 6px 13px; border: 1px dashed var(--border); border-radius: 999px; }
+
+  /* ---------- section scaffolding + numbered overlines ---------- */
+  section.block { padding: 62px 0; }
+  .sec-head { max-width: 720px; margin-bottom: 42px; }
+  .sec-head.center { margin-left: auto; margin-right: auto; text-align: center; }
+  .overline {
+    display: inline-flex; align-items: baseline; gap: 12px;
+    font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 16px;
+  }
+  .overline .idx { color: var(--purple-2); }
+  .overline .rule { display: inline-block; width: 34px; height: 1px; background: var(--border); transform: translateY(-4px); }
+  .sec-head.center .overline { justify-content: center; }
+  .sec-head h2 { font-family: var(--cond); font-size: clamp(30px, 4vw, 44px); font-weight: 600; margin-bottom: 15px; letter-spacing: -0.01em; }
+  .sec-head p { color: var(--text-dim); font-size: 16.5px; line-height: 1.62; }
+
+  /* ---------- corner-bracket card motif (the "unique borders") ---------- */
+  .card { position: relative; background: var(--card); border: 1px solid var(--border); }
+  .card::before, .card::after {
+    content: ""; position: absolute; width: 13px; height: 13px; pointer-events: none;
+    transition: border-color .2s ease; opacity: .9;
+  }
+  .card::before { top: 9px; left: 9px; border-top: 1.5px solid var(--text-mute); border-left: 1.5px solid var(--text-mute); }
+  .card::after { bottom: 9px; right: 9px; border-bottom: 1.5px solid var(--text-mute); border-right: 1.5px solid var(--text-mute); }
+  .card:hover::before, .card:hover::after { border-color: var(--purple); }
+
+  /* ---------- capability grid ---------- */
+  .cap-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .cap-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .cap-grid { grid-template-columns: 1fr; } }
+  .cap-card { padding: 26px 24px; transition: background .2s ease, border-color .2s ease; }
+  .cap-card:hover { background: var(--card-2); border-color: var(--border-soft); }
+  .cap-code {
+    display: inline-flex; align-items: center; font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 0.08em;
+    color: var(--purple-2); margin-bottom: 18px;
+  }
+  .cap-code .b { color: var(--text-mute); font-weight: 400; }
+  .cap-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 9px; }
+  .cap-card p { color: var(--text-dim); font-size: 14.5px; line-height: 1.6; }
+  .cap-card p code { color: var(--purple-2); font-family: var(--mono); font-size: 13px; }
+
+  /* ---------- quick start ---------- */
+  .qs-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 18px; }
+  @media (max-width: 800px) { .qs-grid { grid-template-columns: 1fr; } }
+  .code-card { background: var(--card); border: 1px solid var(--border); overflow: hidden; }
+  .code-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--border-soft); background: rgba(13,19,32,0.55); }
+  .code-head .label { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.03em; }
+  .code-head .label .num { color: var(--purple-2); }
+  .copy-btn {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.04em;
+    background: transparent; border: 1px solid var(--border); border-radius: 999px; padding: 6px 13px; transition: all .16s ease;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--purple); background: rgba(139,92,246,0.1); }
+  .copy-btn.copied { color: #34D399; border-color: rgba(52,211,153,0.5); background: rgba(52,211,153,0.1); }
+  pre { margin: 0; padding: 20px; overflow-x: auto; font-size: 13.5px; line-height: 1.7; color: #E5E7EB; background: var(--bg-2); }
+  pre code { color: inherit; background: none; padding: 0; font-size: inherit; }
+  .qs-hint { font-size: 13px; color: var(--text-mute); padding: 13px 18px 16px; line-height: 1.5; }
+  .qs-hint code { font-family: var(--mono); color: #93C5FD; }
+
+  /* ---------- tables ---------- */
+  .table-wrap { border: 1px solid var(--border); background: var(--card); position: relative; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 560px; }
+  thead th {
+    text-align: left; font-family: var(--mono); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-mute);
+    padding: 15px 22px; background: rgba(13,19,32,0.55); border-bottom: 1px solid var(--border);
+  }
+  tbody td { padding: 15px 22px; border-bottom: 1px solid var(--border-soft); font-size: 14.5px; color: var(--text-dim); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background .15s ease; }
+  tbody tr:hover { background: rgba(139,92,246,0.05); }
+  .role-name { font-family: var(--cond); font-weight: 600; color: var(--text); font-size: 16px; letter-spacing: 0.01em; }
+  .plus { color: var(--text-mute); font-style: italic; margin-right: 6px; font-size: 13px; }
+  .pill {
+    display: inline-flex; align-items: center; font-family: var(--mono); font-size: 12px; font-weight: 500;
+    color: #C7D2FE; background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.28);
+    border-radius: 6px; padding: 3px 9px; margin: 3px 4px 3px 0;
+  }
+  .pill.admin { color: #FBCFE8; background: rgba(236,72,153,0.12); border-color: rgba(236,72,153,0.32); }
+  .pill.any { color: var(--text-mute); background: rgba(107,114,128,0.12); border-color: var(--border); font-style: normal; }
+  .scope-cell { display: flex; flex-wrap: wrap; align-items: center; }
+  .tool-name { font-family: var(--mono); font-weight: 600; color: var(--text); font-size: 13.5px; }
+  .role-tag { display: inline-block; font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pink); margin-left: 8px; vertical-align: middle; }
+  .table-note {
+    display: flex; align-items: flex-start; gap: 12px; font-size: 13.5px; color: var(--text-dim);
+    margin-bottom: 18px; padding: 13px 16px; border: 1px solid rgba(99,102,241,0.24); background: rgba(99,102,241,0.06);
+  }
+  .table-note .tag { font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; color: var(--indigo); border: 1px solid rgba(99,102,241,0.4); border-radius: 4px; padding: 2px 6px; flex-shrink: 0; margin-top: 1px; }
+  .table-note code { font-family: var(--mono); color: var(--purple-2); }
+  .table-note strong { color: var(--text); font-weight: 600; }
+
+  /* ---------- callout ---------- */
+  .callout { position: relative; padding: 42px; overflow: hidden; background: var(--card); border: 1px solid var(--border); }
+  .callout::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--purple), var(--pink)); }
+  .callout-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; align-items: center; }
+  @media (max-width: 780px) { .callout-grid { grid-template-columns: 1fr; gap: 26px; } .callout { padding: 30px; } }
+  .callout h2 { font-family: var(--cond); font-size: clamp(26px, 3vw, 34px); margin-bottom: 14px; }
+  .callout p { color: var(--text-dim); font-size: 15.5px; line-height: 1.64; margin-bottom: 12px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout p strong { color: var(--text); font-weight: 600; }
+  .flow { display: flex; flex-direction: column; gap: 8px; background: var(--bg-2); border: 1px solid var(--border); padding: 22px; }
+  .flow-step { display: flex; align-items: center; gap: 13px; font-size: 13.5px; }
+  .flow-step .n { width: 26px; height: 26px; flex-shrink: 0; border: 1px solid var(--border); display: grid; place-items: center; font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--purple-2); }
+  .flow-step .t { color: var(--text-dim); }
+  .flow-step .t b { color: var(--text); font-weight: 600; }
+  .flow-arrow { padding-left: 12px; color: var(--text-mute); font-family: var(--mono); font-size: 13px; }
+
+  /* ---------- endpoints ---------- */
+  .ep-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 820px) { .ep-grid { grid-template-columns: 1fr; } }
+  .ep-card { padding: 22px; transition: border-color .2s ease, background .2s ease; }
+  .ep-card:hover { border-color: var(--border-soft); background: var(--card-2); }
+  .ep-method { display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; padding: 3px 10px; border-radius: 4px; margin-bottom: 14px; }
+  .ep-method.post { color: #6EE7B7; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); }
+  .ep-method.get { color: #93C5FD; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3); }
+  .ep-path { font-family: var(--mono); font-size: 13.5px; color: var(--text); word-break: break-all; margin-bottom: 10px; display: block; }
+  .ep-desc { font-size: 13.5px; color: var(--text-dim); line-height: 1.55; }
+
+  /* ---------- troubleshooting ---------- */
+  .ts-list { display: grid; gap: 14px; }
+  .ts-item { display: flex; gap: 18px; padding: 22px 24px; align-items: flex-start; }
+  .ts-num { flex-shrink: 0; font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--purple-2); letter-spacing: 0.06em; padding-top: 2px; }
+  .ts-body h4 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .ts-body p { font-size: 14px; color: var(--text-dim); line-height: 1.55; }
+  .ts-body code { font-family: var(--mono); font-size: 12.5px; color: var(--purple-2); background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.22); border-radius: 5px; padding: 2px 7px; }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid var(--border-soft); margin-top: 42px; padding: 48px 0 56px; background: var(--bg-2); position: relative; z-index: 1; }
+  .foot-grid { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  .foot-brand { display: flex; align-items: center; gap: 12px; }
+  .foot-links { display: flex; gap: 24px; flex-wrap: wrap; }
+  .foot-links a { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text-dim); letter-spacing: 0.02em; }
+  .foot-links a:hover { color: var(--purple-2); }
+  .foot-note { color: var(--text-mute); font-size: 13px; margin-top: 24px; line-height: 1.55; }
+
+  .fade-up { opacity: 0; transform: translateY(18px); transition: opacity .55s ease, transform .55s ease; }
+  .fade-up.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .fade-up { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<div class="bg-fx">
+  <div class="halo"></div>
+  <div class="grid-lines"></div>
+  <div class="meridian"></div>
+</div>
+
+<nav>
+  <div class="wrap">
+    <div class="brand">
+      <span class="mark">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="navmg" x1="12" y1="10" x2="54" y2="56" gradientUnits="userSpaceOnUse"><stop stop-color="#8B5CF6"></stop><stop offset="0.55" stop-color="#6366F1"></stop><stop offset="1" stop-color="#EC4899"></stop></linearGradient></defs><path d="M12.5 34 H51.5" stroke="url(#navmg)" stroke-width="2.4" stroke-linecap="round" opacity="0.5"></path><ellipse cx="32" cy="34" rx="8" ry="20" stroke="url(#navmg)" stroke-width="2.4"></ellipse><circle cx="32" cy="34" r="20" stroke="url(#navmg)" stroke-width="3"></circle><rect x="27.4" y="9.4" width="9.2" height="9.2" rx="1.6" transform="rotate(45 32 14)" fill="#EC4899"></rect></svg>
+      </span>
+      <span>Meridian</span>
+    </div>
+    <div class="nav-links">
+      <a href="#secured">Security</a>
+      <a href="#quickstart">Quick start</a>
+      <a href="#tools">Tools</a>
+      <a href="#endpoints">API</a>
+      <a class="nav-badge" href="#quickstart"><span class="dot"></span> MCP&nbsp;·&nbsp;live</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <!-- HERO -->
+  <header class="hero">
+    <div class="wrap">
+      <span class="eyebrow"><span class="code">MER</span> Corporate travel &amp; expense</span>
+      <h1>The Meridian <span class="accent">MCP&nbsp;Server</span> for travel &amp; expense agents</h1>
+      <p class="lede">A <strong>Model Context Protocol</strong> server that lets an AI agent book trips, file expenses, approve reports, and pull spend analytics — securely, on a user's behalf.</p>
+      <p class="hero-sub">It's a reference for <span class="hl">Descope's B2B MCP auth</span>: every request is authenticated by Descope, which stamps the caller's organization into the token so the server can scope its own data to that tenant — and each tool is authorized against the caller's role.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#quickstart">Connect a client
+          <svg class="arw" width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </a>
+        <a class="btn btn-ghost" href="#secured">How auth works</a>
+      </div>
+      <div class="meta-row">
+        <span class="meta-chip"><span class="tick">›</span> Built with <b>FastMCP&nbsp;3</b></span>
+        <span class="meta-chip demo">Meridian is a fictional company, for demo purposes</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- SECURED BY DESCOPE -->
+  <section class="block" id="secured">
+    <div class="wrap">
+      <div class="sec-head center fade-up">
+        <span class="overline"><span class="idx">01</span><span class="rule"></span> Secured by Descope</span>
+        <h2>B2B CIAM built for MCP</h2>
+        <p>Meridian doesn't build auth. <strong style="color:var(--text)">Descope is the authorization server</strong> sitting in front of the MCP endpoint — handling identity, tenancy, and tool-level authorization so the server can focus on travel and expense.</p>
+      </div>
+      <div class="cap-grid">
+        <article class="card cap-card fade-up">
+          <span class="cap-code"><span class="b">//&nbsp;</span>MT</span>
+          <h3>Multi-tenant by design</h3>
+          <p>Descope adds the auth layer and stamps the caller's org into the token's <code>dct</code> claim. The server reads it and scopes its own data — Descope never touches your records; it just tells you which tenant the request is for.</p>
+        </article>
+        <article class="card cap-card fade-up">
+          <span class="cap-code"><span class="b">//&nbsp;</span>RBAC</span>
+          <h3>Role-based tool access</h3>
+          <p>Each tool declares the OAuth scope it needs; callers only see the tools their role allows — enforced on every request, not just at login.</p>
+        </article>
+        <article class="card cap-card fade-up">
+          <span class="cap-code"><span class="b">//&nbsp;</span>SSO</span>
+          <h3>Enterprise SSO &amp; group mapping</h3>
+          <p>Connect the customer's Okta / Entra ID / any OIDC-SAML IdP. Descope maps IdP groups → roles, scopes, and permissions, with tenant-level policies controlling tool access. No code changes to add a customer.</p>
+        </article>
+        <article class="card cap-card fade-up">
+          <span class="cap-code"><span class="b">//&nbsp;</span>JAG</span>
+          <h3>ID-JAG / Cross-App Access</h3>
+          <p>Clients like Claude and VS Code sign in instantly via an enterprise-issued assertion — no separate SSO login or consent screen. IT authorizes the app once at the IdP; users get Meridian pre-connected.</p>
+        </article>
+        <article class="card cap-card fade-up">
+          <span class="cap-code"><span class="b">//&nbsp;</span>DCR</span>
+          <h3>CIMD &amp; Dynamic Client Registration</h3>
+          <p>MCP clients self-onboard via CIMD / DCR — no hand-provisioned secrets. Registration flows can tag, classify, and verify clients as they come online.</p>
+        </article>
+        <article class="card cap-card fade-up">
+          <span class="cap-code"><span class="b">//&nbsp;</span>BYO</span>
+          <h3>Bring your own auth</h3>
+          <p>Plug in an existing auth system as an external provider — no rip-and-replace. Descope becomes the OAuth 2.1 authorization server for the MCP endpoint while your identity source stays the source of truth.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUICK START -->
+  <section class="block" id="quickstart">
+    <div class="wrap">
+      <div class="sec-head fade-up">
+        <span class="overline"><span class="idx">02</span><span class="rule"></span> Quick start</span>
+        <h2>Point your MCP client at Meridian</h2>
+        <p>Add the server URL to your MCP client config. On first connect you'll be sent through Descope's OAuth flow; the issued token carries your org and scopes.</p>
+      </div>
+      <div class="qs-grid">
+        <div class="code-card fade-up">
+          <div class="code-head">
+            <span class="label"><span class="num">01</span> server_url</span>
+            <button class="copy-btn" type="button">Copy</button>
+          </div>
+          <pre><code id="server-url">loading…</code></pre>
+          <p class="qs-hint">Requires a <code>Bearer</code> token. Your client obtains it automatically via OAuth on first use.</p>
+        </div>
+        <div class="code-card fade-up">
+          <div class="code-head">
+            <span class="label"><span class="num">02</span> config.json</span>
+            <button class="copy-btn" type="button">Copy</button>
+          </div>
+          <pre><code id="config-json">loading…</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROLES & SCOPES -->
+  <section class="block" id="roles">
+    <div class="wrap">
+      <div class="sec-head fade-up">
+        <span class="overline"><span class="idx">03</span><span class="rule"></span> Access model</span>
+        <h2>Roles &amp; scopes</h2>
+        <p>Roles are cumulative. Descope maps each caller's role to a set of OAuth scopes; those scopes gate which tools appear and run.</p>
+      </div>
+      <div class="table-wrap fade-up">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th style="width:200px">Role</th><th>Granted scopes</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="role-name">Employee</span></td>
+                <td><div class="scope-cell">
+                  <span class="pill">expenses:read</span><span class="pill">expenses:write</span><span class="pill">trips:read</span><span class="pill">trips:book</span>
+                </div></td>
+              </tr>
+              <tr>
+                <td><span class="role-name">Manager</span></td>
+                <td><div class="scope-cell">
+                  <span class="plus">Employee +</span><span class="pill">expenses:approve</span><span class="pill">reports:read</span>
+                </div></td>
+              </tr>
+              <tr>
+                <td><span class="role-name">Finance Admin</span></td>
+                <td><div class="scope-cell">
+                  <span class="plus">Manager +</span><span class="pill admin">admin</span>
+                </div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOOLS -->
+  <section class="block" id="tools">
+    <div class="wrap">
+      <div class="sec-head fade-up">
+        <span class="overline"><span class="idx">04</span><span class="rule"></span> Capabilities</span>
+        <h2>Tools &amp; required scopes</h2>
+      </div>
+      <div class="table-note fade-up">
+        <span class="tag">NOTE</span>
+        <span>Tools whose scope you don't hold are <strong>hidden from <code>tools/list</code></strong> — clients only ever see what their token allows.</span>
+      </div>
+      <div class="table-wrap fade-up">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th style="width:210px">Tool</th><th style="width:190px">Required scope</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><span class="tool-name">whoami</span></td><td><span class="pill any">any authenticated</span></td><td>Identity, organization, and granted scopes</td></tr>
+              <tr><td><span class="tool-name">list_expenses</span></td><td><span class="pill">expenses:read</span></td><td>List your org's expenses</td></tr>
+              <tr><td><span class="tool-name">get_expense</span></td><td><span class="pill">expenses:read</span></td><td>Fetch one expense by id</td></tr>
+              <tr><td><span class="tool-name">submit_expense</span></td><td><span class="pill">expenses:write</span></td><td>File a new expense report</td></tr>
+              <tr><td><span class="tool-name">approve_expense</span></td><td><span class="pill">expenses:approve</span></td><td>Approve a pending expense <span class="role-tag">Manager</span></td></tr>
+              <tr><td><span class="tool-name">reject_expense</span></td><td><span class="pill">expenses:approve</span></td><td>Reject a pending expense <span class="role-tag">Manager</span></td></tr>
+              <tr><td><span class="tool-name">search_flights</span></td><td><span class="pill">trips:read</span></td><td>Search in-policy flights</td></tr>
+              <tr><td><span class="tool-name">list_trips</span></td><td><span class="pill">trips:read</span></td><td>List booked trips</td></tr>
+              <tr><td><span class="tool-name">book_trip</span></td><td><span class="pill">trips:book</span></td><td>Book a trip (enforced against policy)</td></tr>
+              <tr><td><span class="tool-name">expense_summary</span></td><td><span class="pill">reports:read</span></td><td>Spend analytics &amp; budget usage <span class="role-tag">Manager</span></td></tr>
+              <tr><td><span class="tool-name">list_employees</span></td><td><span class="pill admin">admin</span></td><td>Organization directory <span class="role-tag">Finance Admin</span></td></tr>
+              <tr><td><span class="tool-name">set_travel_policy</span></td><td><span class="pill admin">admin</span></td><td>Update the org's travel/expense policy</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ID-JAG CALLOUT -->
+  <section class="block" id="idjag">
+    <div class="wrap">
+      <div class="callout fade-up">
+        <div class="callout-grid">
+          <div>
+            <span class="overline"><span class="idx">05</span><span class="rule"></span> Enterprise access</span>
+            <h2>ID-JAG &amp; Cross-App Access</h2>
+            <p>For workforce deployments — Claude used internally across a company — the enterprise IdP issues a short-lived <strong>ID-JAG assertion</strong> that Descope exchanges for a Meridian access token. No separate consent screen, no second login.</p>
+            <p>Enabled per tenant in Descope, it <strong>complements — not replaces</strong> — the interactive OAuth&nbsp;+&nbsp;DCR flow used by individual clients.</p>
+          </div>
+          <div class="flow">
+            <div class="flow-step"><span class="n">1</span><span class="t">Enterprise <b>IdP</b> issues ID-JAG assertion</span></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step"><span class="n">2</span><span class="t"><b>Descope</b> exchanges it for an access token</span></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step"><span class="n">3</span><span class="t"><b>Meridian</b> serves tenant-scoped data</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENDPOINTS -->
+  <section class="block" id="endpoints">
+    <div class="wrap">
+      <div class="sec-head fade-up">
+        <span class="overline"><span class="idx">06</span><span class="rule"></span> Reference</span>
+        <h2>API endpoints</h2>
+      </div>
+      <div class="ep-grid">
+        <div class="card ep-card fade-up">
+          <span class="ep-method post">POST</span>
+          <code class="ep-path">/mcp</code>
+          <p class="ep-desc">Main MCP endpoint. Requires a valid Bearer token.</p>
+        </div>
+        <div class="card ep-card fade-up">
+          <span class="ep-method get">GET</span>
+          <code class="ep-path">/.well-known/oauth-protected-resource/mcp</code>
+          <p class="ep-desc">Protected-resource metadata for the MCP endpoint.</p>
+        </div>
+        <div class="card ep-card fade-up">
+          <span class="ep-method get">GET</span>
+          <code class="ep-path">/.well-known/oauth-authorization-server</code>
+          <p class="ep-desc">OAuth 2.1 authorization-server metadata, served from Descope.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TROUBLESHOOTING -->
+  <section class="block" id="troubleshooting">
+    <div class="wrap">
+      <div class="sec-head fade-up">
+        <span class="overline"><span class="idx">07</span><span class="rule"></span> Help</span>
+        <h2>Troubleshooting</h2>
+      </div>
+      <div class="ts-list">
+        <div class="card ts-item fade-up">
+          <span class="ts-num">01</span>
+          <div class="ts-body">
+            <h4>Clear cached auth</h4>
+            <p>Stale credentials causing 401s? Remove the local auth cache and reconnect: <code>rm -rf ~/.mcp-auth</code></p>
+          </div>
+        </div>
+        <div class="card ts-item fade-up">
+          <span class="ts-num">02</span>
+          <div class="ts-body">
+            <h4>A tool is missing</h4>
+            <p>If a tool doesn't appear in <code>tools/list</code>, your token lacks its required scope. Check your role in the access model above.</p>
+          </div>
+        </div>
+        <div class="card ts-item fade-up">
+          <span class="ts-num">03</span>
+          <div class="ts-body">
+            <h4>whoami shows the default org</h4>
+            <p>If <code>whoami</code> returns the default organization, your token isn't carrying a tenant claim yet — re-authenticate through your enterprise tenant.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <span class="mark" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;display:grid;place-items:center;background:var(--card);">
+          <svg viewBox="0 0 64 64" width="19" height="19" fill="none"><defs><linearGradient id="footmg" x1="12" y1="10" x2="54" y2="56" gradientUnits="userSpaceOnUse"><stop stop-color="#8B5CF6"></stop><stop offset="0.55" stop-color="#6366F1"></stop><stop offset="1" stop-color="#EC4899"></stop></linearGradient></defs><path d="M12.5 34 H51.5" stroke="url(#footmg)" stroke-width="2.4" stroke-linecap="round" opacity="0.5"></path><ellipse cx="32" cy="34" rx="8" ry="20" stroke="url(#footmg)" stroke-width="2.4"></ellipse><circle cx="32" cy="34" r="20" stroke="url(#footmg)" stroke-width="3"></circle><rect x="27.4" y="9.4" width="9.2" height="9.2" rx="1.6" transform="rotate(45 32 14)" fill="#EC4899"></rect></svg>
+        </span>
+        <span style="font-family:var(--cond);font-weight:600;font-size:19px;">Meridian</span>
+      </div>
+      <div class="foot-links">
+        <a href="https://descope.com" target="_blank" rel="noopener">Descope →</a>
+        <a href="https://modelcontextprotocol.com" target="_blank" rel="noopener">MCP →</a>
+        <a href="https://gofastmcp.com" target="_blank" rel="noopener">FastMCP →</a>
+      </div>
+    </div>
+    <p class="foot-note">Meridian is a fictional company for demo purposes. Built with FastMCP&nbsp;3 and Descope.</p>
+  </div>
+</footer>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // --- dynamic server URL + config JSON ---
+    var origin = window.location.origin;
+    var serverUrl = origin + "/mcp";
+
+    var urlEl = document.getElementById("server-url");
+    if (urlEl) urlEl.textContent = serverUrl;
+
+    var configObj = { mcpServers: { meridian: { url: serverUrl } } };
+    var configEl = document.getElementById("config-json");
+    if (configEl) configEl.textContent = JSON.stringify(configObj, null, 2);
+
+    // --- copy buttons on every <pre> block ---
+    document.querySelectorAll("pre").forEach(function (pre) {
+      var card = pre.closest(".code-card");
+      var btn = card ? card.querySelector(".copy-btn") : null;
+      if (!btn) return;
+      var original = btn.textContent;
+      btn.addEventListener("click", function () {
+        var text = pre.innerText;
+        var done = function () {
+          btn.classList.add("copied");
+          btn.textContent = "Copied!";
+          setTimeout(function () {
+            btn.classList.remove("copied");
+            btn.textContent = original;
+          }, 1600);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+        } else {
+          fallbackCopy(text); done();
+        }
+      });
+    });
+
+    function fallbackCopy(text) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    // --- scroll reveal ---
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+    document.querySelectorAll(".fade-up").forEach(function (el, i) {
+      el.style.transitionDelay = (Math.min(i % 6, 5) * 0.05) + "s";
+      io.observe(el);
+    });
+  });
+</script>
+
+</body></html>

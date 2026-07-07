@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meridian — Travel &amp; Expense MCP Server</title>
+    <script>
+      const SERVER_URL = window.location.origin + "/mcp";
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#8B5CF6", // Purple
+              secondary: "#6366F1", // Indigo
+              accent: "#EC4899", // Pink
+              dark: {
+                DEFAULT: "#111827",
+                lighter: "#1F2937",
+              },
+            },
+            fontFamily: {
+              sans: ["Inter", "system-ui", "sans-serif"],
+              heading: ["Space Grotesk", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+      body {
+        background-color: #111827;
+        color: #f3f4f6;
+      }
+
+      pre {
+        background: #1f2937 !important;
+        color: #e5e7eb !important;
+        position: relative;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        word-break: break-word;
+        border-radius: 0.5rem;
+        padding: 0.7rem;
+        border: 1px solid #374151;
+        text-shadow: none;
+        -webkit-text-fill-color: #e5e7eb;
+      }
+
+      pre code {
+        background: transparent !important;
+        color: inherit !important;
+        text-shadow: none;
+        -webkit-text-fill-color: inherit;
+      }
+
+      pre .copy-button {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        color: #8b5cf6;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: all 0.2s;
+      }
+
+      pre .copy-button:hover {
+        background: rgba(139, 92, 246, 0.2);
+      }
+
+      pre .copy-button.copied {
+        background: rgba(139, 92, 246, 0.2);
+        border-color: rgba(139, 92, 246, 0.2);
+      }
+
+      .card {
+        background: #1f2937;
+        border: 1px solid #374151;
+        transition: all 0.2s;
+      }
+
+      .card:hover {
+        border-color: #8b5cf6;
+      }
+
+      code {
+        background: #374151;
+        color: #e5e7eb;
+      }
+
+      .scope-badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.1rem 0.5rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(139, 92, 246, 0.4);
+        background: rgba(139, 92, 246, 0.12);
+        color: #c4b5fd;
+        font-family: ui-monospace, monospace;
+      }
+
+      .role-chip {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.15rem 0.6rem;
+        border-radius: 9999px;
+        border: 1px solid #374151;
+        background: #111827;
+        color: #e5e7eb;
+      }
+
+      a {
+        color: #8b5cf6;
+        transition: all 0.2s;
+        text-decoration: underline !important;
+      }
+
+      a:hover {
+        color: #a78bfa;
+      }
+    </style>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("server-url").textContent = SERVER_URL;
+
+        const config = {
+          mcpServers: {
+            meridian: {
+              url: SERVER_URL,
+            },
+          },
+        };
+        document.getElementById("config-json").textContent = JSON.stringify(
+          config,
+          null,
+          2
+        );
+
+        const preBlocks = document.querySelectorAll("pre");
+        preBlocks.forEach((pre) => {
+          const button = document.createElement("button");
+          button.className = "copy-button";
+          button.textContent = "Copy";
+          button.onclick = () => {
+            const code = pre.querySelector("code")?.textContent || "";
+            navigator.clipboard.writeText(code).then(() => {
+              button.textContent = "Copied!";
+              button.classList.add("copied");
+              setTimeout(() => {
+                button.textContent = "Copy";
+                button.classList.remove("copied");
+              }, 2000);
+            });
+          };
+          pre.appendChild(button);
+        });
+      });
+    </script>
+  </head>
+
+  <body class="font-sans leading-relaxed flex flex-col min-h-screen">
+    <main class="container mx-auto px-4 pb-12 flex-grow pt-8">
+      <div class="max-w-4xl mx-auto">
+        <p class="text-sm uppercase tracking-widest text-primary font-semibold mb-2">
+          Meridian · Corporate Travel &amp; Expense
+        </p>
+        <h1 class="text-4xl font-bold font-heading text-white mb-6">
+          ✈️ Meridian MCP Server
+        </h1>
+        <p class="text-lg text-gray-300 mb-4">
+          Meridian is a (fictional) B2B travel &amp; expense platform — think
+          Navan or Ramp — exposed as a
+          <a href="https://modelcontextprotocol.com/" class="hover:text-primary"
+            >Model Context Protocol (MCP)</a
+          >
+          server so an AI agent can book trips, file expenses, approve reports,
+          and pull spend analytics on a user's behalf.
+        </p>
+        <p class="text-lg text-gray-300 mb-8">
+          It's a reference for
+          <strong class="text-white">Descope's B2B MCP auth</strong>: every
+          request is authenticated by
+          <a href="https://www.descope.com/" class="hover:text-primary"
+            >Descope</a
+          >, scoped to the caller's
+          <strong class="text-white">organization</strong> (tenant), and each
+          tool is authorized against the caller's
+          <strong class="text-white">role</strong>. Built with
+          <a href="https://gofastmcp.com/" class="hover:text-primary"
+            >FastMCP 3</a
+          >.
+        </p>
+
+        <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">
+          Secured by Descope — B2B CIAM built for MCP
+        </h2>
+        <p class="text-gray-300 mb-4">
+          Meridian doesn't build auth. Descope is the authorization server in
+          front of the MCP endpoint, and it brings the full B2B identity stack
+          that agent-facing servers need:
+        </p>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+          <div class="card rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-white mb-2">
+              🏢 Multi-tenant by design
+            </h3>
+            <p class="text-gray-300">
+              Tokens carry the caller's organization. Every tool reads and writes
+              only that tenant's data — Acme's agent never sees Globex's
+              expenses, even on the same server.
+            </p>
+          </div>
+          <div class="card rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-white mb-2">
+              🔐 Role-based tool access
+            </h3>
+            <p class="text-gray-300">
+              Each tool declares the OAuth scope it needs, so callers only ever
+              see the tools their role allows — enforced at the transport layer
+              on every request.
+            </p>
+          </div>
+          <div class="card rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-white mb-2">
+              🪪 Enterprise SSO &amp; group mapping
+            </h3>
+            <p class="text-gray-300">
+              Connect the customer's Okta, Entra ID, or any OIDC/SAML IdP. Descope
+              maps IdP <strong class="text-white">groups → roles, scopes, and
+              permissions</strong>, and tenant-level policies control tool access
+              per organization — no code changes to add a new customer.
+            </p>
+          </div>
+          <div class="card rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-white mb-2">
+              ⚡ ID-JAG / Cross-App Access
+            </h3>
+            <p class="text-gray-300">
+              Clients like <strong class="text-white">Claude</strong> and
+              <strong class="text-white">VS Code</strong> sign in instantly using
+              an enterprise-issued assertion — <strong class="text-white">no
+              separate SSO login or consent screen</strong>. IT authorizes the app
+              once at the IdP; users get Meridian pre-connected.
+            </p>
+          </div>
+          <div class="card rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-white mb-2">
+              🤝 CIMD &amp; Dynamic Client Registration
+            </h3>
+            <p class="text-gray-300">
+              MCP clients self-onboard via CIMD / DCR — no hand-provisioned client
+              secrets. Client Registration Flows let you
+              <strong class="text-white">tag, classify, and verify</strong> each
+              client before it's trusted.
+            </p>
+          </div>
+          <div class="card rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-white mb-2">
+              🧩 Bring your own auth
+            </h3>
+            <p class="text-gray-300">
+              Already have an auth system? Plug it in as an external
+              provider — no rip-and-replace. Descope becomes the OAuth 2.1
+              authorization server for your MCP endpoint while your existing
+              identity source stays the source of truth.
+            </p>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">
+          Quick Start
+        </h2>
+        <div class="card rounded-lg p-6 mb-6">
+          <h3 class="text-xl font-semibold text-white mb-3">Server URL</h3>
+          <pre><code class="px-2 py-1 rounded" id="server-url"></code></pre>
+        </div>
+
+        <div class="card rounded-lg p-6 mb-6">
+          <h3 class="text-xl font-semibold text-white mb-3">Configuration</h3>
+          <pre><code id="config-json"></code></pre>
+        </div>
+
+        <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">
+          Roles &amp; Scopes
+        </h2>
+        <div class="card rounded-lg p-6 mb-6">
+          <p class="text-gray-300 mb-4">
+            Roles are bundles of scopes. Connect with a token whose scopes match
+            a role, and only that role's tools appear.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-gray-300">
+              <thead>
+                <tr class="border-b border-gray-700 text-white">
+                  <th class="py-2 pr-4 font-semibold">Role</th>
+                  <th class="py-2 font-semibold">Scopes</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-800">
+                <tr>
+                  <td class="py-3 pr-4"><span class="role-chip">Employee</span></td>
+                  <td class="py-3">
+                    <span class="scope-badge">expenses:read</span>
+                    <span class="scope-badge">expenses:write</span>
+                    <span class="scope-badge">trips:read</span>
+                    <span class="scope-badge">trips:book</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-4"><span class="role-chip">Manager</span></td>
+                  <td class="py-3">
+                    <span class="text-gray-500">Employee +</span>
+                    <span class="scope-badge">expenses:approve</span>
+                    <span class="scope-badge">reports:read</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-4">
+                    <span class="role-chip">Finance Admin</span>
+                  </td>
+                  <td class="py-3">
+                    <span class="text-gray-500">Manager +</span>
+                    <span class="scope-badge">admin</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">
+          Tools &amp; Required Scopes
+        </h2>
+        <div class="card rounded-lg p-6 mb-6">
+          <p class="text-gray-300 mb-4">
+            Tools whose scope you don't hold are hidden from
+            <code class="px-1 rounded">tools/list</code> — clients only ever see
+            what their token allows.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-gray-300">
+              <thead>
+                <tr class="border-b border-gray-700 text-white">
+                  <th class="py-2 pr-4 font-semibold">Tool</th>
+                  <th class="py-2 pr-4 font-semibold">Required scope</th>
+                  <th class="py-2 font-semibold">Description</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-800">
+                <tr>
+                  <td class="py-2 pr-4"><code>whoami</code></td>
+                  <td class="py-2 pr-4"><span class="text-gray-500">any authed</span></td>
+                  <td class="py-2">Identity, organization, and granted scopes</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>list_expenses</code></td>
+                  <td class="py-2 pr-4"><span class="scope-badge">expenses:read</span></td>
+                  <td class="py-2">List your org's expenses</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>get_expense</code></td>
+                  <td class="py-2 pr-4"><span class="scope-badge">expenses:read</span></td>
+                  <td class="py-2">Fetch one expense by id</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>submit_expense</code></td>
+                  <td class="py-2 pr-4"><span class="scope-badge">expenses:write</span></td>
+                  <td class="py-2">File a new expense report</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>approve_expense</code></td>
+                  <td class="py-2 pr-4"><span class="scope-badge">expenses:approve</span></td>
+                  <td class="py-2">Approve a pending expense (Manager)</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>reject_expense</code></td>
+                  <td class="py-2 pr-4"><span class="scope-badge">expenses:approve</span></td>
+                  <td class="py-2">Reject a pending expense (Manager)</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>search_flights</code></td>
+                  <td class="py-2 pr-4"><span class="scope-badge">trips:read</span></td>
+                  <td class="py-2">Search in-policy flights</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>list_trips</code></td>
+                  <td class="py-2 pr-4"><span class="scope-badge">trips:read</span></td>
+                  <td class="py-2">List booked trips</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>book_trip</code></td>
+                  <td class="py-2 pr-4"><span class="scope-badge">trips:book</span></td>
+                  <td class="py-2">Book a trip (enforced against policy)</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>expense_summary</code></td>
+                  <td class="py-2 pr-4"><span class="scope-badge">reports:read</span></td>
+                  <td class="py-2">Spend analytics &amp; budget usage (Manager)</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>list_employees</code></td>
+                  <td class="py-2 pr-4"><span class="scope-badge">admin</span></td>
+                  <td class="py-2">Organization directory (Finance Admin)</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4"><code>set_travel_policy</code></td>
+                  <td class="py-2 pr-4"><span class="scope-badge">admin</span></td>
+                  <td class="py-2">Update the org's travel/expense policy</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">
+          API Endpoints
+        </h2>
+        <div class="card rounded-lg p-6 mb-6">
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold text-white mb-2">MCP Server</h3>
+            <code class="bg-gray-800 px-2 py-1 rounded">POST /mcp</code>
+            <p class="mt-1 text-gray-300">
+              The main MCP endpoint (requires a Bearer token)
+            </p>
+          </div>
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold text-white mb-2">OAuth Metadata</h3>
+            <code class="bg-gray-800 px-2 py-1 rounded"
+              >GET /.well-known/oauth-protected-resource/mcp</code
+            >
+            <p class="mt-1 text-gray-300">
+              Resource metadata for the MCP endpoint
+            </p>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-2">
+              Authorization Server Metadata
+            </h3>
+            <code class="bg-gray-800 px-2 py-1 rounded"
+              >GET /.well-known/oauth-authorization-server</code
+            >
+            <p class="mt-1 text-gray-300">
+              OAuth 2.1 authorization server metadata (from Descope)
+            </p>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold font-heading text-white mt-8 mb-4">
+          Troubleshooting
+        </h2>
+        <div class="card rounded-lg p-6 mb-6">
+          <p class="mb-4 text-gray-300">
+            If you encounter authentication issues, try clearing the cached
+            authentication files:
+          </p>
+          <pre><code>rm -rf ~/.mcp-auth</code></pre>
+          <p class="mt-4 text-gray-300">
+            If a tool you expect is missing, confirm the scope is granted on your
+            token (decode your access token to inspect its scopes) and that the
+            scope is defined on your Descope MCP Server. If
+            <code class="px-1 rounded">whoami</code> shows the default org, your
+            token isn't carrying a tenant claim yet.
+          </p>
+        </div>
+      </div>
+    </main>
+    <footer class="bg-gray-900 py-6 mt-12">
+      <div class="container mx-auto px-4 text-center text-gray-400">
+        <p>
+          Meridian is a fictional company for demo purposes. Built with FastMCP 3
+          and Descope.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -193,9 +193,10 @@
           request is authenticated by
           <a href="https://www.descope.com/" class="hover:text-primary"
             >Descope</a
-          >, scoped to the caller's
-          <strong class="text-white">organization</strong> (tenant), and each
-          tool is authorized against the caller's
+          >, which stamps the caller's
+          <strong class="text-white">organization</strong> into the token so the
+          server can scope its own data to that tenant, and each tool is
+          authorized against the caller's
           <strong class="text-white">role</strong>. Built with
           <a href="https://gofastmcp.com/" class="hover:text-primary"
             >FastMCP 3</a
@@ -216,9 +217,10 @@
               🏢 Multi-tenant by design
             </h3>
             <p class="text-gray-300">
-              Tokens carry the caller's organization. Every tool reads and writes
-              only that tenant's data — Acme's agent never sees Globex's
-              expenses, even on the same server.
+              Descope adds the auth layer and stamps the caller's organization
+              into the token's <code class="px-1 rounded">dct</code> claim. Your
+              server reads it and scopes its own data — Descope never touches
+              your records; it just tells you which tenant the request is for.
             </p>
           </div>
           <div class="card rounded-lg p-6">

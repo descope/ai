@@ -15,11 +15,17 @@ It's built to be a **demo of Descope's B2B capabilities for MCP auth**. Unlike a
 consumer (B2C) app, a B2B product is organized around *organizations* (tenants)
 and *roles*. This server shows both:
 
-1. **Multi-tenant isolation.** Every request carries a Descope-issued JWT that
-   identifies the caller's **organization**. Every tool reads and writes only
-   that tenant's data. Acme Robotics' agent can never see Globex Corporation's
-   expenses, even though both connect to the same server. Two demo tenants are
-   seeded so you can prove it.
+1. **Multi-tenant isolation.** Descope provides the **auth layer**, not your data
+   layer — it doesn't store or return your tenants' records. What it does is
+   authenticate the request and stamp the caller's **organization** into the
+   token via the **`dct` claim** (the "current tenant"). Your MCP server reads
+   `dct` off the validated token and is responsible for scoping every query to
+   that tenant. In this example, `_current_tenant()` reads the claim and each
+   tool only touches that org's in-memory data — so Acme Robotics' agent never
+   sees Globex Corporation's expenses, even though both connect to the same
+   server. Two demo tenants are seeded so you can prove it. Swap the in-memory
+   store for your real database and you'd apply the same `dct`-based filter (a
+   `WHERE tenant_id = …`, a per-tenant schema, etc.).
 2. **Role-based authorization (tool-level scopes).** Each tool declares the OAuth
    scope(s) it needs. A caller whose token lacks a scope won't even see the tool
    in `tools/list`, and a direct call returns _not found_. Roles map to scope
@@ -87,16 +93,22 @@ auth_provider = DescopeProvider(
 mcp = FastMCP(name="Meridian Travel & Expense MCP Server", auth=auth_provider)
 ```
 
-**Tenant isolation.** Each tool resolves the caller's organization from the
-validated token before touching data:
+**Tenant isolation (your responsibility, using Descope's claim).** Descope puts
+the caller's tenant in the token's **`dct` claim**; the server reads it and scopes
+its own data access. Descope never sees or returns your business data — it just
+tells you *which tenant* the request belongs to:
 
 ```python
 from fastmcp.server.dependencies import get_access_token
 
 def _current_tenant() -> str:
     claims = get_access_token().claims or {}
-    # Descope multi-tenant tokens carry `dct` (selected tenant) and a `tenants` map.
+    # Descope stamps the caller's tenant into the token as `dct` ("current
+    # tenant"); multi-tenant tokens also carry a `tenants` map. Your code reads
+    # this and does the data scoping — Descope doesn't touch your data.
     return claims.get("dct") or next(iter(claims.get("tenants", {})), DEFAULT_TENANT)
+
+# ...then every tool filters on it, e.g. rows WHERE tenant_id == _current_tenant().
 ```
 
 **Authorization (per tool).** Each tool declares its scope:

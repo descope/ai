@@ -1,0 +1,16 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Meridian">
+  <title>Meridian</title>
+  <defs>
+    <linearGradient id="fg" x1="16" y1="14" x2="50" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A78BFA"/>
+      <stop offset="0.55" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#EC4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#111827"/>
+  <rect x="0.5" y="0.5" width="63" height="63" rx="14.5" stroke="#374151"/>
+  <path d="M16 33 H48" stroke="url(#fg)" stroke-width="2.6" stroke-linecap="round" opacity="0.55"/>
+  <ellipse cx="32" cy="33" rx="7" ry="16" stroke="url(#fg)" stroke-width="2.6"/>
+  <circle cx="32" cy="33" r="16" stroke="url(#fg)" stroke-width="3.2"/>
+  <rect x="27.8" y="12.8" width="8.4" height="8.4" rx="1.5" transform="rotate(45 32 17)" fill="#EC4899"/>
+</svg>

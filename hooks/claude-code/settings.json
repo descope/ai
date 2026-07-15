@@ -1,0 +1,67 @@
+// .claude/settings.json
+// ─────────────────────
+// Claude Code hook configuration for Descope agent auth.
+//
+// PreToolUse hooks run before every tool call. The matcher is a regex
+// against tool_name — MCP tools follow the pattern "mcp__<server>__<tool>".
+//
+// The hook:
+//   1. Acquires a scoped Descope token for the matched MCP server
+//   2. Writes it to a shared token file the MCP wrapper reads
+//   3. Blocks execution if token acquisition fails
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^mcp__",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hooks/descope-auth-cc.sh"
+          }
+        ]
+      }
+    ]
+  },
+
+  // MCP servers use the auth wrapper to inject tokens.
+  // The wrapper reads the token from the hook's cache and
+  // proxies to the upstream MCP server with Authorization headers.
+  "mcpServers": {
+    // Strategy 1: Client Credentials + Token Exchange
+    "github": {
+      "command": "hooks/descope-mcp-wrapper.sh",
+      "args": ["https://mcp.github.com/sse"],
+      "env": {
+        "DESCOPE_SERVER_KEY": "github"
+      }
+    },
+
+    // Strategy 2: User Token Exchange
+    "salesforce": {
+      "command": "hooks/descope-mcp-wrapper.sh",
+      "args": ["https://mcp.salesforce.com/sse"],
+      "env": {
+        "DESCOPE_SERVER_KEY": "salesforce"
+      }
+    },
+
+    // Strategy 3: Connections API
+    "google-contacts": {
+      "command": "hooks/descope-mcp-wrapper.sh",
+      "args": ["https://mcp.google.com/sse"],
+      "env": {
+        "DESCOPE_SERVER_KEY": "google-contacts"
+      }
+    },
+
+    // Strategy 4: CIBA
+    "calendar": {
+      "command": "hooks/descope-mcp-wrapper.sh",
+      "args": ["https://mcp.calendar.com/sse"],
+      "env": {
+        "DESCOPE_SERVER_KEY": "calendar"
+      }
+    }
+  }
+}

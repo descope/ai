@@ -1,0 +1,16 @@
+# Secrets — never commit real configs
+**/descope-auth.config.json
+!**/*.example.json
+
+# Runtime artifacts
+**/.token-cache/
+**/descope-auth.log
+
+# Node
+node_modules/
+dist/
+*.tgz
+
+# OS
+.DS_Store
+Thumbs.db

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -14,6 +15,14 @@ import (
 type contextKey string
 
 const tokenContextKey contextKey = "bearer_token"
+
+// genericSessionError is the caller-facing message for any bearer-token
+// validation failure — missing, malformed, expired, revoked, or a Descope
+// SDK/network error. It is deliberately identical across all of these cases
+// so an unauthenticated caller can't fingerprint the specific failure mode.
+// The real error is logged server-side instead; see RequireBearerToken and
+// NewAuthMiddleware.
+const genericSessionError = "invalid or expired session token"
 
 // bearerToken extracts the raw bearer token from an HTTP request's
 // Authorization header, or "" if none is present.
@@ -55,11 +64,12 @@ func RequireBearerToken(descopeClient *descopeclient.DescopeClient, resourceMeta
 
 			authorized, _, err := descopeClient.Auth.ValidateSessionWithToken(r.Context(), token)
 			if err != nil {
-				writeUnauthorized(w, challenge, fmt.Sprintf("invalid session token: %v", err))
+				log.Printf("auth: descope session validation error: %v", err)
+				writeUnauthorized(w, challenge, genericSessionError)
 				return
 			}
 			if !authorized {
-				writeUnauthorized(w, challenge, "invalid or expired session token")
+				writeUnauthorized(w, challenge, genericSessionError)
 				return
 			}
 
@@ -89,10 +99,11 @@ func NewAuthMiddleware(descopeClient *descopeclient.DescopeClient) server.ToolHa
 
 			authorized, _, err := descopeClient.Auth.ValidateSessionWithToken(ctx, token)
 			if err != nil {
-				return mcp.NewToolResultError(fmt.Sprintf("unauthorized: %v", err)), nil
+				log.Printf("auth: descope session validation error: %v", err)
+				return mcp.NewToolResultError("unauthorized: " + genericSessionError), nil
 			}
 			if !authorized {
-				return mcp.NewToolResultError("unauthorized: invalid or expired session token"), nil
+				return mcp.NewToolResultError("unauthorized: " + genericSessionError), nil
 			}
 
 			return next(ctx, req)

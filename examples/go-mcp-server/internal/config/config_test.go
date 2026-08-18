@@ -54,3 +54,35 @@ func TestLoad_CustomAddr(t *testing.T) {
 		t.Errorf("cfg.Addr = %q, want %q", cfg.Addr, ":9999")
 	}
 }
+
+func TestLoad_ResourceURLDefaultUsesLocalhostRegardlessOfBindHost(t *testing.T) {
+	t.Setenv("DESCOPE_PROJECT_ID", "Ptest0000000000000000000000000000")
+	t.Setenv("ADDR", "0.0.0.0:9090")
+	t.Setenv("SERVER_URL", "")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+	if want := "http://localhost:9090"; cfg.ResourceURL != want {
+		t.Errorf("cfg.ResourceURL = %q, want %q (must not naively concatenate ADDR's host onto localhost)", cfg.ResourceURL, want)
+	}
+}
+
+func TestLoad_ResourceURLTrimsTrailingSlash(t *testing.T) {
+	t.Setenv("DESCOPE_PROJECT_ID", "Ptest0000000000000000000000000000")
+	t.Setenv("SERVER_URL", "https://example.com/")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+	if want := "https://example.com"; cfg.ResourceURL != want {
+		t.Errorf("cfg.ResourceURL = %q, want %q (trailing slash should be trimmed)", cfg.ResourceURL, want)
+	}
+
+	discoveryURL := cfg.ResourceURL + "/.well-known/oauth-protected-resource"
+	if want := "https://example.com/.well-known/oauth-protected-resource"; discoveryURL != want {
+		t.Errorf("joined discovery URL = %q, want %q (no double slash)", discoveryURL, want)
+	}
+}

@@ -2,7 +2,15 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"strings"
+)
+
+const (
+	defaultAddr           = ":8080"
+	defaultResourcePort   = "8080"
+	defaultDescopeBaseURL = "https://api.descope.com"
 )
 
 type Config struct {
@@ -20,12 +28,14 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	addr := getEnvOrDefault("ADDR", ":8080")
+	addr := getEnvOrDefault("ADDR", defaultAddr)
+	resourceURL := strings.TrimRight(getEnvOrDefault("SERVER_URL", defaultResourceURL(addr)), "/")
+
 	cfg := &Config{
 		DescopeProjectID: os.Getenv("DESCOPE_PROJECT_ID"),
 		Addr:             addr,
-		ResourceURL:      getEnvOrDefault("SERVER_URL", "http://localhost"+addr),
-		DescopeBaseURL:   getEnvOrDefault("DESCOPE_BASE_URL", "https://api.descope.com"),
+		ResourceURL:      resourceURL,
+		DescopeBaseURL:   getEnvOrDefault("DESCOPE_BASE_URL", defaultDescopeBaseURL),
 	}
 
 	if cfg.DescopeProjectID == "" {
@@ -33,6 +43,19 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// defaultResourceURL builds the local discovery URL used when SERVER_URL is
+// not set. It always yields "http://localhost:<port>", regardless of what
+// host part ADDR binds to — e.g. ADDR="0.0.0.0:8080" still yields
+// "http://localhost:8080" instead of the malformed "http://localhost0.0.0.0:8080"
+// that a naive "http://localhost"+addr concatenation would produce.
+func defaultResourceURL(addr string) string {
+	_, port, err := net.SplitHostPort(addr)
+	if err != nil || port == "" {
+		port = defaultResourcePort
+	}
+	return "http://localhost:" + port
 }
 
 func getEnvOrDefault(key, fallback string) string {

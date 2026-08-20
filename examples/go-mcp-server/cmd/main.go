@@ -1,12 +1,13 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"net/http"
 
 	descopeclient "github.com/descope/go-sdk/descope/client"
-	"github.com/mark3labs/mcp-go/server"
+	sdkauth "github.com/modelcontextprotocol/go-sdk/auth"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/modelcontextprotocol/go-sdk/oauthex"
 
 	"github.com/descope/ai/examples/go-mcp-server/internal/auth"
 	"github.com/descope/ai/examples/go-mcp-server/internal/config"
@@ -14,14 +15,15 @@ import (
 )
 
 // mcpEndpointPath is the path the streamable-HTTP transport serves the MCP
-// endpoint on. Pinned explicitly (rather than relying on mcp-go's default)
-// since it's also used to build the auth-wrapping mux route below.
+// endpoint on.
 const mcpEndpointPath = "/mcp"
 
-func main() {
-	transport := flag.String("transport", "stdio", "Transport to use: stdio or http")
-	flag.Parse()
+// protectedResourceMetadataPath is the RFC 9728 well-known discovery path,
+// which must stay reachable without auth so clients can find out how to
+// authenticate in the first place.
+const protectedResourceMetadataPath = "/.well-known/oauth-protected-resource"
 
+func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("config error: %v", err)
@@ -32,49 +34,36 @@ func main() {
 		log.Fatalf("failed to init descope client: %v", err)
 	}
 
-	s := server.NewMCPServer(
-		"descope-go-mcp-server",
-		"0.1.0",
-	)
-	s.AddTool(tools.NewHelloTool(), tools.HelloHandler)
+	s := mcp.NewServer(&mcp.Implementation{
+		Name:    "descope-go-mcp-server",
+		Version: "0.1.0",
+	}, nil)
 
-	switch *transport {
-	case "stdio":
-		log.Println("Starting MCP server on stdio (no auth enforced locally)...")
-		if err := server.ServeStdio(s); err != nil {
-			log.Fatalf("server error: %v", err)
-		}
-	case "http":
-		// Tool-call middleware runs as defense in depth behind the HTTP-level
-		// 401 gate below; it's only registered here so stdio mode (which
-		// shares this *MCPServer) stays unauthenticated.
-		s.Use(auth.NewAuthMiddleware(descopeClient))
+	mcp.AddTool(s, tools.NewEchoTool(), tools.EchoHandler)
 
-		prmPath := server.ProtectedResourceMetadataPath(cfg.ResourceURL)
-		metadataURL := cfg.ResourceURL + prmPath
+	handler := mcp.NewStreamableHTTPHandler(func(r *http.Request) *mcp.Server {
+		return s
+	}, &mcp.StreamableHTTPOptions{
+		Stateless: true,
+	})
 
-		httpServer := server.NewStreamableHTTPServer(s,
-			server.WithHTTPContextFunc(auth.HTTPContextFunc),
-			server.WithEndpointPath(mcpEndpointPath),
-			server.WithProtectedResourceMetadata(server.ProtectedResourceMetadataConfig{
-				Resource:             cfg.ResourceURL,
-				AuthorizationServers: []string{cfg.DescopeBaseURL},
-			}),
-		)
+	metadataURL := cfg.ResourceURL + protectedResourceMetadataPath
+	authenticatedHandler := sdkauth.RequireBearerToken(
+		auth.NewDescopeTokenVerifier(descopeClient),
+		&sdkauth.RequireBearerTokenOptions{ResourceMetadataURL: metadataURL},
+	)(handler)
 
-		// The MCP endpoint requires a valid bearer token (HTTP 401 +
-		// WWW-Authenticate on failure); the discovery document itself must
-		// stay reachable without auth so clients can find out how to
-		// authenticate in the first place.
-		mux := http.NewServeMux()
-		mux.Handle(mcpEndpointPath, auth.RequireBearerToken(descopeClient, metadataURL)(httpServer))
-		mux.Handle(prmPath, httpServer)
+	prmHandler := sdkauth.ProtectedResourceMetadataHandler(&oauthex.ProtectedResourceMetadata{
+		Resource:             cfg.ResourceURL,
+		AuthorizationServers: []string{cfg.Issuer()},
+	})
 
-		log.Printf("Starting MCP server on http at %s (endpoint: %s, discovery: %s)...", cfg.Addr, mcpEndpointPath, prmPath)
-		if err := http.ListenAndServe(cfg.Addr, mux); err != nil {
-			log.Fatalf("server error: %v", err)
-		}
-	default:
-		log.Fatalf("unknown transport: %s (use 'stdio' or 'http')", *transport)
+	mux := http.NewServeMux()
+	mux.Handle(mcpEndpointPath, authenticatedHandler)
+	mux.Handle(protectedResourceMetadataPath, prmHandler)
+
+	log.Printf("Starting MCP server on http at %s (endpoint: %s, discovery: %s)...", cfg.Addr, mcpEndpointPath, protectedResourceMetadataPath)
+	if err := http.ListenAndServe(cfg.Addr, mux); err != nil {
+		log.Fatalf("server error: %v", err)
 	}
 }

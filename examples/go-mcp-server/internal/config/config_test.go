@@ -86,3 +86,45 @@ func TestLoad_ResourceURLTrimsTrailingSlash(t *testing.T) {
 		t.Errorf("joined discovery URL = %q, want %q (no double slash)", discoveryURL, want)
 	}
 }
+
+func TestIssuer_DefaultDerivesFromProjectIDAndBaseURL(t *testing.T) {
+	t.Setenv("DESCOPE_PROJECT_ID", "Ptest0000000000000000000000000000")
+	t.Setenv("DESCOPE_BASE_URL", "https://api.descope.com")
+	t.Setenv("DESCOPE_ISSUER_URL", "")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+	if want := "https://api.descope.com/v1/apps/Ptest0000000000000000000000000000"; cfg.Issuer() != want {
+		t.Errorf("cfg.Issuer() = %q, want %q", cfg.Issuer(), want)
+	}
+}
+
+func TestIssuer_RespectsExplicitOverride(t *testing.T) {
+	t.Setenv("DESCOPE_PROJECT_ID", "Ptest0000000000000000000000000000")
+	t.Setenv("DESCOPE_BASE_URL", "https://api.descope.com")
+	t.Setenv("DESCOPE_ISSUER_URL", "https://custom.example.com/my-issuer")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+	if want := "https://custom.example.com/my-issuer"; cfg.Issuer() != want {
+		t.Errorf("cfg.Issuer() = %q, want the explicit override %q unchanged", cfg.Issuer(), want)
+	}
+}
+
+func TestIssuer_NoDoubleSlashWithTrailingSlashBaseURL(t *testing.T) {
+	t.Setenv("DESCOPE_PROJECT_ID", "Ptest0000000000000000000000000000")
+	t.Setenv("DESCOPE_BASE_URL", "https://api.descope.com/")
+	t.Setenv("DESCOPE_ISSUER_URL", "")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+	if want := "https://api.descope.com/v1/apps/Ptest0000000000000000000000000000"; cfg.Issuer() != want {
+		t.Errorf("cfg.Issuer() = %q, want %q (no double slash from a trailing-slash base URL)", cfg.Issuer(), want)
+	}
+}

@@ -1,84 +1,114 @@
 # Descope Go MCP Server (Sample)
 
-A sample MCP (Model Context Protocol) server built with [mcp-go](https://github.com/mark3labs/mcp-go), demonstrating Descope session-token authentication over the streamable HTTP transport.
+A sample MCP (Model Context Protocol) server written in Go, built with the official
+[modelcontextprotocol/go-sdk](https://github.com/modelcontextprotocol/go-sdk), demonstrating
+an OAuth-protected MCP server secured with Descope. This is meant as a minimal, deployable
+template you can clone and build on, not just a local demo.
 
 ## Overview
 
-This server exposes a single demo tool, `hello_world`, and enforces Descope authentication on every request when running over HTTP. Local stdio mode is available for quick development without auth.
+This server exposes a single `echo` tool over the streamable HTTP transport, and enforces
+Descope session-token authentication (OAuth 2.0 Bearer tokens) on every request using the
+official SDK's built-in `auth.RequireBearerToken` middleware.
 
 ## Features
 
-- Built with `mark3labs/mcp-go`
-- Supports both `stdio` and streamable HTTP transports
-- Descope JWT session validation, enforced at two layers when running over HTTP (Resource Server pattern):
-  1. **HTTP-level gate** (primary): an `http.Handler` middleware validates the bearer token before the request reaches the MCP layer, returning a real `401 Unauthorized` with a `WWW-Authenticate` header per the [MCP Authorization spec](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization) and [RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728). The OAuth 2.0 Protected Resource Metadata document is served at `/.well-known/oauth-protected-resource` (unauthenticated, as required for discovery).
-  2. **Tool-call middleware** (defense in depth): re-validates the token before the `hello_world` handler runs.
-
-  In `stdio` mode neither layer is registered, so tool calls are never authenticated — stdio is local-dev only.
+- Built with the official `modelcontextprotocol/go-sdk`
+- Streamable HTTP transport only, stateless (no session-ID bookkeeping)
+- Descope OAuth Bearer-token validation, enforced via a single HTTP-layer middleware
+- RFC 9728 OAuth Protected Resource Metadata discovery document, served unauthenticated
 - Config via environment variables
 
 ## Requirements
 
-- Go 1.2x+
-- A Descope project (Project ID)
+- Go 1.26.6+
+- A Descope project
 
 ## Environment Variables
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `DESCOPE_PROJECT_ID` | Yes | — | Your Descope project ID |
+| `DESCOPE_PROJECT_ID` | Yes | none | Your Descope project ID |
 | `ADDR` | No | `:8080` | Address the HTTP server listens on |
-| `SERVER_URL` | No | `http://localhost<ADDR>` | This server's externally-reachable base URL, advertised as the OAuth Protected Resource identifier (RFC 9728). Set this to your real public URL in any non-local deployment. |
-| `DESCOPE_BASE_URL` | No | `https://api.descope.com` | Advertised to clients as the authorization server in the protected resource metadata document. Does not change how this server talks to Descope's API. |
+| `DESCOPE_BASE_URL` | No | `https://api.descope.com` | Descope's API base URL. Change only for custom regions or domains |
+| `DESCOPE_ISSUER_URL` | No | Derived from `DESCOPE_BASE_URL` and `DESCOPE_PROJECT_ID` | Override the OAuth issuer URL. Needed only for custom Descope domains |
+| `SERVER_URL` | No | `http://localhost` plus the port from `ADDR` | This server's own public URL, used to build the discovery document |
 
-Copy `.env.example` to `.env` and fill in your values, then export them into your shell (or use a tool like `direnv`).
+Copy `.env.example` to `.env`, fill in your values, and export them into your shell.
 
 ## Running
 
-### stdio (local dev, no auth enforced)
-```bash
-go run ./cmd/main.go --transport stdio
-```
-
-### HTTP (auth enforced)
 ```bash
 export DESCOPE_PROJECT_ID=your_project_id
-go run ./cmd/main.go --transport http
+go run ./cmd/main.go
 ```
 
-The server listens on `/mcp` (default `:8080`).
+The server listens on `/mcp` (default `:8080`), with the discovery document served at
+`/.well-known/oauth-protected-resource`.
 
 ## Descope Auth Setup
 
 1. Create a Descope project and note its Project ID.
-2. Obtain a session token for a caller (e.g. via an Access Key + Client Credentials flow, or a full user login).
-3. Send it as `Authorization: Bearer <token>` on every request to `/mcp`.
-4. Requests without a valid token receive an HTTP `401 Unauthorized` with a `WWW-Authenticate: Bearer resource_metadata="<discovery-url>"` header — clients can fetch that URL for the Protected Resource Metadata document instead of guessing how to authenticate.
+2. Obtain a session token for a caller. For testing, use the Client Credentials flow with a
+   Descope Access Key (see "Testing with curl" below).
+3. Send the token as `Authorization: Bearer <token>` on every request to `/mcp`.
+4. Requests without a valid token receive a `401 Unauthorized` response with a
+   `WWW-Authenticate` header pointing callers to the discovery document.
 
 ## Testing with curl
 
 ```bash
-# 0. No token -> 401 + WWW-Authenticate (no Mcp-Session-Id is ever issued)
+# 1. Get a token via Client Credentials, using a Descope Access Key
+curl -X POST https://api.descope.com/oauth2/v1/token \
+  -H "Authorization: Basic $(echo -n '<ProjectID>:<AccessKey>' | base64)" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&scope=openid profile email"
+
+# 2. Initialize, with the token
 curl -i -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
+  -H "Authorization: Bearer <token>" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl-test","version":"1.0"}}}'
 
-# 1. Initialize with a valid bearer token (get a session ID)
-curl -i -X POST http://localhost:8080/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -H "Authorization: Bearer <your-token>" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl-test","version":"1.0"}}}'
-
-# 2. Call the tool (with the session ID and a valid bearer token)
+# 3. Call the echo tool
 curl -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -H "Mcp-Session-Id: <session-id-from-step-1>" \
-  -H "Authorization: Bearer <your-token>" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hello_world","arguments":{"name":"World"}}}'
-
-# 3. Discovery document (no auth required)
-curl -i http://localhost:8080/.well-known/oauth-protected-resource
+  -H "Authorization: Bearer <token>" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"echo","arguments":{"message":"hello"}}}'
 ```
+
+## Available Tools
+
+- **echo**: takes a `message` string and returns it back as is. A minimal template tool;
+  replace it with your own logic.
+
+## Deploying
+
+This is a plain Go HTTP server, so it builds and runs as a standard container image on any
+platform that accepts one.
+
+```bash
+docker build -t go-mcp-server .
+docker run -p 8080:8080 -e DESCOPE_PROJECT_ID=your_project_id go-mcp-server
+```
+
+From there, deploy the image with whichever platform you prefer, for example:
+- Google Cloud Run: `gcloud run deploy --source .`
+- Fly.io: `fly launch`
+- Any container host that accepts a standard Docker image
+
+## Beyond This Sample: Other Descope Go SDK Capabilities
+
+This sample only demonstrates session-token validation. The same
+[Descope Go SDK](https://github.com/descope/go-sdk) also supports, if your own MCP server's
+tools need them:
+
+- **Token exchange**: exchanging one token type for another
+- **Connections token fetching**: retrieving a user's already-authorized tokens for other
+  connected services, so your tools can call third-party APIs on the user's behalf
+- **Management functions**: broader administrative operations, including user, role, and
+  tenant management
+
+See the [Descope Go SDK documentation](https://github.com/descope/go-sdk) for details.

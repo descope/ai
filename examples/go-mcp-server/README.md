@@ -153,13 +153,17 @@ This pattern has two distinct testing paths, depending on what you're simulating
 3. Go to **Agentic Identity Hub → Policies** and create a policy with this client as the
    **subject**, your MCP Server Resource as the **target**, the specific scope(s) you want to
    grant (e.g. `mcp:echo`), and grant type **Machine-to-Machine (M2M) access**.
-4. Request a token from the resource's token endpoint (from the Usage Samples section):
+4. Request a token from the resource's token endpoint (from the Usage Samples section),
+   including a `resource` parameter ([RFC 8707](https://www.rfc-editor.org/rfc/rfc8707)) set
+   to your MCP Server's own URL — the same value you set as **MCP Server URL** when creating
+   the resource (e.g. `http://localhost:8080`):
 
    ```bash
    curl -X POST https://api.descope.com/oauth2/v1/apps/agentic/<ProjectID>/<AppID>/token \
      -H "Authorization: Basic $(echo -n '<ClientID>:<ClientSecret>' | base64)" \
      -H "Content-Type: application/x-www-form-urlencoded" \
-     -d "grant_type=client_credentials"
+     --data-urlencode "grant_type=client_credentials" \
+     --data-urlencode "resource=<your MCP Server URL>"
    ```
 
    Then use the returned token the same way as steps 2–3 above.
@@ -168,13 +172,14 @@ This pattern has two distinct testing paths, depending on what you're simulating
    reach the resource at all — unlike clients registered via DCR/CIMD, which get automatic
    access to the MCP server they registered with, no policy required.
 
-   **Known rough edge, unresolved as of this writing:** we hit a case where a manually-created
-   Client + Policy combination that looked correctly configured in the Console still returned
+   **The `resource` parameter above is required, not optional.** Descope runs one shared
+   authorization server across all Inbound Apps and Resources; without `resource` telling it
+   which specific Resource you're requesting a token for, it can't resolve which policy to
+   evaluate — even with a correctly configured Client and Policy, you'll get
    `{"errorCode":"E063316","errorMessage":"Application is not associated with this MCP
-   server"}` on every token request. If you hit the same error, double-check your Console setup
-   very carefully (grant type toggle actually saved, policy subject/target exactly matching,
-   policy actually active) — or fall back to the DCR/MCP Inspector path below, which doesn't
-   depend on manual policy wiring.
+   server"}`. Adding `resource=<MCP Server URL>` resolves it: the returned token carries the
+   scope(s) your policy grants (e.g. `"scope":"mcp:echo"`) and includes the MCP Server URL in
+   its `aud` claim.
 
 **Interactive / user-delegated (simulating a real MCP client):**
 

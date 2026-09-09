@@ -158,11 +158,28 @@ func TestEchoHandler_AllowsWithScope(t *testing.T) {
 // validation happens in the server's dispatch layer, one level above the
 // typed handler, so a direct call always bypasses it regardless of the
 // EchoArgs value passed in.
+//
+// The test registers a wrapping handler that records whether EchoHandler was
+// actually invoked, and asserts it was NOT. This test's ctx is
+// context.Background() (no TokenInfo attached, unlike contextWithScopes
+// elsewhere in this file), so EchoHandler's scope check would itself produce
+// an IsError:true result if it ever ran. Without the handlerCalled check,
+// this test could pass for the wrong reason — an unrelated scope-rejection
+// masquerading as "the missing message was rejected" — if the schema's
+// required-field validation were ever accidentally weakened. Checking
+// handlerCalled instead proves specifically that schema validation, not some
+// other failure, is what stopped this call.
 func TestEchoTool_MissingMessageRejectedBeforeHandler(t *testing.T) {
 	ctx := context.Background()
 
+	var handlerCalled bool
+	wrappedHandler := func(ctx context.Context, req *mcp.CallToolRequest, args EchoArgs) (*mcp.CallToolResult, any, error) {
+		handlerCalled = true
+		return EchoHandler(ctx, req, args)
+	}
+
 	server := mcp.NewServer(&mcp.Implementation{Name: "test-server", Version: "0.0.1"}, nil)
-	mcp.AddTool(server, NewEchoTool(), EchoHandler)
+	mcp.AddTool(server, NewEchoTool(), wrappedHandler)
 
 	serverTransport, clientTransport := mcp.NewInMemoryTransports()
 
@@ -182,14 +199,16 @@ func TestEchoTool_MissingMessageRejectedBeforeHandler(t *testing.T) {
 		Arguments: map[string]any{},
 	})
 
+	if handlerCalled {
+		t.Fatal("EchoHandler was invoked despite the missing required \"message\" argument — schema validation did not reject the call before the handler ran")
+	}
+
 	switch {
 	case err != nil:
-		// Rejected as a protocol-level error — also an acceptable shape for
-		// "rejected before the handler ran", since either way EchoHandler
-		// was never invoked with a missing message.
+		// Rejected as a protocol-level error.
 	case result != nil && result.IsError:
 		// Rejected as a tool-level error result.
 	default:
-		t.Fatalf("expected the missing required \"message\" argument to be rejected before EchoHandler ran, got result=%+v, err=%v", result, err)
+		t.Fatalf("expected the missing required \"message\" argument to be rejected, got result=%+v, err=%v", result, err)
 	}
 }

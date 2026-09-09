@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -13,12 +15,34 @@ import (
 	sdkauth "github.com/modelcontextprotocol/go-sdk/auth"
 )
 
+// fakeJWT builds a syntactically-valid, unsigned JWT string carrying the
+// given claims, for exercising audienceFromJWT / tokenInfoFromValidationResult
+// without a real Descope client or network access. The signature segment is
+// a placeholder — these tests exercise claim parsing only, which happens
+// after ValidateSessionWithToken has already verified the signature.
+func fakeJWT(t *testing.T, claims map[string]any) string {
+	t.Helper()
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"none","typ":"JWT"}`))
+	payloadBytes, err := json.Marshal(claims)
+	if err != nil {
+		t.Fatalf("fakeJWT: marshaling claims: %v", err)
+	}
+	payload := base64.RawURLEncoding.EncodeToString(payloadBytes)
+	return header + "." + payload + ".sig"
+}
+
 // --- tokenInfoFromValidationResult: pure translation logic, no network needed ---
 
-func TestTokenInfoFromValidationResult_Success(t *testing.T) {
-	sessionToken := &descope.Token{ID: "user-123", Expiration: 1893456000} // 2030-01-01T00:00:00Z
+const testResourceURL = "http://localhost:8080"
 
-	info, err := tokenInfoFromValidationResult(true, sessionToken, nil)
+func TestTokenInfoFromValidationResult_Success(t *testing.T) {
+	sessionToken := &descope.Token{
+		ID:         "user-123",
+		Expiration: 1893456000, // 2030-01-01T00:00:00Z
+		JWT:        fakeJWT(t, map[string]any{"aud": []string{testResourceURL}}),
+	}
+
+	info, err := tokenInfoFromValidationResult(true, sessionToken, nil, testResourceURL)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -35,7 +59,7 @@ func TestTokenInfoFromValidationResult_Success(t *testing.T) {
 }
 
 func TestTokenInfoFromValidationResult_SDKError(t *testing.T) {
-	info, err := tokenInfoFromValidationResult(false, nil, errors.New("[G030001] Missing or invalid public key"))
+	info, err := tokenInfoFromValidationResult(false, nil, errors.New("[G030001] Missing or invalid public key"), testResourceURL)
 	if info != nil {
 		t.Errorf("info = %+v, want nil on error", info)
 	}
@@ -51,12 +75,54 @@ func TestTokenInfoFromValidationResult_SDKError(t *testing.T) {
 }
 
 func TestTokenInfoFromValidationResult_NotAuthorized(t *testing.T) {
-	info, err := tokenInfoFromValidationResult(false, nil, nil)
+	info, err := tokenInfoFromValidationResult(false, nil, nil, testResourceURL)
 	if info != nil {
 		t.Errorf("info = %+v, want nil when not authorized", info)
 	}
 	if !errors.Is(err, sdkauth.ErrInvalidToken) {
 		t.Errorf("err = %v, want it to wrap sdkauth.ErrInvalidToken", err)
+	}
+}
+
+func TestTokenInfoFromValidationResult_AudienceMatchAllowed(t *testing.T) {
+	// Mirrors the shape of a real Descope agentic-pattern token: aud carries
+	// the client ID and project ID alongside the MCP server's resource URL.
+	sessionToken := &descope.Token{
+		ID:         "user-123",
+		Expiration: 1893456000,
+		JWT: fakeJWT(t, map[string]any{
+			"aud": []string{"some-client-id", "some-project-id", testResourceURL},
+		}),
+	}
+
+	info, err := tokenInfoFromValidationResult(true, sessionToken, nil, testResourceURL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if info == nil {
+		t.Fatal("info is nil, want a populated TokenInfo")
+	}
+}
+
+func TestTokenInfoFromValidationResult_AudienceMismatchRejected(t *testing.T) {
+	sessionToken := &descope.Token{
+		ID:         "user-123",
+		Expiration: 1893456000,
+		JWT: fakeJWT(t, map[string]any{
+			"aud":   []string{"https://some-other-mcp-server.example.com"},
+			"scope": "mcp:echo",
+		}),
+	}
+
+	info, err := tokenInfoFromValidationResult(true, sessionToken, nil, testResourceURL)
+	if info != nil {
+		t.Errorf("info = %+v, want nil for an audience mismatch, even with the right scope", info)
+	}
+	if !errors.Is(err, sdkauth.ErrInvalidToken) {
+		t.Errorf("err = %v, want it to wrap sdkauth.ErrInvalidToken", err)
+	}
+	if got := err.Error(); got != "invalid or expired session token: invalid token" {
+		t.Errorf("err.Error() = %q, must not leak which check failed", got)
 	}
 }
 

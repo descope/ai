@@ -57,7 +57,7 @@ func main() {
 
 	metadataURL := cfg.ResourceURL + protectedResourceMetadataPath
 	authenticatedHandler := sdkauth.RequireBearerToken(
-		auth.NewDescopeTokenVerifier(descopeClient),
+		auth.NewDescopeTokenVerifier(descopeClient, cfg.ResourceURL),
 		&sdkauth.RequireBearerTokenOptions{ResourceMetadataURL: metadataURL},
 	)(handler)
 

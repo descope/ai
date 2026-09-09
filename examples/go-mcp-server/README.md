@@ -101,7 +101,9 @@ two patterns.
 curl -X POST https://api.descope.com/oauth2/v1/token \
   -H "Authorization: Basic $(echo -n '<ProjectID>:<AccessKey>' | base64)" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=client_credentials&scope=mcp:echo"
+  --data-urlencode "grant_type=client_credentials" \
+  --data-urlencode "scope=mcp:echo" \
+  --data-urlencode "resource=http://localhost:8080"
 
 # 2. Initialize, with the token
 curl -i -X POST http://localhost:8080/mcp \
@@ -118,9 +120,14 @@ curl -X POST http://localhost:8080/mcp \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"echo","arguments":{"message":"hello"}}}'
 ```
 
-Note the `scope=mcp:echo` on the token request in step 1 — the `echo` tool now requires this
-scope (see "Available Tools" below); a token without it will get an
-`insufficient scope: mcp:echo required` tool-level error in step 3.
+Note two things about step 1's token request:
+- `scope=mcp:echo` — the `echo` tool requires this scope (see "Available Tools" below); a
+  token without it will get an `insufficient scope: mcp:echo required` tool-level error in
+  step 3.
+- `resource=http://localhost:8080` (replace with your server's actual `SERVER_URL`/`ADDR`) —
+  this server checks that a token's `aud` claim includes its own resource URL before trusting
+  the token's scopes at all, so a token requested without this parameter is rejected outright
+  (a generic `401`) even if it's otherwise valid and carries the right scope.
 
 #### Alternative: MCP Inspector
 

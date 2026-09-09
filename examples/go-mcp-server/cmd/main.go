@@ -29,7 +29,15 @@ func main() {
 		log.Fatalf("config error: %v", err)
 	}
 
-	descopeClient, err := descopeclient.NewWithConfig(&descopeclient.Config{ProjectID: cfg.DescopeProjectID})
+	descopeBaseURL, err := cfg.DescopeAPIBaseURL()
+	if err != nil {
+		log.Fatalf("config error: %v", err)
+	}
+
+	descopeClient, err := descopeclient.NewWithConfig(&descopeclient.Config{
+		ProjectID:      cfg.DescopeProjectID,
+		DescopeBaseURL: descopeBaseURL,
+	})
 	if err != nil {
 		log.Fatalf("failed to init descope client: %v", err)
 	}
@@ -55,7 +63,7 @@ func main() {
 
 	prmHandler := sdkauth.ProtectedResourceMetadataHandler(&oauthex.ProtectedResourceMetadata{
 		Resource:             cfg.ResourceURL,
-		AuthorizationServers: []string{cfg.Issuer()},
+		AuthorizationServers: []string{cfg.IssuerURL},
 	})
 
 	mux := http.NewServeMux()

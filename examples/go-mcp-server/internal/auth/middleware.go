@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/descope/go-sdk/descope"
@@ -18,12 +19,9 @@ import (
 // auth.RequireBearerToken to gate an HTTP handler.
 //
 // On success it returns a populated *auth.TokenInfo: UserID is taken from
-// the Descope token's ID (subject) claim, and Expiration from the token's
-// expiration claim. Scopes is left unset — Descope session tokens carry
-// permissions/tenants rather than a flat OAuth scope list, so there's no
-// straightforward mapping; code needing fine-grained authorization should
-// inspect the underlying Descope token's claims directly instead of
-// guessing a Scopes value here.
+// the Descope token's ID (subject) claim, Expiration from the token's
+// expiration claim, and Scopes from the token's space-separated "scope"
+// claim (standard OAuth 2.0 access token shape — RFC 6749 §5.1), if present.
 //
 // On any failure — a Descope SDK/network error, or an explicitly
 // unauthorized token — the real error is logged server-side and a generic
@@ -58,6 +56,9 @@ func tokenInfoFromValidationResult(authorized bool, sessionToken *descope.Token,
 	}
 	if sessionToken.Expiration > 0 {
 		info.Expiration = time.Unix(sessionToken.Expiration, 0)
+	}
+	if scope, ok := sessionToken.Claims["scope"].(string); ok && scope != "" {
+		info.Scopes = strings.Fields(scope)
 	}
 	return info, nil
 }

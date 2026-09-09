@@ -2,9 +2,15 @@ package tools
 
 import (
 	"context"
+	"fmt"
+	"slices"
 
+	"github.com/modelcontextprotocol/go-sdk/auth"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+// echoScope is the MCP Server scope required to call the echo tool.
+const echoScope = "mcp:echo"
 
 // EchoArgs is the input schema for the echo tool.
 //
@@ -36,7 +42,19 @@ func NewEchoTool() *mcp.Tool {
 // "required" under JSON Schema semantics (required means "present", not
 // "non-empty") and is a legitimate echo input, so it's intentionally not
 // treated as an error here either.
+//
+// The caller's token must carry the echoScope ("mcp:echo") scope, as
+// populated onto the request context by auth.RequireBearerToken. A returned
+// Go error here is converted by the SDK into a CallToolResult with
+// IsError:true, rather than an HTTP-level failure — the HTTP request itself
+// (and its bearer token) was already valid; this is a tool-level
+// authorization check.
 func EchoHandler(ctx context.Context, req *mcp.CallToolRequest, args EchoArgs) (*mcp.CallToolResult, any, error) {
+	tokenInfo := auth.TokenInfoFromContext(ctx)
+	if tokenInfo == nil || !slices.Contains(tokenInfo.Scopes, echoScope) {
+		return nil, nil, fmt.Errorf("insufficient scope: %s required", echoScope)
+	}
+
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: args.Message}},
 	}, nil, nil

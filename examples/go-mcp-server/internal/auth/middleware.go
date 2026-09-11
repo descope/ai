@@ -16,30 +16,8 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/auth"
 )
 
-// NewDescopeTokenVerifier returns an auth.TokenVerifier that validates a
-// bearer token as a Descope session token via
-// descopeClient.Auth.ValidateSessionWithToken. Pass the result to
-// auth.RequireBearerToken to gate an HTTP handler.
-//
-// resourceURL is this server's own resource identifier (cfg.ResourceURL) —
-// the verifier rejects any token whose "aud" claim doesn't include it. The
-// Descope Go SDK has no built-in audience-checking parameter on
-// ValidateSessionWithToken (confirmed: its signature takes only a context
-// and the token string), so this is enforced manually here; see
-// audienceFromJWT.
-//
-// On success it returns a populated *auth.TokenInfo: UserID is taken from
-// the Descope token's ID (subject) claim, Expiration from the token's
-// expiration claim, and Scopes from the token's space-separated "scope"
-// claim (standard OAuth 2.0 access token shape — RFC 6749 §5.1), if present.
-//
-// On any failure — a Descope SDK/network error, an explicitly unauthorized
-// token, or an audience mismatch — the real reason is logged server-side and
-// a generic error wrapping auth.ErrInvalidToken is returned to the caller,
-// so a caller can't fingerprint which specific check failed.
-// auth.RequireBearerToken turns that into the appropriate HTTP 401 +
-// WWW-Authenticate response automatically; this package no longer
-// hand-writes that response itself.
+// NewDescopeTokenVerifier returns a TokenVerifier that validates a bearer
+// token against Descope and checks it was issued for resourceURL.
 func NewDescopeTokenVerifier(descopeClient *descopeclient.DescopeClient, resourceURL string) auth.TokenVerifier {
 	return func(ctx context.Context, token string, req *http.Request) (*auth.TokenInfo, error) {
 		authorized, sessionToken, err := descopeClient.Auth.ValidateSessionWithToken(ctx, token)

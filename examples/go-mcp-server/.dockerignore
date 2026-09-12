@@ -1,0 +1,22 @@
+# Version control
+.git
+.gitignore
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Docs
+README.md
+
+# Tests (don't affect the built binary, excluded to keep the build context small)
+*_test.go
+
+# Local build artifacts / editor cruft
+*.exe
+*.test
+main
+.DS_Store
+.vscode
+.idea

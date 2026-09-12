@@ -1,0 +1,10 @@
+# Compiled binaries
+main
+*.exe
+*.test
+
+# Environment files
+.env
+
+# OS files
+.DS_Store

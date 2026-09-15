@@ -24,14 +24,24 @@ Before proceeding, make sure you have the following:
 
 - [Node.js](https://nodejs.org/) (version 20 or later)
 - A valid Descope [Project ID](https://app.descope.com/settings/project)
+- An MCP server registered in Descope (see below) so you have an **Issuer URL** for this deployment
 
 ## Running the Server
 
-First, add the environment variables in a `.env` file at the root:
+In the [Descope Console](https://app.descope.com/agentic-hub/mcp-servers), you will need to create an [MCP server](https://docs.descope.com/agentic-identity-hub/mcp-servers).
+
+Once completed, copy that MCP server’s **Issuer URL**—you will set it as `DESCOPE_MCP_ISSUER_URL`. Without it, clients cannot discover or use the hosted auth flows against your server.
+
+Then add the environment variables in a `.env` file at the root:
 
 ```bash
-NEXT_PUBLIC_DESCOPE_PROJECT_ID=      # Your Descope project ID
-NEXT_PUBLIC_DESCOPE_BASE_URL=        # Your Descope base URL (optional, defaults to https://api.descope.com)
+# Your Descope project ID
+NEXT_PUBLIC_DESCOPE_PROJECT_ID=
+# Issuer URL from your MCP server in Descope (MCP server configuration)
+DESCOPE_MCP_ISSUER_URL=
+
+# Your Descope base URL (optional)
+NEXT_PUBLIC_DESCOPE_BASE_URL=
 ```
 
 Then, install dependencies:
@@ -60,48 +70,6 @@ The server uses Descope's Node SDK for session validation. The `verifyToken` fun
 2. Uses the Descope Node SDK to validate the session
 3. Returns authentication context including user scopes and client ID
 4. All MCP endpoints require a valid bearer token
-
-## Managing API Keys and OAuth Tokens for Tools
-
-If you want Descope to manage your API keys or OAuth tokens for your MCP, you can use functions in the Node SDK to fetch outbound app tokens at either a user or tenant level:
-
-```typescript
-// Fetch user token with specific scopes
-const userToken =
-  await descopeClient.management.outboundApplication.fetchTokenByScopes(
-    "my-app-id",
-    "user-id",
-    ["read", "write"],
-    { withRefreshToken: false },
-    "tenant-id"
-  );
-
-// Fetch latest user token
-const latestUserToken =
-  await descopeClient.management.outboundApplication.fetchToken(
-    "my-app-id",
-    "user-id",
-    "tenant-id",
-    { forceRefresh: false }
-  );
-
-// Fetch tenant token with specific scopes
-const tenantToken =
-  await descopeClient.management.outboundApplication.fetchTenantTokenByScopes(
-    "my-app-id",
-    "tenant-id",
-    ["read", "write"],
-    { withRefreshToken: false }
-  );
-
-// Fetch latest tenant token
-const latestTenantToken =
-  await descopeClient.management.outboundApplication.fetchTenantToken(
-    "my-app-id",
-    "tenant-id",
-    { forceRefresh: false }
-  );
-```
 
 ## Available Tools
 

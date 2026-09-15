@@ -3,12 +3,14 @@ import {
   metadataCorsOptionsRequestHandler,
 } from "mcp-handler";
 
-const DESCOPE_PROJECT_ID = process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID;
-const DESCOPE_BASE_URL =
-  process.env.NEXT_PUBLIC_DESCOPE_BASE_URL || "https://api.descope.com";
+const DESCOPE_MCP_ISSUER_URL = process.env.DESCOPE_MCP_ISSUER_URL;
+
+if (!DESCOPE_MCP_ISSUER_URL) {
+  throw new Error("DESCOPE_MCP_ISSUER_URL environment variable is required");
+}
 
 const handler = protectedResourceHandler({
-  authServerUrls: [`${DESCOPE_BASE_URL}/v1/apps/${DESCOPE_PROJECT_ID}`],
+  authServerUrls: [`${DESCOPE_MCP_ISSUER_URL}`],
 });
 
 const optionsHandler = metadataCorsOptionsRequestHandler();

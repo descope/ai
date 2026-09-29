@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeMCPExecution": [{ "command": "./hooks/descope-auth.sh" }]
+  }
+}

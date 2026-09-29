@@ -1,0 +1,47 @@
+{
+  "servers": {
+    "github": {
+      "strategy": "client_credentials_exchange",
+      "baseUrl": "https://api.descope.com",
+      "projectId": "P2xxxxxxxxx",
+      "clientId": "DS_xxxxxxxx",
+      "clientSecret": "ds_xxxxxxxx",
+      "audience": "mcp-server-github",
+      "scopes": "repo:read issues:write"
+    },
+
+    "salesforce": {
+      "strategy": "user_token_exchange",
+      "baseUrl": "https://api.descope.com",
+      "projectId": "P2xxxxxxxxx",
+      "userAccessToken": "YOUR_USER_ACCESS_TOKEN",
+      "audience": "mcp-server-salesforce",
+      "scopes": "contacts:read deals:write"
+    },
+
+    "google-contacts": {
+      "strategy": "connections",
+      "baseUrl": "https://api.descope.com",
+      "projectId": "P2xxxxxxxxx",
+      "userAccessToken": "YOUR_USER_ACCESS_TOKEN",
+      "appId": "google-contacts",
+      "userId": "YOUR_DESCOPE_USER_ID",
+      "tenantId": "",
+      "scopes": ["https://www.googleapis.com/auth/contacts.readonly"]
+    },
+
+    "calendar": {
+      "strategy": "ciba",
+      "baseUrl": "https://api.descope.com",
+      "projectId": "P2xxxxxxxxx",
+      "clientId": "DS_xxxxxxxx",
+      "clientSecret": "ds_xxxxxxxx",
+      "audience": "mcp-server-calendar",
+      "scopes": "events:read events:write",
+      "loginHint": "user@example.com",
+      "bindingMessage": "Allow AI assistant to manage your calendar?",
+      "pollIntervalSeconds": 2,
+      "timeoutSeconds": 120
+    }
+  }
+}

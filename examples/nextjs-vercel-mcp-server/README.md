@@ -73,7 +73,7 @@ const userToken =
     "user-id",
     ["read", "write"],
     { withRefreshToken: false },
-    "tenant-id"
+    "tenant-id",
   );
 
 // Fetch latest user token
@@ -82,7 +82,7 @@ const latestUserToken =
     "my-app-id",
     "user-id",
     "tenant-id",
-    { forceRefresh: false }
+    { forceRefresh: false },
   );
 
 // Fetch tenant token with specific scopes
@@ -91,7 +91,7 @@ const tenantToken =
     "my-app-id",
     "tenant-id",
     ["read", "write"],
-    { withRefreshToken: false }
+    { withRefreshToken: false },
   );
 
 // Fetch latest tenant token
@@ -99,7 +99,7 @@ const latestTenantToken =
   await descopeClient.management.outboundApplication.fetchTenantToken(
     "my-app-id",
     "tenant-id",
-    { forceRefresh: false }
+    { forceRefresh: false },
   );
 ```
 

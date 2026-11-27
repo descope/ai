@@ -13,7 +13,7 @@ You can connect to the server using the [Cloudflare Playground](https://playgrou
 Before you begin, ensure you have:
 
 - A [Descope](https://www.descope.com/) account and project
-- Node.js version `18.x` or higher
+- Node.js version `20.x` or higher
 - A Cloudflare account (for deployment)
 
 ## Develop locally

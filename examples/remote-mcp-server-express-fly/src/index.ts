@@ -3,20 +3,9 @@ import express from "express";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { createServer } from "./create-server.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import { descopeMcpAuthRouter, descopeMcpBearerAuth, DescopeMcpProvider, DescopeMcpProviderOptions } from "@descope/mcp-express";
 import cors from "cors";
 import path from 'path';
-
-declare module "express-serve-static-core" {
-    interface Request {
-        /**
-         * Information about the validated access token, if the `descopeMcpBearerAuth` middleware was used.
-         * Contains user information and token details after successful authentication.
-         */
-        auth?: AuthInfo;
-    }
-}
 
 dotenv.config();
 

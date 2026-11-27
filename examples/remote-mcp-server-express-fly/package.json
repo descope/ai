@@ -20,12 +20,12 @@
   "dependencies": {
     "@descope/mcp-express": "^1.0.3",
     "@descope/node-sdk": "^1.6.13",
-    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.22.0",
     "node-fetch": "^3.3.2",
-    "zod": "^3.24.2"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

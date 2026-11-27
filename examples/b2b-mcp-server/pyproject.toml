@@ -1,0 +1,12 @@
+[project]
+name = "meridian-b2b-mcp-server"
+version = "0.1.0"
+description = "Meridian — a fictional B2B travel & expense MCP server secured by Descope (multi-tenant + role-based scopes)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=3.4.2",
+    "python-dotenv>=1.1.1",
+    "uvicorn>=0.34.0",
+    "starlette>=0.47.1",
+]
